@@ -55,6 +55,7 @@ fun OlseraHeaderBar(
     categories: List<Category>,
     selectedCategoryId: String,
     onCategorySelected: (String) -> Unit,
+    onMenuClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
@@ -75,7 +76,7 @@ fun OlseraHeaderBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(0.42f)
             ) {
-                IconButton(onClick = { }) {
+                IconButton(onClick = onMenuClick) {
                     Icon(
                         imageVector = Icons.Default.Menu,
                         contentDescription = "Menu",
