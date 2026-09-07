@@ -11,16 +11,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,14 +40,25 @@ import id.my.matahati.pos.ui.screen.home.components.OlseraCartPanel
 import id.my.matahati.pos.ui.screen.home.components.OlseraGreenPay
 import id.my.matahati.pos.ui.screen.home.components.OlseraHeaderBar
 import id.my.matahati.pos.ui.screen.home.components.OlseraProductGrid
+import id.my.matahati.pos.ui.screen.home.components.SidebarDrawer
 import id.my.matahati.pos.ui.theme.MobileMatahati_POSTheme
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
 fun HomeScreen(
+    userName: String = "Kasir",
+    roleOwner: Boolean = false,
+    roleCashier: Boolean = true,
+    roleCaptain: Boolean = false,
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Drawer State
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val coroutineScope = rememberCoroutineScope()
+
     // Dummy Data State
     val categories = remember { DummyData.categories }
     val allProducts = remember { DummyData.products }
@@ -111,94 +126,112 @@ fun HomeScreen(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isTablet = maxWidth >= 600.dp
 
-        Scaffold(
-            topBar = {
-                OlseraHeaderBar(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
-                    categories = categories,
-                    selectedCategoryId = selectedCategoryId,
-                    onCategorySelected = { selectedCategoryId = it }
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                SidebarDrawer(
+                    userName = userName,
+                    roleOwner = roleOwner,
+                    roleCashier = roleCashier,
+                    roleCaptain = roleCaptain,
+                    onLogout = onLogout
                 )
-            },
-            modifier = Modifier.fillMaxSize()
-        ) { innerPadding ->
-            if (isTablet) {
-                // ==========================================
-                // OLSERA POS TABLET LANDSCAPE SPLIT-PANE
-                // ==========================================
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .background(Color(0xFFECEFF1))
-                ) {
-                    // Left Side: Olsera Order & Cart Panel (40% width)
-                    OlseraCartPanel(
-                        cartItems = cartItems,
-                        onIncreaseQuantity = onIncreaseQuantity,
-                        onDecreaseQuantity = onDecreaseQuantity,
-                        onClearCart = { cartItems.clear() },
-                        onCheckoutClick = { },
-                        customerName = "A.N DITO",
-                        orderType = "DINE-IN",
-                        cashierName = "april",
-                        modifier = Modifier
-                            .weight(0.40f)
-                            .fillMaxHeight()
+            }
+        ) {
+            Scaffold(
+                topBar = {
+                    OlseraHeaderBar(
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = { searchQuery = it },
+                        categories = categories,
+                        selectedCategoryId = selectedCategoryId,
+                        onCategorySelected = { selectedCategoryId = it },
+                        onMenuClick = {
+                            coroutineScope.launch {
+                                if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                            }
+                        }
                     )
-
-                    VerticalDivider(color = DividerDefaults.color.copy(alpha = 0.5f))
-
-                    // Right Side: Scrollable Olsera Product Grid (60% width)
-                    OlseraProductGrid(
-                        products = filteredProducts,
-                        onAddToCart = onAddToCart,
-                        columnsCount = 4,
+                },
+                modifier = Modifier.fillMaxSize()
+            ) { innerPadding ->
+                if (isTablet) {
+                    // ==========================================
+                    // OLSERA POS TABLET LANDSCAPE SPLIT-PANE
+                    // ==========================================
+                    Row(
                         modifier = Modifier
-                            .weight(0.60f)
-                            .fillMaxHeight()
-                    )
-                }
-            } else {
-                // ==========================================
-                // PHONE PORTRAIT / SINGLE COLUMN LAYOUT
-                // ==========================================
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .background(Color(0xFFECEFF1))
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize()
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .background(Color(0xFFECEFF1))
                     ) {
+                        // Left Side: Olsera Order & Cart Panel (40% width)
+                        OlseraCartPanel(
+                            cartItems = cartItems,
+                            onIncreaseQuantity = onIncreaseQuantity,
+                            onDecreaseQuantity = onDecreaseQuantity,
+                            onClearCart = { cartItems.clear() },
+                            onCheckoutClick = { },
+                            customerName = "A.N DITO",
+                            orderType = "DINE-IN",
+                            cashierName = userName,
+                            modifier = Modifier
+                                .weight(0.40f)
+                                .fillMaxHeight()
+                        )
+
+                        VerticalDivider(color = DividerDefaults.color.copy(alpha = 0.5f))
+
+                        // Right Side: Scrollable Olsera Product Grid (60% width)
                         OlseraProductGrid(
                             products = filteredProducts,
                             onAddToCart = onAddToCart,
-                            columnsCount = 2,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        // Bottom Green Pay Bar
-                        Surface(
-                            color = OlseraGreenPay,
+                            columnsCount = 4,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { }
+                                .weight(0.60f)
+                                .fillMaxHeight()
+                        )
+                    }
+                } else {
+                    // ==========================================
+                    // PHONE PORTRAIT / SINGLE COLUMN LAYOUT
+                    // ==========================================
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .background(Color(0xFFECEFF1))
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize()
                         ) {
-                            Box(
+                            OlseraProductGrid(
+                                products = filteredProducts,
+                                onAddToCart = onAddToCart,
+                                columnsCount = 2,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            // Bottom Green Pay Bar
+                            Surface(
+                                color = OlseraGreenPay,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 14.dp),
-                                contentAlignment = Alignment.Center
+                                    .clickable { }
                             ) {
-                                Text(
-                                    text = "Rp ${formatRawCurrency(cartTotalAmount)}",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 14.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Rp ${formatRawCurrency(cartTotalAmount)}",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.White
+                                    )
+                                }
                             }
                         }
                     }
