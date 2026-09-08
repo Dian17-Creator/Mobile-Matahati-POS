@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,11 +25,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import id.my.matahati.pos.model.Product
 import java.text.NumberFormat
 import java.util.Locale
@@ -93,7 +94,7 @@ fun OlseraProductCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Product Image Container / Emoji Box (Square)
+            // Product Image Container (Square)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -101,10 +102,24 @@ fun OlseraProductCard(
                     .background(Color(0xFFE8ECEF)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = product.iconEmoji,
-                    fontSize = 36.sp
-                )
+                if (!product.imageUrl.isNullOrBlank()) {
+                    val fullImageUrl = if (product.imageUrl.startsWith("http")) {
+                        product.imageUrl
+                    } else {
+                        "http://localhost:8000/${product.imageUrl.removePrefix("/")}"
+                    }
+                    AsyncImage(
+                        model = fullImageUrl,
+                        contentDescription = product.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text(
+                        text = product.iconEmoji,
+                        fontSize = 36.sp
+                    )
+                }
             }
 
             // Product Text Container (Name & Price)
