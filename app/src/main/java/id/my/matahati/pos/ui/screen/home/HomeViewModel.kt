@@ -9,12 +9,14 @@ import androidx.lifecycle.viewModelScope
 import id.my.matahati.pos.data.DummyData
 import id.my.matahati.pos.data.remote.RetrofitClient
 import id.my.matahati.pos.model.Category
+import id.my.matahati.pos.model.Customer
 import id.my.matahati.pos.model.Product
 import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
     val categories = mutableStateListOf<Category>()
     val products = mutableStateListOf<Product>()
+    val customers = mutableStateListOf<Customer>()
 
     var isLoading by mutableStateOf(false)
         private set
@@ -50,6 +52,15 @@ class HomeViewModel : ViewModel() {
                     products.clear()
                     products.addAll(fetchedProducts)
                 }
+
+                // Fetch Customers
+                val custResponse = RetrofitClient.apiService.getCustomers()
+                if (custResponse.isSuccessful && custResponse.body()?.success == true) {
+                    val dtos = custResponse.body()?.data ?: emptyList()
+                    val fetchedCustomers = dtos.map { it.toCustomer() }
+                    customers.clear()
+                    customers.addAll(fetchedCustomers)
+                }
             } catch (e: Exception) {
                 errorMessage = "Gagal memuat data dari server: ${e.localizedMessage}"
                 // Fallback to dummy data if network fails so POS is still usable
@@ -60,6 +71,10 @@ class HomeViewModel : ViewModel() {
                 if (products.isEmpty()) {
                     products.clear()
                     products.addAll(DummyData.products)
+                }
+                if (customers.isEmpty()) {
+                    customers.clear()
+                    customers.add(Customer(id = "1", name = "A.N DITO", phone = "", email = "", address = ""))
                 }
             } finally {
                 isLoading = false

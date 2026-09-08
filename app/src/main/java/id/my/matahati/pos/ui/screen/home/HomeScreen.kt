@@ -170,12 +170,11 @@ fun HomeScreen(
                             // Left Side: Olsera Order & Cart Panel (40% width)
                             OlseraCartPanel(
                                 cartItems = cartItems,
+                                customers = viewModel.customers,
                                 onIncreaseQuantity = onIncreaseQuantity,
                                 onDecreaseQuantity = onDecreaseQuantity,
                                 onClearCart = { cartItems.clear() },
                                 onCheckoutClick = { },
-                                customerName = "A.N DITO",
-                                orderType = "DINE-IN",
                                 cashierName = userName,
                                 modifier = Modifier
                                     .weight(0.40f)
