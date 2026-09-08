@@ -1,12 +1,10 @@
 package id.my.matahati.pos.ui.screen.home.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,21 +21,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Redeem
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +75,7 @@ fun OlseraCartPanel(
 ) {
     val totalAmount = cartItems.sumOf { it.totalPrice }
     val totalItemsCount = cartItems.sumOf { it.quantity }
+    var showMore by remember { mutableStateOf(false) }
 
     Surface(
         color = OlseraLightBg,
@@ -96,13 +101,13 @@ fun OlseraCartPanel(
                 ) {
                     Column {
                         Text(
-                            text = "$orderType",
+                            text = orderType,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = OlseraHeaderBlue
                         )
                         Text(
-                            text = "$customerName",
+                            text = customerName,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = OlseraHeaderBlue
@@ -227,31 +232,54 @@ fun OlseraCartPanel(
 
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
 
-            // Quick Action Circular Buttons Bar (Olsera Style)
+            // Quick Action Buttons Bar (Spread full left-to-right via SpaceBetween with inline expandable "Lainnya" row)
             Surface(
                 color = OlseraLightBg,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                LazyRow(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 10.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    item { QuickActionButton(icon = Icons.Default.LocalOffer, label = "Disc. Pesanan", onClick = {}) }
-                    item { QuickActionButton(icon = Icons.Default.LocalShipping, label = "Ongkos Kirim", onClick = {}) }
-                    item { QuickActionButton(icon = Icons.Default.ChatBubbleOutline, label = "Catatan Pesanan", onClick = {}) }
-                    item { QuickActionButton(icon = Icons.Default.Person, label = "Dilayani Oleh", onClick = {}) }
-                    item { QuickActionButton(icon = Icons.Default.Restaurant, label = "Kirim ke Dapur", onClick = {}) }
-                    item { QuickActionButton(icon = Icons.Default.Redeem, label = "Tebus Point", onClick = {}) }
-                    item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        QuickActionButton(
+                            icon = if (showMore) Icons.Default.ExpandLess else Icons.Default.GridView,
+                            label = if (showMore) "Tutup" else "Lainnya",
+                            onClick = { showMore = !showMore }
+                        )
+                        QuickActionButton(icon = Icons.Default.LocalOffer, label = "Disc. Pesanan", onClick = {})
+                        QuickActionButton(icon = Icons.Default.LocalShipping, label = "Ongkos Kirim", onClick = {})
+                        QuickActionButton(icon = Icons.Default.ChatBubbleOutline, label = "Catatan Pesanan", onClick = {})
+                        QuickActionButton(icon = Icons.Default.Person, label = "Dilayani Oleh", onClick = {})
+                        QuickActionButton(icon = Icons.Default.Restaurant, label = "Kirim ke Dapur", onClick = {})
                         QuickActionButton(
                             icon = Icons.Default.Close,
                             label = "Batal Pesanan",
                             isDestructive = true,
                             onClick = onClearCart
                         )
+                    }
+
+                    if (showMore) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            QuickActionButton(icon = Icons.Default.Print, label = "Cetak Periksa", onClick = {})
+                            QuickActionButton(icon = Icons.Default.Redeem, label = "Tebus Point", onClick = {})
+                            QuickActionButton(icon = Icons.Default.Share, label = "Share Pesanan", onClick = {})
+                            QuickActionButton(icon = Icons.Default.GroupAdd, label = "Referral Pelanggan", onClick = {})
+                            Spacer(modifier = Modifier.width(50.dp))
+                            Spacer(modifier = Modifier.width(50.dp))
+                            Spacer(modifier = Modifier.width(50.dp))
+                        }
                     }
                 }
             }
@@ -319,7 +347,7 @@ private fun OlseraCartItemRow(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${formatRawCurrency(cartItem.product.price)}",
+                    text = formatRawCurrency(cartItem.product.price),
                     fontSize = 11.sp,
                     color = Color.Gray
                 )
@@ -374,11 +402,11 @@ private fun QuickActionButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clickable { onClick() }
-            .width(58.dp)
+            .width(50.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(42.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(if (isDestructive) Color(0xFFE53935) else Color(0xFF0288D1)),
             contentAlignment = Alignment.Center
@@ -387,10 +415,10 @@ private fun QuickActionButton(
                 imageVector = icon,
                 contentDescription = label,
                 tint = Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(16.dp)
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = label,
             fontSize = 9.sp,
@@ -398,7 +426,9 @@ private fun QuickActionButton(
             color = if (isDestructive) Color(0xFFD32F2F) else OlseraHeaderBlue,
             textAlign = TextAlign.Center,
             maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            minLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            lineHeight = 11.sp
         )
     }
 }
