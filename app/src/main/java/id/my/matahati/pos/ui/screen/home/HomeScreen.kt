@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
@@ -33,7 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import id.my.matahati.pos.data.DummyData
+import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.ui.screen.home.components.OlseraCartPanel
@@ -48,35 +49,26 @@ import java.util.Locale
 
 @Composable
 fun HomeScreen(
+    modifier: Modifier = Modifier,
     userName: String = "Kasir",
     roleOwner: Boolean = false,
     roleCashier: Boolean = true,
     roleCaptain: Boolean = false,
     onLogout: () -> Unit = {},
-    modifier: Modifier = Modifier
+    viewModel: HomeViewModel = viewModel()
 ) {
     // Drawer State
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
-    // Dummy Data State
-    val categories = remember { DummyData.categories }
-    val allProducts = remember { DummyData.products }
+    // Data State from ViewModel
+    val categories = viewModel.categories
+    val allProducts = viewModel.products
 
     // Interactive UI State
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf("all") }
     val cartItems = remember { mutableStateListOf<CartItem>() }
-
-    // Pre-populate initial dummy cart item (Burger Ayam 1x = Rp 21.000) matching reference photo
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        if (cartItems.isEmpty()) {
-            val burgerProduct = allProducts.find { it.name == "BURGER AYAM" }
-            if (burgerProduct != null) {
-                cartItems.add(CartItem(product = burgerProduct, quantity = 1))
-            }
-        }
-    }
 
     // Cart Helper Functions
     val onAddToCart: (Product) -> Unit = { product ->
@@ -143,7 +135,7 @@ fun HomeScreen(
                     OlseraHeaderBar(
                         searchQuery = searchQuery,
                         onSearchQueryChange = { searchQuery = it },
-                        categories = categories,
+                        categories = categories.ifEmpty { listOf(id.my.matahati.pos.model.Category(id = "all", name = "Semua Kategori")) },
                         selectedCategoryId = selectedCategoryId,
                         onCategorySelected = { selectedCategoryId = it },
                         onMenuClick = {
@@ -155,82 +147,93 @@ fun HomeScreen(
                 },
                 modifier = Modifier.fillMaxSize()
             ) { innerPadding ->
-                if (isTablet) {
-                    // ==========================================
-                    // OLSERA POS TABLET LANDSCAPE SPLIT-PANE
-                    // ==========================================
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .background(Color(0xFFECEFF1))
-                    ) {
-                        // Left Side: Olsera Order & Cart Panel (40% width)
-                        OlseraCartPanel(
-                            cartItems = cartItems,
-                            onIncreaseQuantity = onIncreaseQuantity,
-                            onDecreaseQuantity = onDecreaseQuantity,
-                            onClearCart = { cartItems.clear() },
-                            onCheckoutClick = { },
-                            customerName = "A.N DITO",
-                            orderType = "DINE-IN",
-                            cashierName = userName,
-                            modifier = Modifier
-                                .weight(0.40f)
-                                .fillMaxHeight()
-                        )
-
-                        VerticalDivider(color = DividerDefaults.color.copy(alpha = 0.5f))
-
-                        // Right Side: Scrollable Olsera Product Grid (60% width)
-                        OlseraProductGrid(
-                            products = filteredProducts,
-                            onAddToCart = onAddToCart,
-                            columnsCount = 4,
-                            modifier = Modifier
-                                .weight(0.60f)
-                                .fillMaxHeight()
-                        )
-                    }
-                } else {
-                    // ==========================================
-                    // PHONE PORTRAIT / SINGLE COLUMN LAYOUT
-                    // ==========================================
+                if (viewModel.isLoading && allProducts.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(innerPadding)
-                            .background(Color(0xFFECEFF1))
+                            .padding(innerPadding),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize()
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    if (isTablet) {
+                        // ==========================================
+                        // OLSERA POS TABLET LANDSCAPE SPLIT-PANE
+                        // ==========================================
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .background(Color(0xFFECEFF1))
                         ) {
+                            // Left Side: Olsera Order & Cart Panel (40% width)
+                            OlseraCartPanel(
+                                cartItems = cartItems,
+                                onIncreaseQuantity = onIncreaseQuantity,
+                                onDecreaseQuantity = onDecreaseQuantity,
+                                onClearCart = { cartItems.clear() },
+                                onCheckoutClick = { },
+                                customerName = "A.N DITO",
+                                orderType = "DINE-IN",
+                                cashierName = userName,
+                                modifier = Modifier
+                                    .weight(0.40f)
+                                    .fillMaxHeight()
+                            )
+
+                            VerticalDivider(color = DividerDefaults.color.copy(alpha = 0.5f))
+
+                            // Right Side: Scrollable Olsera Product Grid (60% width)
                             OlseraProductGrid(
                                 products = filteredProducts,
                                 onAddToCart = onAddToCart,
-                                columnsCount = 2,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            // Bottom Green Pay Bar
-                            Surface(
-                                color = OlseraGreenPay,
+                                columnsCount = 4,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { }
+                                    .weight(0.60f)
+                                    .fillMaxHeight()
+                            )
+                        }
+                    } else {
+                        // ==========================================
+                        // PHONE PORTRAIT / SINGLE COLUMN LAYOUT
+                        // ==========================================
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .background(Color(0xFFECEFF1))
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxSize()
                             ) {
-                                Box(
+                                OlseraProductGrid(
+                                    products = filteredProducts,
+                                    onAddToCart = onAddToCart,
+                                    columnsCount = 2,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                // Bottom Green Pay Bar
+                                Surface(
+                                    color = OlseraGreenPay,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 14.dp),
-                                    contentAlignment = Alignment.Center
+                                        .clickable { }
                                 ) {
-                                    Text(
-                                        text = "Rp ${formatRawCurrency(cartTotalAmount)}",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Color.White
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 14.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Rp ${formatRawCurrency(cartTotalAmount)}",
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color.White
+                                        )
+                                    }
                                 }
                             }
                         }
