@@ -1,6 +1,7 @@
 package id.my.matahati.pos.data.remote
 
 import id.my.matahati.pos.model.CategoryResponse
+import id.my.matahati.pos.model.CustomerResponse
 import id.my.matahati.pos.model.LoginRequest
 import id.my.matahati.pos.model.LoginResponse
 import id.my.matahati.pos.model.ProductResponse
@@ -18,4 +19,7 @@ interface ApiService {
 
     @GET("api/products")
     suspend fun getProducts(): Response<ProductResponse>
+
+    @GET("api/customers")
+    suspend fun getCustomers(): Response<CustomerResponse>
 }

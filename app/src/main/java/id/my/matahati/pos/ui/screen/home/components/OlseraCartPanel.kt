@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChatBubbleOutline
@@ -31,6 +33,7 @@ import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Redeem
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -38,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.my.matahati.pos.model.CartItem
+import id.my.matahati.pos.model.Customer
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -64,18 +69,22 @@ val OlseraLightBg = Color(0xFFEBF3FA)
 @Composable
 fun OlseraCartPanel(
     cartItems: List<CartItem>,
+    customers: List<Customer>,
     onIncreaseQuantity: (CartItem) -> Unit,
     onDecreaseQuantity: (CartItem) -> Unit,
     onClearCart: () -> Unit,
     onCheckoutClick: () -> Unit,
     modifier: Modifier = Modifier,
-    customerName: String = "A.N DITO",
-    orderType: String = "DINE-IN",
     cashierName: String = "april"
 ) {
     val totalAmount = cartItems.sumOf { it.totalPrice }
     val totalItemsCount = cartItems.sumOf { it.quantity }
     var showMore by remember { mutableStateOf(false) }
+
+    var orderType by remember { mutableStateOf("") }
+    var customerName by remember { mutableStateOf("") }
+    var showOrderTypeDialog by remember { mutableStateOf(false) }
+    var showCustomerDialog by remember { mutableStateOf(false) }
 
     Surface(
         color = OlseraLightBg,
@@ -86,7 +95,7 @@ fun OlseraCartPanel(
                 .fillMaxHeight()
                 .fillMaxWidth()
         ) {
-            // Header Status: DINE-IN A.N DITO + Button Add Customer
+            // Header Status: Left = Customer Icon, Center = Clickable "Pesanan Baru" / Order Type & Customer Text, Right = Plus Button
             Surface(
                 color = Color.White,
                 shadowElevation = 1.dp,
@@ -95,37 +104,81 @@ fun OlseraCartPanel(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = orderType,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = OlseraHeaderBlue
-                        )
-                        Text(
-                            text = customerName,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = OlseraHeaderBlue
+                    // Left: Customer Icon Button
+                    IconButton(
+                        onClick = { showCustomerDialog = true },
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(OlseraHeaderBlue.copy(alpha = 0.1f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Pilih Pelanggan",
+                            tint = OlseraHeaderBlue,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
 
-                    IconButton(
-                        onClick = { },
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    // Center: Order Type & Customer Name Text (Clickable to open In/Away dialog)
+                    Column(
                         modifier = Modifier
-                            .size(34.dp)
+                            .weight(1f)
+                            .clickable { showOrderTypeDialog = true },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        if (orderType.isBlank() && customerName.isBlank()) {
+                            Text(
+                                text = "Pesanan Baru",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = OlseraHeaderBlue,
+                                textAlign = TextAlign.Center
+                            )
+                        } else {
+                            if (orderType.isNotBlank()) {
+                                Text(
+                                    text = orderType,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = OlseraHeaderBlue,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            if (customerName.isNotBlank()) {
+                                Text(
+                                    text = customerName,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = OlseraHeaderBlue,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    // Right: Plus Button
+                    IconButton(
+                        onClick = { showCustomerDialog = true },
+                        modifier = Modifier
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(OlseraHeaderBlue)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Tambah Pelanggan",
+                            contentDescription = "Tambah/Pilih Pelanggan",
                             tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
@@ -232,7 +285,7 @@ fun OlseraCartPanel(
 
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
 
-            // Quick Action Buttons Bar (Spread full left-to-right via SpaceBetween with inline expandable "Lainnya" row)
+            // Quick Action Buttons Bar
             Surface(
                 color = OlseraLightBg,
                 modifier = Modifier.fillMaxWidth()
@@ -284,7 +337,7 @@ fun OlseraCartPanel(
                 }
             }
 
-            // Big Green Pay Bar at the bottom (Olsera Style)
+            // Big Green Pay Bar at the bottom
             Surface(
                 color = OlseraGreenPay,
                 modifier = Modifier
@@ -308,6 +361,89 @@ fun OlseraCartPanel(
                 }
             }
         }
+    }
+
+    // Order Type (In/Away) Selection Dialog
+    if (showOrderTypeDialog) {
+        AlertDialog(
+            onDismissRequest = { showOrderTypeDialog = false },
+            title = { Text("In/Away", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    val types = listOf("DINE-IN", "TAKE-AWAY", "DELIVERY", "GOFOOD", "GRABFOOD", "SHOPEEFOOD", "TRAVELOKA-EATS", "MAXIMFOOD", "+REMARK")
+                    types.forEach { type ->
+                        TextButton(
+                            onClick = {
+                                orderType = type
+                                showOrderTypeDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = type,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.DarkGray,
+                                textAlign = TextAlign.Start,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showOrderTypeDialog = false }) {
+                    Text("BATAL", color = OlseraHeaderBlue, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    // Customer Selection Dialog
+    if (showCustomerDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomerDialog = false },
+            title = { Text("Pilih Pelanggan", fontWeight = FontWeight.Bold) },
+            text = {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth().height(300.dp)
+                ) {
+                    items(customers) { customer ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFF1F5F9),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    customerName = "A.N ${customer.name}"
+                                    showCustomerDialog = false
+                                }
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp)
+                            ) {
+                                Text(text = customer.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.DarkGray)
+                                if (customer.phone.isNotBlank()) {
+                                    Text(text = customer.phone, fontSize = 12.sp, color = Color.Gray)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCustomerDialog = false }) {
+                    Text("Tutup")
+                }
+            }
+        )
     }
 }
 
