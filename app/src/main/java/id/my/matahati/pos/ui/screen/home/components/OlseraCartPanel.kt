@@ -84,7 +84,7 @@ fun OlseraCartPanel(
     var showCustomerDialog by remember { mutableStateOf(false) }
 
     Surface(
-        color = OlseraLightBg,
+        color = Color.White,
         shape = RoundedCornerShape(0.dp),
         shadowElevation = 0.dp,
         modifier = modifier.fillMaxHeight()
@@ -183,7 +183,7 @@ fun OlseraCartPanel(
 
             // Table Header: Item | Qty | Total
             Surface(
-                color = Color(0xFFBABABA),
+                color = Color(0xFFDBDBDB),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Box(
@@ -251,7 +251,7 @@ fun OlseraCartPanel(
                     item {
 
                         Surface(
-                            color = Color.White,
+                            color = Color(0xFFF3F3F3),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -267,14 +267,14 @@ fun OlseraCartPanel(
                                 Text(
                                     text = "Pajak",
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = Color.Black
                                 )
 
                                 Text(
                                     text = "0",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.DarkGray
+                                    color = Color.Black
                                 )
                             }
                         }
@@ -283,7 +283,7 @@ fun OlseraCartPanel(
                     item {
 
                         Surface(
-                            color = OlseraLightBg,
+                            color = Color.White,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
@@ -304,13 +304,13 @@ fun OlseraCartPanel(
                     item {
 
                         Surface(
-                            color = Color.White,
+                            color = Color(0xFFF3F3F3),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
                                 text = "Dilayani Oleh: $cashierName",
                                 fontSize = 12.sp,
-                                color = Color.Gray,
+                                color = Color.Black,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(

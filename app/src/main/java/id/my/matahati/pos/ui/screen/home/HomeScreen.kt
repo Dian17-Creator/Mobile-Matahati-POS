@@ -194,7 +194,7 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
-                                .background(Color(0xFFECEFF1))
+                                .background(Color.White)
                         ) {
                             // Left Side: Olsera Order & Cart Panel (40% width)
                             OlseraCartPanel(
@@ -218,7 +218,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .weight(0.60f)
                                     .fillMaxHeight()
-                                    .background(Color(0xFFECEFF1))
+                                    .background(Color.White)
                             ) {
                                 when (selectedRightTab) {
                                     "Produk" -> {
@@ -377,7 +377,7 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
-                                .background(Color(0xFFECEFF1))
+                                .background(Color.White)
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxSize()
