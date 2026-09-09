@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -85,6 +86,7 @@ fun OlseraCartPanel(
 
     Surface(
         color = OlseraLightBg,
+        shape = RectangleShape,
         modifier = modifier.fillMaxHeight()
     ) {
         Column(
@@ -335,6 +337,7 @@ fun OlseraCartPanel(
             // Big Green Pay Bar at the bottom
             Surface(
                 color = OlseraGreenPay,
+                shape = RectangleShape,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
