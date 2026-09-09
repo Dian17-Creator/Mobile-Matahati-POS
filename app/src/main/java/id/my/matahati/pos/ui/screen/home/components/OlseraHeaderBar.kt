@@ -1,6 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -146,6 +147,11 @@ private fun HeaderTabItem(
             .padding(horizontal = 2.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(if (isSelected) Color.White else Color.Transparent)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(12.dp)
+            )
             .clickable { onClick() }
             .padding(horizontal = 10.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
