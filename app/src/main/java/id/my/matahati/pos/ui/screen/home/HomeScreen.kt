@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -421,9 +422,9 @@ fun HomeScreen(
                                 // Bottom Green Pay Bar
                                 Surface(
                                     color = OlseraGreenPay,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { }
+                                    shape = RoundedCornerShape(0.dp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = { }
                                 ) {
                                     Box(
                                         modifier = Modifier

@@ -49,7 +49,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -86,7 +85,8 @@ fun OlseraCartPanel(
 
     Surface(
         color = OlseraLightBg,
-        shape = RectangleShape,
+        shape = RoundedCornerShape(0.dp),
+        shadowElevation = 0.dp,
         modifier = modifier.fillMaxHeight()
     ) {
         Column(
@@ -183,38 +183,43 @@ fun OlseraCartPanel(
 
             // Table Header: Item | Qty | Total
             Surface(
-                color = Color(0xFFCFD8DC),
+                color = Color(0xFFE5E5E5),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
+
+                    // ITEM - paling kiri
                     Text(
                         text = "Item",
-                        fontSize = 12.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.DarkGray,
-                        modifier = Modifier.weight(0.45f)
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.align(Alignment.CenterStart)
                     )
+
+                    // QTY - BENAR-BENAR DI TENGAH PANEL
                     Text(
                         text = "Qty",
-                        fontSize = 12.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.DarkGray,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(0.3f)
+                        modifier = Modifier.align(Alignment.Center)
                     )
+
+                    // TOTAL - paling kanan
                     Text(
                         text = "Total",
-                        fontSize = 12.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.DarkGray,
                         textAlign = TextAlign.End,
-                        modifier = Modifier.weight(0.25f)
+                        modifier = Modifier.align(Alignment.CenterEnd)
                     )
                 }
             }
@@ -337,12 +342,12 @@ fun OlseraCartPanel(
             // Big Green Pay Bar at the bottom
             Surface(
                 color = OlseraGreenPay,
-                shape = RectangleShape,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        if (cartItems.isNotEmpty()) onCheckoutClick()
-                    }
+                shape = RoundedCornerShape(0.dp),
+                shadowElevation = 0.dp,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    if (cartItems.isNotEmpty()) onCheckoutClick()
+                }
             ) {
                 Box(
                     modifier = Modifier
@@ -418,10 +423,13 @@ private fun OlseraCartItemRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Item Name
+
+            // =========================================================
+            // ITEM
+            // =========================================================
             Text(
                 text = cartItem.product.name,
                 fontSize = 12.sp,
@@ -429,60 +437,92 @@ private fun OlseraCartItemRow(
                 color = Color.DarkGray,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Start,
                 modifier = Modifier.weight(0.45f)
             )
 
-            // Price & Qty Adjuster Controls
-            Row(
-                modifier = Modifier.weight(0.3f),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+            // =========================================================
+            // QTY
+            // =========================================================
+            Box(
+                modifier = Modifier
+                    .weight(0.30f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = formatRawCurrency(cartItem.product.price),
-                    fontSize = 11.sp,
-                    color = Color.Gray
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFFE0E0E0))
-                        .clickable { onDecrease() }
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "-", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                }
-                Text(
-                    text = "${cartItem.quantity}x",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFFE0E0E0))
-                        .clickable { onIncrease() }
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                ) {
-                    Text(text = "+", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+
+                    // Minus
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0xFFE0E0E0))
+                            .clickable { onDecrease() }
+                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "-",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Quantity
+                    Text(
+                        text = "${cartItem.quantity}x",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 6.dp)
+                    )
+
+                    // Plus
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0xFFE0E0E0))
+                            .clickable { onIncrease() }
+                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "+",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
-            // Line Total
+            // =========================================================
+            // TOTAL
+            // =========================================================
             Text(
                 text = formatRawCurrency(cartItem.totalPrice),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
                 textAlign = TextAlign.End,
-                modifier = Modifier.weight(0.25f)
+                modifier = Modifier
+                    .weight(0.25f)
+                    .fillMaxWidth()
             )
         }
+
+        // Harga produk ditampilkan di bawah item
+        Text(
+            text = formatRawCurrency(cartItem.product.price),
+            fontSize = 11.sp,
+            color = Color.Gray,
+            modifier = Modifier.padding(
+                start = 16.dp,
+                bottom = 8.dp
+            )
+        )
     }
 }
-
 @Composable
 private fun QuickActionButton(
     icon: ImageVector,
