@@ -15,10 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChatBubbleOutline
@@ -70,6 +68,7 @@ val OlseraLightBg = Color(0xFFEBF3FA)
 fun OlseraCartPanel(
     cartItems: List<CartItem>,
     customers: List<Customer>,
+    orderType: String,
     onIncreaseQuantity: (CartItem) -> Unit,
     onDecreaseQuantity: (CartItem) -> Unit,
     onClearCart: () -> Unit,
@@ -81,9 +80,7 @@ fun OlseraCartPanel(
     val totalItemsCount = cartItems.sumOf { it.quantity }
     var showMore by remember { mutableStateOf(false) }
 
-    var orderType by remember { mutableStateOf("") }
     var customerName by remember { mutableStateOf("") }
-    var showOrderTypeDialog by remember { mutableStateOf(false) }
     var showCustomerDialog by remember { mutableStateOf(false) }
 
     Surface(
@@ -95,7 +92,7 @@ fun OlseraCartPanel(
                 .fillMaxHeight()
                 .fillMaxWidth()
         ) {
-            // Header Status: Left = Customer Icon, Center = Clickable "Pesanan Baru" / Order Type & Customer Text, Right = Plus Button
+            // Header Status: Left = Customer Icon, Center = Order Type & Customer Text, Right = Plus Button
             Surface(
                 color = Color.White,
                 shadowElevation = 1.dp,
@@ -126,11 +123,9 @@ fun OlseraCartPanel(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    // Center: Order Type & Customer Name Text (Clickable to open In/Away dialog)
+                    // Center: Order Type & Customer Name Text
                     Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showOrderTypeDialog = true },
+                        modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -361,48 +356,6 @@ fun OlseraCartPanel(
                 }
             }
         }
-    }
-
-    // Order Type (In/Away) Selection Dialog
-    if (showOrderTypeDialog) {
-        AlertDialog(
-            onDismissRequest = { showOrderTypeDialog = false },
-            title = { Text("In/Away", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(320.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    val types = listOf("DINE-IN", "TAKE-AWAY", "DELIVERY", "GOFOOD", "GRABFOOD", "SHOPEEFOOD", "TRAVELOKA-EATS", "MAXIMFOOD", "+REMARK")
-                    types.forEach { type ->
-                        TextButton(
-                            onClick = {
-                                orderType = type
-                                showOrderTypeDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = type,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.DarkGray,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showOrderTypeDialog = false }) {
-                    Text("BATAL", color = OlseraHeaderBlue, fontWeight = FontWeight.Bold)
-                }
-            }
-        )
     }
 
     // Customer Selection Dialog

@@ -2,6 +2,7 @@ package id.my.matahati.pos.ui.screen.home.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,6 +60,8 @@ fun OlseraHeaderBar(
     selectedCategoryId: String,
     onCategorySelected: (String) -> Unit,
     onMenuClick: () -> Unit,
+    selectedOrderType: String = "",
+    onInAwayClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
@@ -90,10 +93,14 @@ fun OlseraHeaderBar(
                 Spacer(modifier = Modifier.width(4.dp))
 
                 // Quick Header Tabs: Meja, In/Aw, Pesanan, Remark
-                HeaderTabItem(label = "Meja", isSelected = false)
-                HeaderTabItem(label = "In/Aw", isSelected = true)
-                HeaderTabItem(label = "Pesanan", isSelected = false)
-                HeaderTabItem(label = "Remark", isSelected = false)
+                HeaderTabItem(label = "Meja", isSelected = false, onClick = {})
+                HeaderTabItem(
+                    label = if (selectedOrderType.isBlank()) "In/Aw" else selectedOrderType,
+                    isSelected = selectedOrderType.isNotBlank(),
+                    onClick = onInAwayClick
+                )
+                HeaderTabItem(label = "Pesanan", isSelected = false, onClick = {})
+                HeaderTabItem(label = "Remark", isSelected = false, onClick = {})
 
                 Spacer(modifier = Modifier.weight(1f))
 
@@ -174,8 +181,8 @@ fun OlseraHeaderBar(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                HeaderTabItem(label = "Produk", isSelected = true)
-                HeaderTabItem(label = "Barcode", isSelected = false)
+                HeaderTabItem(label = "Produk", isSelected = true, onClick = {})
+                HeaderTabItem(label = "Barcode", isSelected = false, onClick = {})
 
                 Spacer(modifier = Modifier.width(12.dp))
 
@@ -231,13 +238,20 @@ fun OlseraHeaderBar(
 @Composable
 private fun HeaderTabItem(
     label: String,
-    isSelected: Boolean
+    isSelected: Boolean,
+    onClick: () -> Unit
 ) {
     Box(
-    modifier = Modifier
+        modifier = Modifier
             .padding(horizontal = 2.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) Color.White.copy(alpha = 0.2f) else Color.Transparent)
+            .background(if (isSelected) Color.White else Color.Transparent)
+            .border(
+                width = if (isSelected) 0.dp else 1.dp,
+                color = if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable { onClick() }
             .padding(horizontal = 10.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -245,7 +259,7 @@ private fun HeaderTabItem(
             text = label,
             fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = Color.White
+            color = if (isSelected) OlseraBlueHeader else Color.White
         )
     }
 }

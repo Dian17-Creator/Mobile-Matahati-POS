@@ -2,6 +2,7 @@ package id.my.matahati.pos.ui.screen.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -9,7 +10,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DrawerValue
@@ -17,6 +22,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -31,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +47,7 @@ import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.ui.screen.home.components.OlseraCartPanel
 import id.my.matahati.pos.ui.screen.home.components.OlseraGreenPay
 import id.my.matahati.pos.ui.screen.home.components.OlseraHeaderBar
+import id.my.matahati.pos.ui.screen.home.components.OlseraHeaderBlue
 import id.my.matahati.pos.ui.screen.home.components.OlseraProductGrid
 import id.my.matahati.pos.ui.screen.home.components.SidebarDrawer
 import id.my.matahati.pos.ui.theme.MobileMatahati_POSTheme
@@ -68,6 +76,8 @@ fun HomeScreen(
     // Interactive UI State
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf("all") }
+    var orderType by remember { mutableStateOf("") }
+    var showOrderTypeDialog by remember { mutableStateOf(false) }
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
     // Cart Helper Functions
@@ -138,6 +148,8 @@ fun HomeScreen(
                         categories = categories.ifEmpty { listOf(id.my.matahati.pos.model.Category(id = "all", name = "Semua Kategori")) },
                         selectedCategoryId = selectedCategoryId,
                         onCategorySelected = { selectedCategoryId = it },
+                        selectedOrderType = orderType,
+                        onInAwayClick = { showOrderTypeDialog = true },
                         onMenuClick = {
                             coroutineScope.launch {
                                 if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -171,6 +183,7 @@ fun HomeScreen(
                             OlseraCartPanel(
                                 cartItems = cartItems,
                                 customers = viewModel.customers,
+                                orderType = orderType,
                                 onIncreaseQuantity = onIncreaseQuantity,
                                 onDecreaseQuantity = onDecreaseQuantity,
                                 onClearCart = { cartItems.clear() },
@@ -240,6 +253,47 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // Order Type (In/Away) Selection Dialog
+    if (showOrderTypeDialog) {
+        AlertDialog(
+            onDismissRequest = { showOrderTypeDialog = false },
+            title = { Text("In/Away", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                ) {
+                    val types = listOf("DINE-IN", "TAKE-AWAY", "DELIVERY", "GOFOOD", "GRABFOOD", "SHOPEEFOOD", "TRAVELOKA-EATS", "MAXIMFOOD", "+REMARK")
+                    items(types) { type ->
+                        TextButton(
+                            onClick = {
+                                orderType = type
+                                showOrderTypeDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = type,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.DarkGray,
+                                textAlign = TextAlign.Start,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showOrderTypeDialog = false }) {
+                    Text("BATAL", color = OlseraHeaderBlue, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }
 
