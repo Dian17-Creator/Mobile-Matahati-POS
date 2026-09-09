@@ -1,50 +1,33 @@
 package id.my.matahati.pos.ui.screen.home.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.my.matahati.pos.model.Category
@@ -54,33 +37,28 @@ val OlseraHeaderTabActive = Color(0xFF1E88E5)
 
 @Composable
 fun OlseraHeaderBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    categories: List<Category>,
-    selectedCategoryId: String,
-    onCategorySelected: (String) -> Unit,
     onMenuClick: () -> Unit,
     selectedOrderType: String = "",
     onInAwayClick: () -> Unit = {},
+    selectedRightTab: String = "Produk",
+    onRightTabSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
-    val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Semua Kategori"
-
     Surface(
         color = OlseraBlueHeader,
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left Portion (Above Cart): Menu, Quick Tabs, Notification Bell
+            // Left Portion (Above Cart): Menu, Quick Tabs, Notification Bell (40% Weight)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(0.42f)
+                modifier = Modifier
+                    .weight(0.40f)
+                    .padding(start = 12.dp, top = 8.dp, bottom = 8.dp)
             ) {
                 IconButton(onClick = onMenuClick) {
                     Icon(
@@ -92,7 +70,6 @@ fun OlseraHeaderBar(
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // Quick Header Tabs: Meja, In/Aw, Pesanan, Remark
                 HeaderTabItem(label = "Meja", isSelected = false, onClick = {})
                 HeaderTabItem(
                     label = if (selectedOrderType.isBlank()) "In/Aw" else selectedOrderType,
@@ -104,7 +81,7 @@ fun OlseraHeaderBar(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Bell Icon with Red Badge "7"
+                // Bell Icon
                 BadgedBox(
                     badge = {
                         Badge(
@@ -113,7 +90,8 @@ fun OlseraHeaderBar(
                         ) {
                             Text(text = "7", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
-                    }
+                    },
+                    modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Notifications,
@@ -124,112 +102,34 @@ fun OlseraHeaderBar(
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Right Portion (Above Catalog): Search, Tabs (Produk, Barcode, Custom), Category Dropdown
+            // Right Portion: 3 tabs (Produk, Barcode, Custom) (60% Weight)
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.weight(0.58f)
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier
+                    .weight(0.60f)
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(end = 16.dp)
             ) {
-                // Custom Clean Search Box using BasicTextField
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color.White.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(38.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Cari",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        BasicTextField(
-                            value = searchQuery,
-                            onValueChange = onSearchQueryChange,
-                            singleLine = true,
-                            textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium),
-                            cursorBrush = SolidColor(Color.White),
-                            decorationBox = { innerTextField ->
-                                Box(
-                                    contentAlignment = Alignment.CenterStart
-                                ) {
-                                    if (searchQuery.isEmpty()) {
-                                        Text(
-                                            text = "Cari produk...",
-                                            color = Color.White.copy(alpha = 0.6f),
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                    innerTextField()
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                HeaderTabItem(label = "Produk", isSelected = true, onClick = {})
-                HeaderTabItem(label = "Barcode", isSelected = false, onClick = {})
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                // Category Dropdown Filter
-                Box {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color.White.copy(alpha = 0.18f),
-                        modifier = Modifier.clickable { isCategoryDropdownExpanded = true }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = selectedCategoryName,
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Pilih Kategori",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-
-                    DropdownMenu(
-                        expanded = isCategoryDropdownExpanded,
-                        onDismissRequest = { isCategoryDropdownExpanded = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text("${category.iconEmoji} ${category.name}") },
-                                onClick = {
-                                    onCategorySelected(category.id)
-                                    isCategoryDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                RightHeaderTabItem(
+                    label = "Produk",
+                    isSelected = selectedRightTab == "Produk",
+                    onClick = { onRightTabSelected("Produk") },
+                    modifier = Modifier.weight(1f)
+                )
+                RightHeaderTabItem(
+                    label = "Barcode",
+                    isSelected = selectedRightTab == "Barcode",
+                    onClick = { onRightTabSelected("Barcode") },
+                    modifier = Modifier.weight(1f)
+                )
+                RightHeaderTabItem(
+                    label = "Custom",
+                    isSelected = selectedRightTab == "Custom",
+                    onClick = { onRightTabSelected("Custom") },
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
@@ -246,11 +146,6 @@ private fun HeaderTabItem(
             .padding(horizontal = 2.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(if (isSelected) Color.White else Color.Transparent)
-            .border(
-                width = if (isSelected) 0.dp else 1.dp,
-                color = if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(12.dp)
-            )
             .clickable { onClick() }
             .padding(horizontal = 10.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
@@ -260,6 +155,43 @@ private fun HeaderTabItem(
             fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             color = if (isSelected) OlseraBlueHeader else Color.White
+        )
+    }
+}
+
+@Composable
+private fun RightHeaderTabItem(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .padding(horizontal = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = Color.White
+            )
+        }
+        // Underline mengikuti lebar bagian tab masing-masing (1/3 dari total)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(3.dp)
+                .background(if (isSelected) Color.White else Color.Transparent)
         )
     }
 }
