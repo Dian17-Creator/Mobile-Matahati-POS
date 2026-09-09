@@ -183,7 +183,7 @@ fun OlseraCartPanel(
 
             // Table Header: Item | Qty | Total
             Surface(
-                color = Color(0xFFE5E5E5),
+                color = Color(0xFFBABABA),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Box(
@@ -224,63 +224,101 @@ fun OlseraCartPanel(
                 }
             }
 
-            // Cart Items Scrollable List
-            if (cartItems.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Belum ada item dipesan",
-                        fontSize = 13.sp,
-                        color = Color.Gray
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Top
+            ) {
+
+                items(
+                    items = cartItems,
+                    key = { it.product.id }
+                ) { cartItem ->
+
+                    OlseraCartItemRow(
+                        cartItem = cartItem,
+                        onIncrease = {
+                            onIncreaseQuantity(cartItem)
+                        },
+                        onDecrease = {
+                            onDecreaseQuantity(cartItem)
+                        }
                     )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    items(
-                        items = cartItems,
-                        key = { it.product.id }
-                    ) { cartItem ->
-                        OlseraCartItemRow(
-                            cartItem = cartItem,
-                            onIncrease = { onIncreaseQuantity(cartItem) },
-                            onDecrease = { onDecreaseQuantity(cartItem) }
-                        )
-                    }
-                }
-            }
 
-            // Metadata info below items list
-            Surface(
-                color = Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Pajak", fontSize = 12.sp, color = Color.Gray)
-                        Text(text = "0", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                if (cartItems.isNotEmpty()) {
+                    item {
+
+                        Surface(
+                            color = Color.White,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        horizontal = 16.dp,
+                                        vertical = 8.dp
+                                    ),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Pajak",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+
+                                Text(
+                                    text = "0",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.DarkGray
+                                )
+                            }
+                        }
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Jumlah Item: $totalItemsCount", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.DarkGray)
-                        Text(text = "Dilayani Oleh: $cashierName", fontSize = 12.sp, color = Color.Gray)
+
+                    item {
+
+                        Surface(
+                            color = OlseraLightBg,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Jumlah Item: $totalItemsCount",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.DarkGray,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        horizontal = 16.dp,
+                                        vertical = 8.dp
+                                    )
+                            )
+                        }
+                    }
+
+                    item {
+
+                        Surface(
+                            color = Color.White,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Dilayani Oleh: $cashierName",
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        horizontal = 16.dp,
+                                        vertical = 8.dp
+                                    )
+                            )
+                        }
                     }
                 }
             }
@@ -414,115 +452,86 @@ private fun OlseraCartItemRow(
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        modifier = Modifier.fillMaxWidth()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+
+        // =========================================================
+        // ITEM
+        // =========================================================
+        Text(
+            text = cartItem.product.name,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.DarkGray,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.weight(0.45f)
+        )
+
+        // =========================================================
+        // QTY AREA
+        // Harga + tombol quantity
+        // =========================================================
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .weight(0.30f)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // =========================================================
-            // ITEM
-            // =========================================================
+            // Harga satuan
             Text(
-                text = cartItem.product.name,
+                text = formatRawCurrency(cartItem.product.price),
+                fontSize = 11.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.End
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Text(
+                text = "${cartItem.quantity}x",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.DarkGray,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.weight(0.45f)
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .width(32.dp)
             )
 
-            // =========================================================
-            // QTY
-            // =========================================================
-            Box(
-                modifier = Modifier
-                    .weight(0.30f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
 
-                    // Minus
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xFFE0E0E0))
-                            .clickable { onDecrease() }
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "-",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
 
-                    // Quantity
-                    Text(
-                        text = "${cartItem.quantity}x",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 6.dp)
-                    )
-
-                    // Plus
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xFFE0E0E0))
-                            .clickable { onIncrease() }
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "+",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-
-            // =========================================================
-            // TOTAL
-            // =========================================================
-            Text(
-                text = formatRawCurrency(cartItem.totalPrice),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                textAlign = TextAlign.End,
-                modifier = Modifier
-                    .weight(0.25f)
-                    .fillMaxWidth()
-            )
         }
 
-        // Harga produk ditampilkan di bawah item
+        // =========================================================
+        // TOTAL
+        // =========================================================
         Text(
-            text = formatRawCurrency(cartItem.product.price),
-            fontSize = 11.sp,
-            color = Color.Gray,
-            modifier = Modifier.padding(
-                start = 16.dp,
-                bottom = 8.dp
-            )
+            text = formatRawCurrency(cartItem.totalPrice),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black,
+            textAlign = TextAlign.End,
+            modifier = Modifier
+                .weight(0.25f)
+                .fillMaxWidth()
         )
     }
+
+    // Garis pemisah antar item
+    HorizontalDivider(
+        color = Color.LightGray.copy(alpha = 0.4f),
+        thickness = 1.dp
+    )
 }
+
 @Composable
 private fun QuickActionButton(
     icon: ImageVector,
