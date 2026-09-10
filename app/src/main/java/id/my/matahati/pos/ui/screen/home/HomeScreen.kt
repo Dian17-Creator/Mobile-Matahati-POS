@@ -11,19 +11,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,33 +20,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DividerDefaults
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -70,14 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.Product
-import id.my.matahati.pos.ui.screen.home.components.OlseraCartPanel
-import id.my.matahati.pos.ui.screen.home.components.OlseraDiscountDialog
-import id.my.matahati.pos.ui.screen.home.components.OlseraEditItemDialog
-import id.my.matahati.pos.ui.screen.home.components.OlseraGreenPay
-import id.my.matahati.pos.ui.screen.home.components.OlseraHeaderBar
-import id.my.matahati.pos.ui.screen.home.components.OlseraHeaderBlue
-import id.my.matahati.pos.ui.screen.home.components.OlseraProductGrid
-import id.my.matahati.pos.ui.screen.home.components.SidebarDrawer
+import id.my.matahati.pos.ui.screen.home.components.*
 import id.my.matahati.pos.ui.theme.MobileMatahati_POSTheme
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -102,6 +62,7 @@ fun HomeScreen(
     val allProducts = viewModel.products
 
     // Interactive UI State
+    var currentScreen by remember { mutableStateOf("pos") }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf("all") }
     var orderType by remember { mutableStateOf("") }
@@ -113,6 +74,8 @@ fun HomeScreen(
     var selectedCartItem by remember { mutableStateOf<CartItem?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDiscountDialog by remember { mutableStateOf(false) }
+    var showDateFilterDialog by remember { mutableStateOf(false) }
+    var selectedDateRange by remember { mutableStateOf("10 Sep 2026") }
     
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
@@ -188,28 +151,76 @@ fun HomeScreen(
                     roleOwner = roleOwner,
                     roleCashier = roleCashier,
                     roleCaptain = roleCaptain,
+                    currentScreen = currentScreen,
+                    onNavigateToPos = {
+                        currentScreen = "pos"
+                        coroutineScope.launch { drawerState.close() }
+                    },
+                    onNavigateToTransaksi = {
+                        currentScreen = "transaksi"
+                        coroutineScope.launch { drawerState.close() }
+                    },
                     onLogout = onLogout
                 )
             }
         ) {
             Scaffold(
                 topBar = {
-                    OlseraHeaderBar(
-                        selectedOrderType = orderType,
-                        onInAwayClick = { showOrderTypeDialog = true },
-                        selectedRightTab = selectedRightTab,
-                        onRightTabSelected = { selectedRightTab = it },
-                        onNotificationClick = { showNotificationPopup = true },
-                        onMenuClick = {
-                            coroutineScope.launch {
-                                if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                    if (currentScreen == "pos") {
+                        OlseraHeaderBar(
+                            selectedOrderType = orderType,
+                            onInAwayClick = { showOrderTypeDialog = true },
+                            selectedRightTab = selectedRightTab,
+                            onRightTabSelected = { selectedRightTab = it },
+                            onNotificationClick = { showNotificationPopup = true },
+                            onMenuClick = {
+                                coroutineScope.launch {
+                                    if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                }
                             }
-                        }
-                    )
+                        )
+                    } else {
+                        var transaksiSearchQuery by remember { mutableStateOf("") }
+                        TransaksiHeaderBar(
+                            searchQuery = transaksiSearchQuery,
+                            onSearchQueryChange = { transaksiSearchQuery = it },
+                            currentDate = selectedDateRange,
+                            onDateClick = { showDateFilterDialog = true },
+                            onMenuClick = {
+                                coroutineScope.launch {
+                                    if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                }
+                            }
+                        )
+                    }
                 },
                 modifier = Modifier.fillMaxSize()
             ) { innerPadding ->
-                if (viewModel.isLoading && allProducts.isEmpty()) {
+                if (currentScreen == "transaksi") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Tidak ada transaksi ditemukan",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFBDBDBD)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Tidak ada transaksi untuk tanggal yang dipilih",
+                                fontSize = 14.sp,
+                                color = Color(0xFFE0E0E0),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                } else if (viewModel.isLoading && allProducts.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -484,6 +495,18 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // =============================================================
+    // DATE FILTER DIALOG
+    // =============================================================
+    if (showDateFilterDialog) {
+        OlseraDateFilterDialog(
+            onDismiss = { showDateFilterDialog = false },
+            onDateSelected = { newDateRange ->
+                selectedDateRange = newDateRange
+            }
+        )
     }
 
     // Order Type (In/Away) Selection Dialog
