@@ -6,7 +6,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +25,9 @@ fun SidebarDrawer(
     roleOwner: Boolean,
     roleCashier: Boolean,
     roleCaptain: Boolean,
+    currentScreen: String,
+    onNavigateToPos: () -> Unit,
+    onNavigateToTransaksi: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -90,6 +95,26 @@ fun SidebarDrawer(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        NavigationDrawerItem(
+            icon = { Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = "Point of Sale") },
+            label = { Text("Point of Sale", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) },
+            selected = currentScreen == "pos",
+            onClick = onNavigateToPos,
+            shape = RoundedCornerShape(4.dp),
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+
+        NavigationDrawerItem(
+            icon = { Icon(imageVector = Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = "Transaksi") },
+            label = { Text("Transaksi", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) },
+            selected = currentScreen == "transaksi",
+            onClick = onNavigateToTransaksi,
+            shape = RoundedCornerShape(4.dp),
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
 
         NavigationDrawerItem(
             icon = { Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout") },
