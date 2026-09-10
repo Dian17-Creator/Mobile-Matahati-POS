@@ -17,13 +17,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import id.my.matahati.pos.model.Category
 
 val OlseraBlueHeader = Color(0xFF1565C0)
 val OlseraHeaderTabActive = Color(0xFF1E88E5)
@@ -39,29 +40,42 @@ val OlseraHeaderTabActive = Color(0xFF1E88E5)
 @Composable
 fun OlseraHeaderBar(
     onMenuClick: () -> Unit,
+    onNotificationClick: () -> Unit = {},
     selectedOrderType: String = "",
     onInAwayClick: () -> Unit = {},
     selectedRightTab: String = "Produk",
     onRightTabSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+
     Surface(
         color = OlseraBlueHeader,
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left Portion (Above Cart): Menu, Quick Tabs, Notification Bell (40% Weight)
+
+            // =========================================================
+            // LEFT PORTION
+            // Menu, Quick Tabs, Notification Bell
+            // =========================================================
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .weight(0.40f)
-                    .padding(start = 12.dp, top = 8.dp, bottom = 8.dp)
+                    .padding(
+                        start = 12.dp,
+                        top = 8.dp,
+                        bottom = 8.dp
+                    )
             ) {
-                IconButton(onClick = onMenuClick) {
+
+                // Menu
+                IconButton(
+                    onClick = onMenuClick
+                ) {
                     Icon(
                         imageVector = Icons.Default.Menu,
                         contentDescription = "Menu",
@@ -69,41 +83,71 @@ fun OlseraHeaderBar(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(
+                    modifier = Modifier.width(4.dp)
+                )
 
-                HeaderTabItem(label = "Meja", isSelected = false, onClick = {})
+                // Meja
                 HeaderTabItem(
-                    label = if (selectedOrderType.isBlank()) "In/Aw" else selectedOrderType,
+                    label = "Meja",
+                    isSelected = false,
+                    onClick = {}
+                )
+
+                // In / Away
+                HeaderTabItem(
+                    label = if (selectedOrderType.isBlank()) {
+                        "In/Aw"
+                    } else {
+                        selectedOrderType
+                    },
                     isSelected = selectedOrderType.isNotBlank(),
                     onClick = onInAwayClick
                 )
-                HeaderTabItem(label = "Pesanan", isSelected = false, onClick = {})
-                HeaderTabItem(label = "Remark", isSelected = false, onClick = {})
 
-                Spacer(modifier = Modifier.weight(1f))
+                // Pesanan
+                HeaderTabItem(
+                    label = "Pesanan",
+                    isSelected = false,
+                    onClick = {}
+                )
 
-                // Bell Icon
-                BadgedBox(
-                    badge = {
-                        Badge(
-                            containerColor = Color.Red,
-                            contentColor = Color.White
-                        ) {
-                            Text(text = "7", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    },
+                // Remark
+                HeaderTabItem(
+                    label = "Remark",
+                    isSelected = false,
+                    onClick = {}
+                )
+
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
+
+                // =====================================================
+                // NOTIFICATION
+                // =====================================================
+                Box(
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifikasi",
-                        tint = Color.White.copy(alpha = 0.9f),
-                        modifier = Modifier.size(20.dp)
-                    )
+
+                    // Bell Button
+                    IconButton(
+                        onClick = onNotificationClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifikasi",
+                            tint = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
-            // Right Portion: 3 tabs (Produk, Barcode, Custom) (60% Weight)
+            // =========================================================
+            // RIGHT PORTION
+            // Produk, Barcode, Custom
+            // =========================================================
             Row(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Start,
@@ -113,22 +157,34 @@ fun OlseraHeaderBar(
                     .height(56.dp)
                     .padding(end = 16.dp)
             ) {
+
+                // Produk
                 RightHeaderTabItem(
                     label = "Produk",
                     isSelected = selectedRightTab == "Produk",
-                    onClick = { onRightTabSelected("Produk") },
+                    onClick = {
+                        onRightTabSelected("Produk")
+                    },
                     modifier = Modifier.weight(1f)
                 )
+
+                // Barcode
                 RightHeaderTabItem(
                     label = "Barcode",
                     isSelected = selectedRightTab == "Barcode",
-                    onClick = { onRightTabSelected("Barcode") },
+                    onClick = {
+                        onRightTabSelected("Barcode")
+                    },
                     modifier = Modifier.weight(1f)
                 )
+
+                // Custom
                 RightHeaderTabItem(
                     label = "Custom",
                     isSelected = selectedRightTab == "Custom",
-                    onClick = { onRightTabSelected("Custom") },
+                    onClick = {
+                        onRightTabSelected("Custom")
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -136,6 +192,10 @@ fun OlseraHeaderBar(
     }
 }
 
+
+// =============================================================
+// HEADER TAB KIRI
+// =============================================================
 @Composable
 private fun HeaderTabItem(
     label: String,
@@ -145,26 +205,55 @@ private fun HeaderTabItem(
     Box(
         modifier = Modifier
             .padding(horizontal = 2.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) Color.White else Color.Transparent)
+            .clip(
+                RoundedCornerShape(12.dp)
+            )
+            .background(
+                if (isSelected) {
+                    Color.White
+                } else {
+                    Color.Transparent
+                }
+            )
             .border(
                 width = 1.dp,
-                color = if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.5f),
+                color = if (isSelected) {
+                    Color.Transparent
+                } else {
+                    Color.White.copy(alpha = 0.5f)
+                },
                 shape = RoundedCornerShape(12.dp)
             )
-            .clickable { onClick() }
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .clickable {
+                onClick()
+            }
+            .padding(
+                horizontal = 10.dp,
+                vertical = 6.dp
+            ),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
             fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) OlseraBlueHeader else Color.White
+            fontWeight = if (isSelected) {
+                FontWeight.Bold
+            } else {
+                FontWeight.Medium
+            },
+            color = if (isSelected) {
+                OlseraBlueHeader
+            } else {
+                Color.White
+            }
         )
     }
 }
 
+
+// =============================================================
+// HEADER TAB KANAN
+// =============================================================
 @Composable
 private fun RightHeaderTabItem(
     label: String,
@@ -174,10 +263,13 @@ private fun RightHeaderTabItem(
 ) {
     Column(
         modifier = modifier
-            .clickable { onClick() },
+            .clickable {
+                onClick()
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -188,16 +280,27 @@ private fun RightHeaderTabItem(
             Text(
                 text = label,
                 fontSize = 14.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                fontWeight = if (isSelected) {
+                    FontWeight.Bold
+                } else {
+                    FontWeight.Medium
+                },
                 color = Color.White
             )
         }
-        // Underline mengikuti lebar bagian tab masing-masing (1/3 dari total)
+
+        // Underline tab aktif
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(3.dp)
-                .background(if (isSelected) Color.White else Color.Transparent)
+                .background(
+                    if (isSelected) {
+                        Color.White
+                    } else {
+                        Color.Transparent
+                    }
+                )
         )
     }
 }

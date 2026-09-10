@@ -1,8 +1,16 @@
 package id.my.matahati.pos.ui.screen.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,6 +56,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
@@ -96,6 +106,7 @@ fun HomeScreen(
     var showOrderTypeDialog by remember { mutableStateOf(false) }
     var selectedRightTab by remember { mutableStateOf("Produk") }
     var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
+    var showNotificationPopup by remember { mutableStateOf(false) }
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
     val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Semua Kategori"
@@ -167,6 +178,7 @@ fun HomeScreen(
                         onInAwayClick = { showOrderTypeDialog = true },
                         selectedRightTab = selectedRightTab,
                         onRightTabSelected = { selectedRightTab = it },
+                        onNotificationClick = { showNotificationPopup = true },
                         onMenuClick = {
                             coroutineScope.launch {
                                 if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -487,6 +499,152 @@ fun HomeScreen(
                 }
             }
         )
+    }
+
+    // =============================================================
+    // CENTER NOTIFICATION POPUP (MODAL OVERLAY)
+    // =============================================================
+    AnimatedVisibility(
+        visible = showNotificationPopup,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    showNotificationPopup = false
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            AnimatedVisibility(
+                visible = showNotificationPopup,
+                enter = scaleIn(
+                    initialScale = 0.1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioHighBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ),
+                exit = fadeOut()
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .width(600.dp)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    shadowElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Notifikasi",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF333333)
+                            )
+                            
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable { showNotificationPopup = false },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "✕",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Light,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color(0xFFEEEEEE))
+                        )
+
+                        Spacer(modifier = Modifier.height(40.dp))
+
+                        // Empty State Icon & Text
+                        Surface(
+                            shape = RoundedCornerShape(40.dp),
+                            color = Color(0xFFF5F5F5),
+                            modifier = Modifier.size(80.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Notifications,
+                                    contentDescription = null,
+                                    tint = Color(0xFFBDBDBD),
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Text(
+                            text = "Belum Ada Notifikasi",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF424242)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Pemberitahuan transaksi dan informasi toko\nakan muncul di sini.",
+                            fontSize = 14.sp,
+                            color = Color(0xFF757575),
+                            textAlign = TextAlign.Center,
+                            lineHeight = 20.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(40.dp))
+
+                        // Close Button
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .clickable { showNotificationPopup = false },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF1565C0)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "MENGERTI",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
