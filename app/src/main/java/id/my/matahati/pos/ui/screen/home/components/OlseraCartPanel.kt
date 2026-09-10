@@ -71,6 +71,7 @@ fun OlseraCartPanel(
     orderType: String,
     onIncreaseQuantity: (CartItem) -> Unit,
     onDecreaseQuantity: (CartItem) -> Unit,
+    onItemClick: (CartItem) -> Unit,
     onClearCart: () -> Unit,
     onCheckoutClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -243,6 +244,9 @@ fun OlseraCartPanel(
                         },
                         onDecrease = {
                             onDecreaseQuantity(cartItem)
+                        },
+                        onClick = {
+                            onItemClick(cartItem)
                         }
                     )
                 }
@@ -450,12 +454,14 @@ fun OlseraCartPanel(
 private fun OlseraCartItemRow(
     cartItem: CartItem,
     onIncrease: () -> Unit,
-    onDecrease: () -> Unit
+    onDecrease: () -> Unit,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
+            .clickable { onClick() }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

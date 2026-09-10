@@ -71,6 +71,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.ui.screen.home.components.OlseraCartPanel
+import id.my.matahati.pos.ui.screen.home.components.OlseraEditItemDialog
 import id.my.matahati.pos.ui.screen.home.components.OlseraGreenPay
 import id.my.matahati.pos.ui.screen.home.components.OlseraHeaderBar
 import id.my.matahati.pos.ui.screen.home.components.OlseraHeaderBlue
@@ -107,6 +108,10 @@ fun HomeScreen(
     var selectedRightTab by remember { mutableStateOf("Produk") }
     var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
     var showNotificationPopup by remember { mutableStateOf(false) }
+    
+    var selectedCartItem by remember { mutableStateOf<CartItem?>(null) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
     val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Semua Kategori"
@@ -137,6 +142,20 @@ fun HomeScreen(
             } else {
                 cartItems.removeAt(index)
             }
+        }
+    }
+
+    val onUpdateCartItem: (String, Int, String) -> Unit = { productId, newQty, newNote ->
+        val index = cartItems.indexOfFirst { it.product.id == productId }
+        if (index >= 0) {
+            cartItems[index] = cartItems[index].copy(quantity = newQty, note = newNote)
+        }
+    }
+
+    val onRemoveCartItem: (String) -> Unit = { productId ->
+        val index = cartItems.indexOfFirst { it.product.id == productId }
+        if (index >= 0) {
+            cartItems.removeAt(index)
         }
     }
 
@@ -215,6 +234,10 @@ fun HomeScreen(
                                 orderType = orderType,
                                 onIncreaseQuantity = onIncreaseQuantity,
                                 onDecreaseQuantity = onDecreaseQuantity,
+                                onItemClick = { item ->
+                                    selectedCartItem = item
+                                    showEditDialog = true
+                                },
                                 onClearCart = { cartItems.clear() },
                                 onCheckoutClick = { },
                                 cashierName = userName,
@@ -645,6 +668,25 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // =============================================================
+    // EDIT ITEM DIALOG
+    // =============================================================
+    if (showEditDialog && selectedCartItem != null) {
+        OlseraEditItemDialog(
+            cartItem = selectedCartItem!!,
+            onDismiss = {
+                showEditDialog = false
+                selectedCartItem = null
+            },
+            onConfirmUpdate = { newQty, newNote ->
+                onUpdateCartItem(selectedCartItem!!.product.id, newQty, newNote)
+            },
+            onRemoveItem = {
+                onRemoveCartItem(selectedCartItem!!.product.id)
+            }
+        )
     }
 }
 
