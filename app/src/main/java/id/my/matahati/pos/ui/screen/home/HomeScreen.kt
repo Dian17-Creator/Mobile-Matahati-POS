@@ -75,7 +75,9 @@ fun HomeScreen(
     var showEditDialog by remember { mutableStateOf(false) }
     var showDiscountDialog by remember { mutableStateOf(false) }
     var showDateFilterDialog by remember { mutableStateOf(false) }
+    var showPaymentTypeDialog by remember { mutableStateOf(false) }
     var selectedDateRange by remember { mutableStateOf("10 Sep 2026") }
+    var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
@@ -186,6 +188,8 @@ fun HomeScreen(
                             onSearchQueryChange = { transaksiSearchQuery = it },
                             currentDate = selectedDateRange,
                             onDateClick = { showDateFilterDialog = true },
+                            selectedPaymentType = selectedPaymentType,
+                            onPaymentTypeClick = { showPaymentTypeDialog = true },
                             onMenuClick = {
                                 coroutineScope.launch {
                                     if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -505,6 +509,19 @@ fun HomeScreen(
             onDismiss = { showDateFilterDialog = false },
             onDateSelected = { newDateRange ->
                 selectedDateRange = newDateRange
+            }
+        )
+    }
+
+    // =============================================================
+    // PAYMENT TYPE DIALOG
+    // =============================================================
+    if (showPaymentTypeDialog) {
+        OlseraPaymentTypeDialog(
+            paymentMethods = viewModel.paymentMethods,
+            onDismiss = { showPaymentTypeDialog = false },
+            onPaymentSelected = { method ->
+                selectedPaymentType = method.name
             }
         )
     }
