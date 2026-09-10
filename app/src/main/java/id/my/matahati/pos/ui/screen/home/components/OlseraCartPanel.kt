@@ -72,6 +72,7 @@ fun OlseraCartPanel(
     onIncreaseQuantity: (CartItem) -> Unit,
     onDecreaseQuantity: (CartItem) -> Unit,
     onItemClick: (CartItem) -> Unit,
+    onDiscountClick: () -> Unit = {},
     onClearCart: () -> Unit,
     onCheckoutClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -350,7 +351,7 @@ fun OlseraCartPanel(
                             label = if (showMore) "Tutup" else "Lainnya",
                             onClick = { showMore = !showMore }
                         )
-                        QuickActionButton(icon = Icons.Default.LocalOffer, label = "Disc. Pesanan", onClick = {})
+                        QuickActionButton(icon = Icons.Default.LocalOffer, label = "Disc. Pesanan", onClick = onDiscountClick)
                         QuickActionButton(icon = Icons.Default.LocalShipping, label = "Ongkos Kirim", onClick = {})
                         QuickActionButton(icon = Icons.Default.ChatBubbleOutline, label = "Catatan Pesanan", onClick = {})
                         QuickActionButton(icon = Icons.Default.Person, label = "Dilayani Oleh", onClick = {})

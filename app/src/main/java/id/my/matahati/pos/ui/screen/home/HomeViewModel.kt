@@ -11,12 +11,14 @@ import id.my.matahati.pos.data.remote.RetrofitClient
 import id.my.matahati.pos.model.Category
 import id.my.matahati.pos.model.Customer
 import id.my.matahati.pos.model.Product
+import id.my.matahati.pos.model.Voucher
 import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
     val categories = mutableStateListOf<Category>()
     val products = mutableStateListOf<Product>()
     val customers = mutableStateListOf<Customer>()
+    val vouchers = mutableStateListOf<Voucher>()
 
     var isLoading by mutableStateOf(false)
         private set
@@ -60,6 +62,15 @@ class HomeViewModel : ViewModel() {
                     val fetchedCustomers = dtos.map { it.toCustomer() }
                     customers.clear()
                     customers.addAll(fetchedCustomers)
+                }
+
+                // Fetch Vouchers
+                val vouchResponse = RetrofitClient.apiService.getVouchers()
+                if (vouchResponse.isSuccessful && vouchResponse.body()?.success == true) {
+                    val dtos = vouchResponse.body()?.data ?: emptyList()
+                    val fetchedVouchers = dtos.map { it.toVoucher() }
+                    vouchers.clear()
+                    vouchers.addAll(fetchedVouchers)
                 }
             } catch (e: Exception) {
                 errorMessage = "Gagal memuat data dari server: ${e.localizedMessage}"

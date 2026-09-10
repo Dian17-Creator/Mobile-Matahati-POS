@@ -71,6 +71,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.ui.screen.home.components.OlseraCartPanel
+import id.my.matahati.pos.ui.screen.home.components.OlseraDiscountDialog
 import id.my.matahati.pos.ui.screen.home.components.OlseraEditItemDialog
 import id.my.matahati.pos.ui.screen.home.components.OlseraGreenPay
 import id.my.matahati.pos.ui.screen.home.components.OlseraHeaderBar
@@ -111,6 +112,7 @@ fun HomeScreen(
     
     var selectedCartItem by remember { mutableStateOf<CartItem?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
+    var showDiscountDialog by remember { mutableStateOf(false) }
     
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
@@ -238,6 +240,7 @@ fun HomeScreen(
                                     selectedCartItem = item
                                     showEditDialog = true
                                 },
+                                onDiscountClick = { showDiscountDialog = true },
                                 onClearCart = { cartItems.clear() },
                                 onCheckoutClick = { },
                                 cashierName = userName,
@@ -686,6 +689,16 @@ fun HomeScreen(
             onRemoveItem = {
                 onRemoveCartItem(selectedCartItem!!.product.id)
             }
+        )
+    }
+
+    // =============================================================
+    // DISCOUNT / VOUCHER DIALOG
+    // =============================================================
+    if (showDiscountDialog) {
+        OlseraDiscountDialog(
+            vouchers = viewModel.vouchers,
+            onDismiss = { showDiscountDialog = false }
         )
     }
 }
