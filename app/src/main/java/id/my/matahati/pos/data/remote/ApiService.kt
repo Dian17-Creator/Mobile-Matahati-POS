@@ -4,6 +4,7 @@ import id.my.matahati.pos.model.CategoryResponse
 import id.my.matahati.pos.model.CustomerResponse
 import id.my.matahati.pos.model.LoginRequest
 import id.my.matahati.pos.model.LoginResponse
+import id.my.matahati.pos.model.PaymentMethodResponse
 import id.my.matahati.pos.model.ProductResponse
 import id.my.matahati.pos.model.VoucherResponse
 import retrofit2.Response
@@ -26,4 +27,7 @@ interface ApiService {
 
     @GET("api/vouchers")
     suspend fun getVouchers(): Response<VoucherResponse>
+
+    @GET("api/payment-methods")
+    suspend fun getPaymentMethods(): Response<PaymentMethodResponse>
 }

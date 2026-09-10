@@ -10,6 +10,7 @@ import id.my.matahati.pos.data.DummyData
 import id.my.matahati.pos.data.remote.RetrofitClient
 import id.my.matahati.pos.model.Category
 import id.my.matahati.pos.model.Customer
+import id.my.matahati.pos.model.PaymentMethod
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.model.Voucher
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ class HomeViewModel : ViewModel() {
     val products = mutableStateListOf<Product>()
     val customers = mutableStateListOf<Customer>()
     val vouchers = mutableStateListOf<Voucher>()
+    val paymentMethods = mutableStateListOf<PaymentMethod>()
 
     var isLoading by mutableStateOf(false)
         private set
@@ -71,6 +73,18 @@ class HomeViewModel : ViewModel() {
                     val fetchedVouchers = dtos.map { it.toVoucher() }
                     vouchers.clear()
                     vouchers.addAll(fetchedVouchers)
+                }
+
+                // Fetch Payment Methods
+                val payResponse = RetrofitClient.apiService.getPaymentMethods()
+                if (payResponse.isSuccessful && payResponse.body()?.success == true) {
+                    val dtos = payResponse.body()?.data ?: emptyList()
+                    val fetchedPayments = mutableListOf<PaymentMethod>(
+                        PaymentMethod(id = "all", name = "Semua Tipe Pembayaran")
+                    )
+                    fetchedPayments.addAll(dtos.map { it.toPaymentMethod() })
+                    paymentMethods.clear()
+                    paymentMethods.addAll(fetchedPayments)
                 }
             } catch (e: Exception) {
                 errorMessage = "Gagal memuat data dari server: ${e.localizedMessage}"
