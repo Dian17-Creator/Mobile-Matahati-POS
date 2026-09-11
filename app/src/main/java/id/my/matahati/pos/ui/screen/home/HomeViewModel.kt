@@ -16,6 +16,9 @@ import id.my.matahati.pos.model.OrderTypeItem
 import id.my.matahati.pos.model.PaymentMethod
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.model.Voucher
+import id.my.matahati.pos.model.TransactionRequest
+import id.my.matahati.pos.model.TransactionDetailRequest
+import id.my.matahati.pos.model.TransactionData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -29,6 +32,13 @@ class HomeViewModel : ViewModel() {
     private val _orderTypes = MutableStateFlow<List<OrderTypeItem>>(emptyList())
 
     val orderTypes: StateFlow<List<OrderTypeItem>> = _orderTypes
+
+    // Transaction States
+    var selectedTable by mutableStateOf("")
+    var isSubmitting by mutableStateOf(false)
+    var transactionError by mutableStateOf<String?>(null)
+    var lastTransaction by mutableStateOf<TransactionData?>(null)
+    var showReceiptDialog by mutableStateOf(false)
 
     var isLoading by mutableStateOf(false)
         private set
@@ -132,5 +142,116 @@ class HomeViewModel : ViewModel() {
                 Log.e("OrderType", "Gagal mengambil order type", e)
             }
         }
+    }
+
+    fun submitTransaction(
+        cartItems: List<id.my.matahati.pos.model.CartItem>,
+        orderType: String,
+        selectedCustomer: Customer?,
+        selectedPayment: PaymentMethod,
+        discount: Double,
+        tax: Double,
+        paidAmount: Double,
+        nidOutlet: String?
+    ) {
+        if (cartItems.isEmpty()) {
+            transactionError = "Cart kosong."
+            return
+        }
+        if (orderType.isBlank()) {
+            transactionError = "Silakan pilih In/Aw (Order Type) terlebih dahulu."
+            return
+        }
+        if (orderType == "DINE_IN" && selectedTable.isBlank()) {
+            transactionError = "Silakan pilih meja terlebih dahulu."
+            return
+        }
+
+        isSubmitting = true
+        transactionError = null
+
+        val details = cartItems.map {
+            TransactionDetailRequest(
+                productId = it.product.id,
+                quantity = it.quantity,
+                note = it.note.ifBlank { null }
+            )
+        }
+
+        val parsedOutlet = nidOutlet?.toIntOrNull() ?: 1 // Default 1 if null to avoid 422
+
+        val request = TransactionRequest(
+            nidCustomer = selectedCustomer?.id,
+            nidOutlet = parsedOutlet,
+            nidPayment = selectedPayment.id,
+            nidVoucher = null,
+            customerName = selectedCustomer?.name,
+            orderType = orderType,
+            visitorCount = 1,
+            tableName = selectedTable.ifBlank { null },
+            discount = discount,
+            tax = tax,
+            paidAmount = paidAmount,
+            details = details
+        )
+
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.submitTransaction(request)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        lastTransaction = body.data
+                        showReceiptDialog = true
+                    } else {
+                        transactionError = body?.message ?: "Gagal membuat transaksi."
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    transactionError = if (!errorBody.isNullOrBlank()) {
+                        try {
+                            val json = org.json.JSONObject(errorBody)
+                            var parsedError = json.optString("message", "Error: ${response.code()}")
+                            
+                            // Parse detailed Laravel validation errors
+                            if (json.has("errors")) {
+                                val errorsObj = json.getJSONObject("errors")
+                                val errorList = mutableListOf<String>()
+                                val keys = errorsObj.keys()
+                                while (keys.hasNext()) {
+                                    val key = keys.next()
+                                    val errorArray = errorsObj.getJSONArray(key)
+                                    for (i in 0 until errorArray.length()) {
+                                        errorList.add(errorArray.getString(i))
+                                    }
+                                }
+                                if (errorList.isNotEmpty()) {
+                                    parsedError = errorList.joinToString("\n")
+                                }
+                            }
+                            parsedError
+                        } catch (e: Exception) {
+                            "Error: ${response.code()}\nRaw: $errorBody"
+                        }
+                    } else {
+                        "Error: ${response.code()}"
+                    }
+                }
+            } catch (e: Exception) {
+                transactionError = "Koneksi gagal: ${e.localizedMessage}"
+            } finally {
+                isSubmitting = false
+            }
+        }
+    }
+
+    fun clearTransactionError() {
+        transactionError = null
+    }
+
+    fun closeReceiptDialog() {
+        showReceiptDialog = false
+        lastTransaction = null
+        selectedTable = ""
     }
 }

@@ -25,6 +25,8 @@ data class UserDto(
     val name: String,
     @SerializedName("email")
     val email: String,
+    @SerializedName("nid_outlet")
+    val nidOutlet: String?,
     @SerializedName("role_owner")
     val roleOwner: Boolean,
     @SerializedName("role_cashier")
