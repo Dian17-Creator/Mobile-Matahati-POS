@@ -534,55 +534,11 @@ fun HomeScreen(
 
     // Order Type (In/Away) Selection Dialog
     if (showOrderTypeDialog) {
-        AlertDialog(
-            onDismissRequest = { showOrderTypeDialog = false },
-            title = {
-                Text(
-                    "In/Away",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                ) {
-                    items(orderTypes) { item ->
-                        TextButton(
-                            onClick = {
-                                // Simpan VALUE dari backend
-                                orderType = item.value
-                                showOrderTypeDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = item.label,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.DarkGray,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showOrderTypeDialog = false
-                    }
-                ) {
-                    Text(
-                        "BATAL",
-                        color = OlseraHeaderBlue,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+        OlseraOrderTypeDialog(
+            orderTypes = orderTypes,
+            onDismiss = { showOrderTypeDialog = false },
+            onOrderTypeSelected = { item ->
+                orderType = item.value
             }
         )
     }
