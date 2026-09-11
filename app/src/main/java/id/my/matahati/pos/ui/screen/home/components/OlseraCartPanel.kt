@@ -77,6 +77,7 @@ fun OlseraCartPanel(
     onCheckoutClick: () -> Unit,
     selectedCustomerName: String,
     onCustomerSelected: (Customer) -> Unit,
+    selectedTable: String = "",
     modifier: Modifier = Modifier,
     cashierName: String = "april"
 ) {
@@ -362,7 +363,7 @@ fun OlseraCartPanel(
                             label = "Batal Pesanan",
                             isDestructive = true,
                             onClick = {
-                                if (cartItems.isNotEmpty()) {
+                                if (cartItems.isNotEmpty() || orderType.isNotBlank() || selectedCustomerName.isNotBlank() || selectedTable.isNotBlank()) {
                                     onClearCart()
                                 }
                             }
