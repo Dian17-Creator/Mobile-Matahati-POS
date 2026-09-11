@@ -83,6 +83,12 @@ fun HomeScreen(
 
     val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Semua Kategori"
 
+    val orderTypes by viewModel.orderTypes.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadOrderTypes()
+    }
+
     // Cart Helper Functions
     val onAddToCart: (Product) -> Unit = { product ->
         val existingIndex = cartItems.indexOfFirst { it.product.id == product.id }
@@ -530,7 +536,13 @@ fun HomeScreen(
     if (showOrderTypeDialog) {
         AlertDialog(
             onDismissRequest = { showOrderTypeDialog = false },
-            title = { Text("In/Away", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            title = {
+                Text(
+                    "In/Away",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
             text = {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -538,17 +550,17 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .height(300.dp)
                 ) {
-                    val types = listOf("DINE-IN", "TAKE-AWAY", "DELIVERY", "GOFOOD", "GRABFOOD", "SHOPEEFOOD", "TRAVELOKA-EATS", "MAXIMFOOD", "+REMARK")
-                    items(types) { type ->
+                    items(orderTypes) { item ->
                         TextButton(
                             onClick = {
-                                orderType = type
+                                // Simpan VALUE dari backend
+                                orderType = item.value
                                 showOrderTypeDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = type,
+                                text = item.label,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.DarkGray,
@@ -560,8 +572,16 @@ fun HomeScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showOrderTypeDialog = false }) {
-                    Text("BATAL", color = OlseraHeaderBlue, fontWeight = FontWeight.Bold)
+                TextButton(
+                    onClick = {
+                        showOrderTypeDialog = false
+                    }
+                ) {
+                    Text(
+                        "BATAL",
+                        color = OlseraHeaderBlue,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         )
