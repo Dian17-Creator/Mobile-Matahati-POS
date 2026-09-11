@@ -37,6 +37,7 @@ class HomeViewModel : ViewModel() {
     var selectedTable by mutableStateOf("")
     var isSubmitting by mutableStateOf(false)
     var transactionError by mutableStateOf<String?>(null)
+    var transactionSuccessMessage by mutableStateOf<String?>(null)
     var lastTransaction by mutableStateOf<TransactionData?>(null)
     var showReceiptDialog by mutableStateOf(false)
 
@@ -154,17 +155,70 @@ class HomeViewModel : ViewModel() {
         paidAmount: Double,
         nidOutlet: String?
     ) {
+        executeTransaction(
+            cartItems = cartItems,
+            orderType = orderType,
+            selectedCustomer = selectedCustomer,
+            selectedPayment = selectedPayment,
+            discount = discount,
+            tax = tax,
+            paidAmount = paidAmount,
+            nidOutlet = nidOutlet,
+            status = null,
+            cancelNote = null
+        )
+    }
+
+    fun submitCancelTransaction(
+        cartItems: List<id.my.matahati.pos.model.CartItem>,
+        orderType: String,
+        selectedCustomer: Customer?,
+        cancelNote: String,
+        nidOutlet: String?
+    ) {
+        executeTransaction(
+            cartItems = cartItems,
+            orderType = orderType,
+            selectedCustomer = selectedCustomer,
+            selectedPayment = null,
+            discount = 0.0,
+            tax = 0.0,
+            paidAmount = 0.0,
+            nidOutlet = nidOutlet,
+            status = "CANCELLED",
+            cancelNote = cancelNote
+        )
+    }
+
+    private fun executeTransaction(
+        cartItems: List<id.my.matahati.pos.model.CartItem>,
+        orderType: String,
+        selectedCustomer: Customer?,
+        selectedPayment: PaymentMethod?,
+        discount: Double,
+        tax: Double,
+        paidAmount: Double,
+        nidOutlet: String?,
+        status: String?,
+        cancelNote: String?
+    ) {
         if (cartItems.isEmpty()) {
             transactionError = "Cart kosong."
             return
         }
-        if (orderType.isBlank()) {
-            transactionError = "Silakan pilih In/Aw (Order Type) terlebih dahulu."
-            return
-        }
-        if (orderType == "DINE_IN" && selectedTable.isBlank()) {
-            transactionError = "Silakan pilih meja terlebih dahulu."
-            return
+        if (status != "CANCELLED") {
+            if (orderType.isBlank()) {
+                transactionError = "Silakan pilih In/Aw (Order Type) terlebih dahulu."
+                return
+            }
+            if (orderType == "DINE_IN" && selectedTable.isBlank()) {
+                transactionError = "Silakan pilih meja terlebih dahulu."
+                return
+            }
+            if (selectedPayment == null) {
+                transactionError = "Silakan pilih metode pembayaran."
+                return
+            }
         }
 
         isSubmitting = true
@@ -178,20 +232,22 @@ class HomeViewModel : ViewModel() {
             )
         }
 
-        val parsedOutlet = nidOutlet?.toIntOrNull() ?: 1 // Default 1 if null to avoid 422
+        val parsedOutlet = nidOutlet?.toIntOrNull() ?: 1
 
         val request = TransactionRequest(
             nidCustomer = selectedCustomer?.id,
             nidOutlet = parsedOutlet,
-            nidPayment = selectedPayment.id,
+            nidPayment = selectedPayment?.id ?: "1", // Fallback to 1 if cancelled
             nidVoucher = null,
             customerName = selectedCustomer?.name,
-            orderType = orderType,
+            orderType = orderType.ifBlank { "TAKE_AWAY" },
             visitorCount = 1,
             tableName = selectedTable.ifBlank { null },
             discount = discount,
             tax = tax,
             paidAmount = paidAmount,
+            status = status,
+            cancelNote = cancelNote,
             details = details
         )
 
@@ -201,10 +257,16 @@ class HomeViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.success == true && body.data != null) {
-                        lastTransaction = body.data
-                        showReceiptDialog = true
+                        if (status == "CANCELLED") {
+                            // If cancelled, just reset directly without receipt
+                            closeReceiptDialog()
+                            transactionSuccessMessage = "Pesanan berhasil dibatalkan dan dicatat."
+                        } else {
+                            lastTransaction = body.data
+                            showReceiptDialog = true
+                        }
                     } else {
-                        transactionError = body?.message ?: "Gagal membuat transaksi."
+                        transactionError = body?.message ?: "Gagal memproses transaksi."
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
@@ -247,6 +309,10 @@ class HomeViewModel : ViewModel() {
 
     fun clearTransactionError() {
         transactionError = null
+    }
+
+    fun clearTransactionSuccess() {
+        transactionSuccessMessage = null
     }
 
     fun closeReceiptDialog() {
