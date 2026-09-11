@@ -34,4 +34,7 @@ interface ApiService {
 
     @GET("api/pos/order-types")
     suspend fun getOrderTypes(): Response<OrderTypeResponse>
+
+    @POST("api/pos/transactions")
+    suspend fun submitTransaction(@Body request: id.my.matahati.pos.model.TransactionRequest): Response<id.my.matahati.pos.model.TransactionResponse>
 }

@@ -33,21 +33,27 @@ class MainActivity : ComponentActivity() {
                             sharedPrefs.edit()
                                 .putString("auth_token", newToken)
                                 .putString("user_name", user.name)
+                                .putString("nid_outlet", user.nidOutlet)
                                 .putBoolean("role_owner", user.roleOwner)
                                 .putBoolean("role_cashier", user.roleCashier)
                                 .putBoolean("role_captain", user.roleCaptain)
                                 .apply()
                             token = newToken
+                            id.my.matahati.pos.data.remote.RetrofitClient.authToken = newToken
                         }
                     )
                 } else {
+                    id.my.matahati.pos.data.remote.RetrofitClient.authToken = token
+                    
                     val userName = sharedPrefs.getString("user_name", "Kasir") ?: "Kasir"
+                    val nidOutlet = sharedPrefs.getString("nid_outlet", null)
                     val roleOwner = sharedPrefs.getBoolean("role_owner", false)
                     val roleCashier = sharedPrefs.getBoolean("role_cashier", false)
                     val roleCaptain = sharedPrefs.getBoolean("role_captain", false)
 
                     HomeScreen(
                         userName = userName,
+                        nidOutlet = nidOutlet,
                         roleOwner = roleOwner,
                         roleCashier = roleCashier,
                         roleCaptain = roleCaptain,

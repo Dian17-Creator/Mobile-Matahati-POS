@@ -75,6 +75,8 @@ fun OlseraCartPanel(
     onDiscountClick: () -> Unit = {},
     onClearCart: () -> Unit,
     onCheckoutClick: () -> Unit,
+    selectedCustomerName: String,
+    onCustomerSelected: (Customer) -> Unit,
     modifier: Modifier = Modifier,
     cashierName: String = "april"
 ) {
@@ -82,7 +84,6 @@ fun OlseraCartPanel(
     val totalItemsCount = cartItems.sumOf { it.quantity }
     var showMore by remember { mutableStateOf(false) }
 
-    var customerName by remember { mutableStateOf("") }
     var showCustomerDialog by remember { mutableStateOf(false) }
 
     Surface(
@@ -133,7 +134,7 @@ fun OlseraCartPanel(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        if (orderType.isBlank() && customerName.isBlank()) {
+                        if (orderType.isBlank() && selectedCustomerName.isBlank()) {
                             Text(
                                 text = "Pesanan Baru",
                                 fontSize = 14.sp,
@@ -151,9 +152,9 @@ fun OlseraCartPanel(
                                     textAlign = TextAlign.Center
                                 )
                             }
-                            if (customerName.isNotBlank()) {
+                            if (selectedCustomerName.isNotBlank()) {
                                 Text(
-                                    text = customerName,
+                                    text = selectedCustomerName,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = OlseraHeaderBlue,
@@ -426,7 +427,7 @@ fun OlseraCartPanel(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    customerName = "A.N ${customer.name}"
+                                    onCustomerSelected(customer)
                                     showCustomerDialog = false
                                 }
                         ) {

@@ -34,6 +34,8 @@ fun OlseraHeaderBar(
     onNotificationClick: () -> Unit = {},
     selectedOrderType: String = "",
     onInAwayClick: () -> Unit = {},
+    selectedTable: String = "",
+    onTableClick: () -> Unit = {},
     selectedRightTab: String = "Produk",
     onRightTabSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
@@ -63,7 +65,11 @@ fun OlseraHeaderBar(
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                HeaderTabItem(label = "Meja", isSelected = false, onClick = {})
+                HeaderTabItem(
+                    label = if (selectedTable.isBlank()) "Meja" else selectedTable,
+                    isSelected = selectedTable.isNotBlank(),
+                    onClick = onTableClick
+                )
                 HeaderTabItem(
                     label = if (selectedOrderType.isBlank()) "In/Aw" else selectedOrderType,
                     isSelected = selectedOrderType.isNotBlank(),

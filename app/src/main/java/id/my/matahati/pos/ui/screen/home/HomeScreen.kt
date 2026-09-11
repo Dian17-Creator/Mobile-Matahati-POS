@@ -47,6 +47,7 @@ import java.util.Locale
 fun HomeScreen(
     modifier: Modifier = Modifier,
     userName: String = "Kasir",
+    nidOutlet: String? = null,
     roleOwner: Boolean = false,
     roleCashier: Boolean = true,
     roleCaptain: Boolean = false,
@@ -76,8 +77,11 @@ fun HomeScreen(
     var showDiscountDialog by remember { mutableStateOf(false) }
     var showDateFilterDialog by remember { mutableStateOf(false) }
     var showPaymentTypeDialog by remember { mutableStateOf(false) }
+    var showTableInputDialog by remember { mutableStateOf(false) }
+    var showPaymentInputDialog by remember { mutableStateOf(false) }
     var selectedDateRange by remember { mutableStateOf("10 Sep 2026") }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
+    var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
     
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
@@ -178,6 +182,8 @@ fun HomeScreen(
                         OlseraHeaderBar(
                             selectedOrderType = orderType,
                             onInAwayClick = { showOrderTypeDialog = true },
+                            selectedTable = viewModel.selectedTable,
+                            onTableClick = { showTableInputDialog = true },
                             selectedRightTab = selectedRightTab,
                             onRightTabSelected = { selectedRightTab = it },
                             onNotificationClick = { showNotificationPopup = true },
@@ -263,7 +269,15 @@ fun HomeScreen(
                                 },
                                 onDiscountClick = { showDiscountDialog = true },
                                 onClearCart = { cartItems.clear() },
-                                onCheckoutClick = { },
+                                onCheckoutClick = {
+                                    if (cartItems.isNotEmpty()) {
+                                        showPaymentInputDialog = true
+                                    }
+                                },
+                                selectedCustomerName = selectedCustomer?.name ?: "",
+                                onCustomerSelected = { customer ->
+                                    selectedCustomer = customer
+                                },
                                 cashierName = userName,
                                 modifier = Modifier
                                     .weight(0.40f)
@@ -716,6 +730,81 @@ fun HomeScreen(
             vouchers = viewModel.vouchers,
             onDismiss = { showDiscountDialog = false }
         )
+    }
+    // =============================================================
+    // TABLE INPUT DIALOG
+    // =============================================================
+    if (showTableInputDialog) {
+        OlseraTableInputDialog(
+            initialTable = viewModel.selectedTable,
+            onDismiss = { showTableInputDialog = false },
+            onSave = { newTable ->
+                viewModel.selectedTable = newTable
+                showTableInputDialog = false
+            }
+        )
+    }
+
+    // =============================================================
+    // PAYMENT INPUT DIALOG & ERROR HANDLING
+    // =============================================================
+    if (showPaymentInputDialog) {
+        PaymentInputDialog(
+            grandTotal = cartTotalAmount, // Ideally apply discount/tax if present
+            paymentMethods = viewModel.paymentMethods,
+            onDismiss = { showPaymentInputDialog = false },
+            onSubmit = { method, amount ->
+                showPaymentInputDialog = false
+                viewModel.submitTransaction(
+                    cartItems = cartItems,
+                    orderType = orderType,
+                    selectedCustomer = selectedCustomer,
+                    selectedPayment = method,
+                    discount = 0.0,
+                    tax = 0.0,
+                    paidAmount = amount,
+                    nidOutlet = nidOutlet
+                )
+            }
+        )
+    }
+
+    if (viewModel.transactionError != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearTransactionError() },
+            title = { Text("Transaksi Gagal") },
+            text = { Text(viewModel.transactionError ?: "") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearTransactionError() }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    if (viewModel.showReceiptDialog && viewModel.lastTransaction != null) {
+        ReceiptDialog(
+            transactionData = viewModel.lastTransaction!!,
+            cashierName = userName,
+            onDismiss = {
+                viewModel.closeReceiptDialog()
+                cartItems.clear()
+                orderType = ""
+                selectedCustomer = null
+            }
+        )
+    }
+
+    if (viewModel.isSubmitting) {
+        // Loading Overlay
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.White)
+        }
     }
 }
 
