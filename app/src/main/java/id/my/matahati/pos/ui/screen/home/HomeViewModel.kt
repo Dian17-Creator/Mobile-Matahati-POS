@@ -202,7 +202,7 @@ class HomeViewModel : ViewModel() {
         status: String?,
         cancelNote: String?
     ) {
-        if (cartItems.isEmpty()) {
+        if (status != "CANCELLED" && cartItems.isEmpty()) {
             transactionError = "Cart kosong."
             return
         }

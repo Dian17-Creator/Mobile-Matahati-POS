@@ -80,6 +80,7 @@ fun HomeScreen(
     var showTableInputDialog by remember { mutableStateOf(false) }
     var showPaymentInputDialog by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
+    var validationWarningMessage by remember { mutableStateOf<String?>(null) }
     var selectedDateRange by remember { mutableStateOf("10 Sep 2026") }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
@@ -274,13 +275,22 @@ fun HomeScreen(
                                 },
                                 onCheckoutClick = {
                                     if (cartItems.isNotEmpty()) {
-                                        showPaymentInputDialog = true
+                                        if (orderType.isBlank()) {
+                                            validationWarningMessage = "Silahkan pilih tipe pesanan"
+                                        } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
+                                            validationWarningMessage = "Silahkan isi nomor meja"
+                                        } else if (selectedCustomer == null) {
+                                            validationWarningMessage = "Silahkan pilih customer"
+                                        } else {
+                                            showPaymentInputDialog = true
+                                        }
                                     }
                                 },
                                 selectedCustomerName = selectedCustomer?.name ?: "",
                                 onCustomerSelected = { customer ->
                                     selectedCustomer = customer
                                 },
+                                selectedTable = viewModel.selectedTable,
                                 cashierName = userName,
                                 modifier = Modifier
                                     .weight(0.40f)
@@ -500,7 +510,19 @@ fun HomeScreen(
                                     color = OlseraGreenPay,
                                     shape = RoundedCornerShape(0.dp),
                                     modifier = Modifier.fillMaxWidth(),
-                                    onClick = { }
+                                    onClick = {
+                                        if (cartItems.isNotEmpty()) {
+                                            if (orderType.isBlank()) {
+                                                validationWarningMessage = "Silahkan pilih tipe pesanan"
+                                            } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
+                                                validationWarningMessage = "Silahkan isi nomor meja"
+                                            } else if (selectedCustomer == null) {
+                                                validationWarningMessage = "Silahkan pilih customer"
+                                            } else {
+                                                showPaymentInputDialog = true
+                                            }
+                                        }
+                                    }
                                 ) {
                                     Box(
                                         modifier = Modifier
@@ -821,6 +843,19 @@ fun HomeScreen(
             text = { Text(viewModel.transactionError ?: "") },
             confirmButton = {
                 TextButton(onClick = { viewModel.clearTransactionError() }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    if (validationWarningMessage != null) {
+        AlertDialog(
+            onDismissRequest = { validationWarningMessage = null },
+            title = { Text("Peringatan") },
+            text = { Text(validationWarningMessage ?: "") },
+            confirmButton = {
+                TextButton(onClick = { validationWarningMessage = null }) {
                     Text("OK")
                 }
             }
