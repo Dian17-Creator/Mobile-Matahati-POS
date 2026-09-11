@@ -4,6 +4,7 @@ import id.my.matahati.pos.model.CategoryResponse
 import id.my.matahati.pos.model.CustomerResponse
 import id.my.matahati.pos.model.LoginRequest
 import id.my.matahati.pos.model.LoginResponse
+import id.my.matahati.pos.model.OrderTypeResponse
 import id.my.matahati.pos.model.PaymentMethodResponse
 import id.my.matahati.pos.model.ProductResponse
 import id.my.matahati.pos.model.VoucherResponse
@@ -30,4 +31,7 @@ interface ApiService {
 
     @GET("api/payment-methods")
     suspend fun getPaymentMethods(): Response<PaymentMethodResponse>
+
+    @GET("api/pos/order-types")
+    suspend fun getOrderTypes(): Response<OrderTypeResponse>
 }

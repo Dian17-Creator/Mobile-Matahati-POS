@@ -1,18 +1,23 @@
 package id.my.matahati.pos.ui.screen.home
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider.NewInstanceFactory.Companion.instance
 import androidx.lifecycle.viewModelScope
 import id.my.matahati.pos.data.DummyData
 import id.my.matahati.pos.data.remote.RetrofitClient
 import id.my.matahati.pos.model.Category
 import id.my.matahati.pos.model.Customer
+import id.my.matahati.pos.model.OrderTypeItem
 import id.my.matahati.pos.model.PaymentMethod
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.model.Voucher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
@@ -21,6 +26,9 @@ class HomeViewModel : ViewModel() {
     val customers = mutableStateListOf<Customer>()
     val vouchers = mutableStateListOf<Voucher>()
     val paymentMethods = mutableStateListOf<PaymentMethod>()
+    private val _orderTypes = MutableStateFlow<List<OrderTypeItem>>(emptyList())
+
+    val orderTypes: StateFlow<List<OrderTypeItem>> = _orderTypes
 
     var isLoading by mutableStateOf(false)
         private set
@@ -103,6 +111,25 @@ class HomeViewModel : ViewModel() {
                 }
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    fun loadOrderTypes() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getOrderTypes()
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+
+                    if (body != null && body.success) {
+                        _orderTypes.value = body.data
+                    }
+                }
+
+            } catch (e: Exception) {
+                Log.e("OrderType", "Gagal mengambil order type", e)
             }
         }
     }
