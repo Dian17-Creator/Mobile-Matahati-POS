@@ -361,7 +361,11 @@ fun OlseraCartPanel(
                             icon = Icons.Default.Close,
                             label = "Batal Pesanan",
                             isDestructive = true,
-                            onClick = onClearCart
+                            onClick = {
+                                if (cartItems.isNotEmpty()) {
+                                    onClearCart()
+                                }
+                            }
                         )
                     }
 

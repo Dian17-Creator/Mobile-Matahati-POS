@@ -79,6 +79,7 @@ fun HomeScreen(
     var showPaymentTypeDialog by remember { mutableStateOf(false) }
     var showTableInputDialog by remember { mutableStateOf(false) }
     var showPaymentInputDialog by remember { mutableStateOf(false) }
+    var showCancelDialog by remember { mutableStateOf(false) }
     var selectedDateRange by remember { mutableStateOf("10 Sep 2026") }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
@@ -268,7 +269,9 @@ fun HomeScreen(
                                     showEditDialog = true
                                 },
                                 onDiscountClick = { showDiscountDialog = true },
-                                onClearCart = { cartItems.clear() },
+                                onClearCart = { 
+                                    showCancelDialog = true
+                                },
                                 onCheckoutClick = {
                                     if (cartItems.isNotEmpty()) {
                                         showPaymentInputDialog = true
@@ -765,6 +768,48 @@ fun HomeScreen(
                     paidAmount = amount,
                     nidOutlet = nidOutlet
                 )
+            }
+        )
+    }
+
+    // =============================================================
+    // CANCEL ORDER DIALOG
+    // =============================================================
+    if (showCancelDialog) {
+        CancelOrderDialog(
+            onDismiss = { showCancelDialog = false },
+            onConfirm = { note ->
+                showCancelDialog = false
+                viewModel.submitCancelTransaction(
+                    cartItems = cartItems,
+                    orderType = orderType,
+                    selectedCustomer = selectedCustomer,
+                    cancelNote = note,
+                    nidOutlet = nidOutlet
+                )
+            }
+        )
+    }
+
+    if (viewModel.transactionSuccessMessage != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                viewModel.clearTransactionSuccess() 
+                cartItems.clear()
+                orderType = ""
+                selectedCustomer = null
+            },
+            title = { Text("Berhasil") },
+            text = { Text(viewModel.transactionSuccessMessage ?: "") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    viewModel.clearTransactionSuccess() 
+                    cartItems.clear()
+                    orderType = ""
+                    selectedCustomer = null
+                }) {
+                    Text("Selesai")
+                }
             }
         )
     }
