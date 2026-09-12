@@ -6,7 +6,8 @@ import java.util.Locale
 data class CartItem(
     val product: Product,
     val quantity: Int,
-    val note: String = ""
+    val note: String = "",
+    val sentQuantity: Int = 0 // Track how many items already sent to kitchen/bar
 ) {
     val totalPrice: Double
         get() = product.price * quantity
