@@ -41,7 +41,8 @@ import id.my.matahati.pos.ui.screen.home.components.*
 import id.my.matahati.pos.ui.theme.MobileMatahati_POSTheme
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
-import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun HomeScreen(
@@ -81,7 +82,17 @@ fun HomeScreen(
     var showPaymentInputDialog by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
     var validationWarningMessage by remember { mutableStateOf<String?>(null) }
-    var selectedDateRange by remember { mutableStateOf("10 Sep 2026") }
+    
+    val today = remember { Calendar.getInstance().time }
+    val displaySdf = remember { SimpleDateFormat("dd MMM yyyy", Locale("id", "ID")) }
+    val apiSdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
+    
+    var selectedDateRange by remember { mutableStateOf(displaySdf.format(today)) }
+    var selectedStartDate by remember { mutableStateOf(apiSdf.format(today)) }
+    var selectedEndDate by remember { mutableStateOf(apiSdf.format(today)) }
+    
+    var transaksiSearchQuery by remember { mutableStateOf("") }
+    var selectedHistoryTransaction by remember { mutableStateOf<id.my.matahati.pos.model.TransactionModel?>(null) }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
     
@@ -93,6 +104,17 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadOrderTypes()
+    }
+
+    LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate) {
+        if (currentScreen == "transaksi") {
+            viewModel.fetchTransactionHistory(
+                startDate = selectedStartDate,
+                endDate = selectedEndDate,
+                search = transaksiSearchQuery.ifBlank { null },
+                nidOutlet = nidOutlet
+            )
+        }
     }
 
     // Cart Helper Functions
@@ -196,7 +218,6 @@ fun HomeScreen(
                             }
                         )
                     } else {
-                        var transaksiSearchQuery by remember { mutableStateOf("") }
                         TransaksiHeaderBar(
                             searchQuery = transaksiSearchQuery,
                             onSearchQueryChange = { transaksiSearchQuery = it },
@@ -215,29 +236,15 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize()
             ) { innerPadding ->
                 if (currentScreen == "transaksi") {
-                    Box(
+                    TransactionHistoryList(
+                        transactions = viewModel.transactionHistory,
+                        isLoading = viewModel.isHistoryLoading,
+                        onTransactionClick = { selectedHistoryTransaction = it },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)
-                            .background(Color.White),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "Tidak ada transaksi ditemukan",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFBDBDBD)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Tidak ada transaksi untuk tanggal yang dipilih",
-                                fontSize = 14.sp,
-                                color = Color(0xFFE0E0E0),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
+                            .background(Color.White)
+                    )
                 } else if (viewModel.isLoading && allProducts.isEmpty()) {
                     Box(
                         modifier = Modifier
@@ -552,8 +559,10 @@ fun HomeScreen(
     if (showDateFilterDialog) {
         OlseraDateFilterDialog(
             onDismiss = { showDateFilterDialog = false },
-            onDateSelected = { newDateRange ->
-                selectedDateRange = newDateRange
+            onDateSelected = { result ->
+                selectedDateRange = result.displayLabel
+                selectedStartDate = result.startDate
+                selectedEndDate = result.endDate
             }
         )
     }
@@ -872,6 +881,13 @@ fun HomeScreen(
                 orderType = ""
                 selectedCustomer = null
             }
+        )
+    }
+
+    if (selectedHistoryTransaction != null) {
+        TransactionDetailDialog(
+            transaction = selectedHistoryTransaction!!,
+            onDismiss = { selectedHistoryTransaction = null }
         )
     }
 

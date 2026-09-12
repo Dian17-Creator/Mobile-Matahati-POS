@@ -128,7 +128,7 @@ fun OlseraHeaderBar(
 @Composable
 fun TransaksiHeaderBar(
     onMenuClick: () -> Unit,
-    currentDate: String = "10 Sep 2026",
+    currentDate: String = "",
     onDateClick: () -> Unit = {},
     searchQuery: String = "",
     onSearchQueryChange: (String) -> Unit = {},

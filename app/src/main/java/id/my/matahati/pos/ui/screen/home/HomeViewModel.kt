@@ -19,6 +19,7 @@ import id.my.matahati.pos.model.Voucher
 import id.my.matahati.pos.model.TransactionRequest
 import id.my.matahati.pos.model.TransactionDetailRequest
 import id.my.matahati.pos.model.TransactionData
+import id.my.matahati.pos.model.TransactionModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -40,6 +41,11 @@ class HomeViewModel : ViewModel() {
     var transactionSuccessMessage by mutableStateOf<String?>(null)
     var lastTransaction by mutableStateOf<TransactionData?>(null)
     var showReceiptDialog by mutableStateOf(false)
+
+    // History States
+    val transactionHistory = mutableStateListOf<TransactionModel>()
+    var isHistoryLoading by mutableStateOf(false)
+        private set
 
     var isLoading by mutableStateOf(false)
         private set
@@ -319,5 +325,35 @@ class HomeViewModel : ViewModel() {
         showReceiptDialog = false
         lastTransaction = null
         selectedTable = ""
+    }
+
+    fun fetchTransactionHistory(
+        startDate: String? = null,
+        endDate: String? = null,
+        search: String? = null,
+        nidOutlet: String? = null
+    ) {
+        viewModelScope.launch {
+            isHistoryLoading = true
+            try {
+                val response = RetrofitClient.apiService.getTransactions(
+                    startDate = startDate,
+                    endDate = endDate,
+                    search = search,
+                    outletId = nidOutlet
+                )
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val data = response.body()?.data ?: emptyList()
+                    transactionHistory.clear()
+                    transactionHistory.addAll(data)
+                } else {
+                    Log.e("TransactionHistory", "Gagal: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.e("TransactionHistory", "Error: ${e.message}", e)
+            } finally {
+                isHistoryLoading = false
+            }
+        }
     }
 }

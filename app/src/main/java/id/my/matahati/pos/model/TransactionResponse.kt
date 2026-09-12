@@ -8,6 +8,12 @@ data class TransactionResponse(
     @SerializedName("data") val data: TransactionData?
 )
 
+data class TransactionHistoryResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String,
+    @SerializedName("data") val data: List<TransactionModel>?
+)
+
 data class TransactionData(
     @SerializedName("transaction") val transaction: TransactionModel?,
     @SerializedName("details") val details: List<TransactionDetailModel>?
@@ -28,7 +34,9 @@ data class TransactionModel(
     @SerializedName("npaid") val paidAmount: String,
     @SerializedName("nchange") val changeAmount: String,
     @SerializedName("cstatus") val status: String,
-    @SerializedName("nitem") val itemCount: Int
+    @SerializedName("nitem") val itemCount: Int,
+    @SerializedName("ccancel_note") val cancelNote: String? = null,
+    @SerializedName("details") val details: List<TransactionDetailModel>? = null
 )
 
 data class TransactionDetailModel(
