@@ -36,7 +36,18 @@ data class TransactionModel(
     @SerializedName("cstatus") val status: String,
     @SerializedName("nitem") val itemCount: Int,
     @SerializedName("ccancel_note") val cancelNote: String? = null,
-    @SerializedName("details") val details: List<TransactionDetailModel>? = null
+    @SerializedName("details") val details: List<TransactionDetailModel>? = null,
+    @SerializedName("pos_user") val posUser: PosUserModel? = null
+)
+
+data class PosUserModel(
+    @SerializedName("nid") val id: String,
+    @SerializedName("user") val user: UserInternalModel?
+)
+
+data class UserInternalModel(
+    @SerializedName("nid") val id: String,
+    @SerializedName("cname") val name: String
 )
 
 data class TransactionDetailModel(

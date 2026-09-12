@@ -1,12 +1,8 @@
 package id.my.matahati.pos.ui.screen.home
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -217,7 +213,7 @@ fun HomeScreen(
                                 }
                             }
                         )
-                    } else {
+                    } else if (currentScreen == "transaksi") {
                         TransaksiHeaderBar(
                             searchQuery = transaksiSearchQuery,
                             onSearchQueryChange = { transaksiSearchQuery = it },
@@ -235,314 +231,350 @@ fun HomeScreen(
                 },
                 modifier = Modifier.fillMaxSize()
             ) { innerPadding ->
-                if (currentScreen == "transaksi") {
-                    TransactionHistoryList(
-                        transactions = viewModel.transactionHistory,
-                        isLoading = viewModel.isHistoryLoading,
-                        onTransactionClick = { selectedHistoryTransaction = it },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .background(Color.White)
-                    )
-                } else if (viewModel.isLoading && allProducts.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    if (isTablet) {
-                        // ==========================================
-                        // OLSERA POS TABLET LANDSCAPE SPLIT-PANE
-                        // ==========================================
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding)
-                                .background(Color.White)
-                        ) {
-                            // Left Side: Olsera Order & Cart Panel (40% width)
-                            OlseraCartPanel(
-                                cartItems = cartItems,
-                                customers = viewModel.customers,
-                                orderType = orderType,
-                                onIncreaseQuantity = onIncreaseQuantity,
-                                onDecreaseQuantity = onDecreaseQuantity,
-                                onItemClick = { item ->
-                                    selectedCartItem = item
-                                    showEditDialog = true
-                                },
-                                onDiscountClick = { showDiscountDialog = true },
-                                onClearCart = { 
-                                    showCancelDialog = true
-                                },
-                                onCheckoutClick = {
-                                    if (cartItems.isNotEmpty()) {
-                                        if (orderType.isBlank()) {
-                                            validationWarningMessage = "Silahkan pilih tipe pesanan"
-                                        } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
-                                            validationWarningMessage = "Silahkan isi nomor meja"
-                                        } else if (selectedCustomer == null) {
-                                            validationWarningMessage = "Silahkan pilih customer"
-                                        } else {
-                                            showPaymentInputDialog = true
-                                        }
-                                    }
-                                },
-                                selectedCustomerName = selectedCustomer?.name ?: "",
-                                onCustomerSelected = { customer ->
-                                    selectedCustomer = customer
-                                },
-                                selectedTable = viewModel.selectedTable,
-                                cashierName = userName,
-                                modifier = Modifier
-                                    .weight(0.40f)
-                                    .fillMaxHeight()
-                            )
-
-                            VerticalDivider(color = DividerDefaults.color.copy(alpha = 0.5f))
-
-                            // Right Side: Dynamic Content based on selectedRightTab (Produk, Barcode, Custom)
-                            Column(
-                                modifier = Modifier
-                                    .weight(0.60f)
-                                    .fillMaxHeight()
-                                    .background(Color.White)
-                            ) {
-                                when (selectedRightTab) {
-                                    "Produk" -> {
-                                        // Top sub-bar for Search and Category Filter
-                                        Surface(
-                                            color = Color(0xFF1E88E5),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                // Search Bar (Left)
-                                                Surface(
-                                                    shape = RoundedCornerShape(20.dp),
-                                                    color = Color.White.copy(alpha = 0.15f),
-                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-                                                    modifier = Modifier
-                                                        .weight(1f)
-                                                        .height(38.dp)
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .padding(horizontal = 12.dp),
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Search,
-                                                            contentDescription = "Cari",
-                                                            tint = Color.White,
-                                                            modifier = Modifier.size(16.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        BasicTextField(
-                                                            value = searchQuery,
-                                                            onValueChange = { searchQuery = it },
-                                                            singleLine = true,
-                                                            textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium),
-                                                            cursorBrush = SolidColor(Color.White),
-                                                            decorationBox = { innerTextField ->
-                                                                Box(
-                                                                    contentAlignment = Alignment.CenterStart
-                                                                ) {
-                                                                    if (searchQuery.isEmpty()) {
-                                                                        Text(
-                                                                            text = "Cari produk...",
-                                                                            color = Color.White.copy(alpha = 0.6f),
-                                                                            fontSize = 13.sp
-                                                                        )
-                                                                    }
-                                                                    innerTextField()
-                                                                }
-                                                            },
-                                                            modifier = Modifier.fillMaxWidth()
-                                                        )
-                                                    }
-                                                }
-
-                                                Spacer(modifier = Modifier.width(12.dp))
-
-                                                // Category Dropdown Filter (Right)
-                                                Box {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(16.dp),
-                                                        color = Color.White.copy(alpha = 0.18f),
-                                                        modifier = Modifier.clickable { isCategoryDropdownExpanded = true }
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = selectedCategoryName,
-                                                                color = Color.White,
-                                                                fontSize = 12.sp,
-                                                                fontWeight = FontWeight.SemiBold,
-                                                                maxLines = 1,
-                                                                overflow = TextOverflow.Ellipsis
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Icon(
-                                                                imageVector = Icons.Default.ArrowDropDown,
-                                                                contentDescription = "Pilih Kategori",
-                                                                tint = Color.White,
-                                                                modifier = Modifier.size(18.dp)
-                                                            )
-                                                        }
-                                                    }
-
-                                                    DropdownMenu(
-                                                        expanded = isCategoryDropdownExpanded,
-                                                        onDismissRequest = { isCategoryDropdownExpanded = false }
-                                                    ) {
-                                                        categories.forEach { category ->
-                                                            DropdownMenuItem(
-                                                                text = { Text("${category.iconEmoji} ${category.name}") },
-                                                                onClick = {
-                                                                    selectedCategoryId = category.id
-                                                                    isCategoryDropdownExpanded = false
-                                                                }
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        // Product Grid
-                                        OlseraProductGrid(
-                                            products = filteredProducts,
-                                            onAddToCart = onAddToCart,
-                                            columnsCount = 4,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .fillMaxWidth()
-                                        )
-                                    }
-                                    "Barcode" -> {
-                                        Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "Halaman Barcode",
-                                                fontSize = 20.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.DarkGray
-                                            )
-                                        }
-                                    }
-                                    "Custom" -> {
-                                        Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "Halaman Custom",
-                                                fontSize = 20.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.DarkGray
-                                            )
-                                        }
-                                    }
+                AnimatedContent(
+                    targetState = currentScreen,
+                    transitionSpec = {
+                        if (targetState == "transaksi_detail") {
+                            slideInHorizontally(initialOffsetX = { it }) + fadeIn() togetherWith
+                            slideOutHorizontally(targetOffsetX = { -it / 2 }) + fadeOut()
+                        } else if (initialState == "transaksi_detail") {
+                            // Keluar dari detail dibuat langsung menghilang tanpa animasi geser
+                            EnterTransition.None togetherWith ExitTransition.None
+                        } else {
+                            fadeIn() togetherWith fadeOut()
+                        }
+                    },
+                    label = "screen_transition"
+                ) { targetScreen ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        when (targetScreen) {
+                            "transaksi" -> {
+                                TransactionHistoryList(
+                                    transactions = viewModel.transactionHistory,
+                                    isLoading = viewModel.isHistoryLoading,
+                                    onTransactionClick = { 
+                                        selectedHistoryTransaction = it
+                                        currentScreen = "transaksi_detail"
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(innerPadding)
+                                        .background(Color.White)
+                                )
+                            }
+                            "transaksi_detail" -> {
+                                if (selectedHistoryTransaction != null) {
+                                    TransactionDetailScreen(
+                                        transaction = selectedHistoryTransaction!!,
+                                        onBack = { currentScreen = "transaksi" },
+                                        modifier = Modifier.fillMaxSize()
+                                    )
                                 }
                             }
-                        }
-                    } else {
-                        // ==========================================
-                        // PHONE PORTRAIT / SINGLE COLUMN LAYOUT
-                        // ==========================================
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding)
-                                .background(Color.White)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                when (selectedRightTab) {
-                                    "Produk" -> {
-                                        OlseraProductGrid(
-                                            products = filteredProducts,
-                                            onAddToCart = onAddToCart,
-                                            columnsCount = 2,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                    "Barcode" -> {
-                                        Box(
-                                            modifier = Modifier.weight(1f).fillMaxWidth(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "Halaman Barcode",
-                                                fontSize = 20.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.DarkGray
-                                            )
-                                        }
-                                    }
-                                    "Custom" -> {
-                                        Box(
-                                            modifier = Modifier.weight(1f).fillMaxWidth(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "Halaman Custom",
-                                                fontSize = 20.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.DarkGray
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Bottom Green Pay Bar
-                                Surface(
-                                    color = OlseraGreenPay,
-                                    shape = RoundedCornerShape(0.dp),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = {
-                                        if (cartItems.isNotEmpty()) {
-                                            if (orderType.isBlank()) {
-                                                validationWarningMessage = "Silahkan pilih tipe pesanan"
-                                            } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
-                                                validationWarningMessage = "Silahkan isi nomor meja"
-                                            } else if (selectedCustomer == null) {
-                                                validationWarningMessage = "Silahkan pilih customer"
-                                            } else {
-                                                showPaymentInputDialog = true
-                                            }
-                                        }
-                                    }
-                                ) {
+                            else -> {
+                                // Default POS Screen
+                                if (viewModel.isLoading && allProducts.isEmpty()) {
                                     Box(
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 14.dp),
+                                            .fillMaxSize()
+                                            .padding(innerPadding),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(
-                                            text = "Rp ${formatRawCurrency(cartTotalAmount)}",
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = Color.White
-                                        )
+                                        CircularProgressIndicator()
+                                    }
+                                } else {
+                                    if (isTablet) {
+                                        // ==========================================
+                                        // OLSERA POS TABLET LANDSCAPE SPLIT-PANE
+                                        // ==========================================
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(innerPadding)
+                                                .background(Color.White)
+                                        ) {
+                                            // Left Side: Olsera Order & Cart Panel (40% width)
+                                            OlseraCartPanel(
+                                                cartItems = cartItems,
+                                                customers = viewModel.customers,
+                                                orderType = orderType,
+                                                onIncreaseQuantity = onIncreaseQuantity,
+                                                onDecreaseQuantity = onDecreaseQuantity,
+                                                onItemClick = { item ->
+                                                    selectedCartItem = item
+                                                    showEditDialog = true
+                                                },
+                                                onDiscountClick = { showDiscountDialog = true },
+                                                onClearCart = { 
+                                                    showCancelDialog = true
+                                                },
+                                                onCheckoutClick = {
+                                                    if (cartItems.isNotEmpty()) {
+                                                        if (orderType.isBlank()) {
+                                                            validationWarningMessage = "Silahkan pilih tipe pesanan"
+                                                        } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
+                                                            validationWarningMessage = "Silahkan isi nomor meja"
+                                                        } else if (selectedCustomer == null) {
+                                                            validationWarningMessage = "Silahkan pilih customer"
+                                                        } else {
+                                                            showPaymentInputDialog = true
+                                                        }
+                                                    }
+                                                },
+                                                selectedCustomerName = selectedCustomer?.name ?: "",
+                                                onCustomerSelected = { customer ->
+                                                    selectedCustomer = customer
+                                                },
+                                                selectedTable = viewModel.selectedTable,
+                                                cashierName = userName,
+                                                modifier = Modifier
+                                                    .weight(0.40f)
+                                                    .fillMaxHeight()
+                                            )
+
+                                            VerticalDivider(color = DividerDefaults.color.copy(alpha = 0.5f))
+
+                                            // Right Side: Dynamic Content based on selectedRightTab (Produk, Barcode, Custom)
+                                            Column(
+                                                modifier = Modifier
+                                                    .weight(0.60f)
+                                                    .fillMaxHeight()
+                                                    .background(Color.White)
+                                            ) {
+                                                when (selectedRightTab) {
+                                                    "Produk" -> {
+                                                        // Top sub-bar for Search and Category Filter
+                                                        Surface(
+                                                            color = Color(0xFF1E88E5),
+                                                            modifier = Modifier.fillMaxWidth()
+                                                        ) {
+                                                            Row(
+                                                                modifier = Modifier
+                                                                    .fillMaxWidth()
+                                                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                // Search Bar (Left)
+                                                                Surface(
+                                                                    shape = RoundedCornerShape(20.dp),
+                                                                    color = Color.White.copy(alpha = 0.15f),
+                                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                                                                    modifier = Modifier
+                                                                        .weight(1f)
+                                                                        .height(38.dp)
+                                                                ) {
+                                                                    Row(
+                                                                        modifier = Modifier
+                                                                            .fillMaxSize()
+                                                                            .padding(horizontal = 12.dp),
+                                                                        verticalAlignment = Alignment.CenterVertically
+                                                                    ) {
+                                                                        Icon(
+                                                                            imageVector = Icons.Default.Search,
+                                                                            contentDescription = "Cari",
+                                                                            tint = Color.White,
+                                                                            modifier = Modifier.size(16.dp)
+                                                                        )
+                                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                                        BasicTextField(
+                                                                            value = searchQuery,
+                                                                            onValueChange = { searchQuery = it },
+                                                                            singleLine = true,
+                                                                            textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                                                                            cursorBrush = SolidColor(Color.White),
+                                                                            decorationBox = { innerTextField ->
+                                                                                Box(
+                                                                                    contentAlignment = Alignment.CenterStart
+                                                                                ) {
+                                                                                    if (searchQuery.isEmpty()) {
+                                                                                        Text(
+                                                                                            text = "Cari produk...",
+                                                                                            color = Color.White.copy(alpha = 0.6f),
+                                                                                            fontSize = 13.sp
+                                                                                        )
+                                                                                    }
+                                                                                    innerTextField()
+                                                                                }
+                                                                            },
+                                                                            modifier = Modifier.fillMaxWidth()
+                                                                        )
+                                                                    }
+                                                                }
+
+                                                                Spacer(modifier = Modifier.width(12.dp))
+
+                                                                // Category Dropdown Filter (Right)
+                                                                Box {
+                                                                    Surface(
+                                                                        shape = RoundedCornerShape(16.dp),
+                                                                        color = Color.White.copy(alpha = 0.18f),
+                                                                        modifier = Modifier.clickable { isCategoryDropdownExpanded = true }
+                                                                    ) {
+                                                                        Row(
+                                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                                            verticalAlignment = Alignment.CenterVertically
+                                                                        ) {
+                                                                            Text(
+                                                                                text = selectedCategoryName,
+                                                                                color = Color.White,
+                                                                                fontSize = 12.sp,
+                                                                                fontWeight = FontWeight.SemiBold,
+                                                                                maxLines = 1,
+                                                                                overflow = TextOverflow.Ellipsis
+                                                                            )
+                                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                                            Icon(
+                                                                                imageVector = Icons.Default.ArrowDropDown,
+                                                                                contentDescription = "Pilih Kategori",
+                                                                                tint = Color.White,
+                                                                                modifier = Modifier.size(18.dp)
+                                                                            )
+                                                                        }
+                                                                    }
+
+                                                                    DropdownMenu(
+                                                                        expanded = isCategoryDropdownExpanded,
+                                                                        onDismissRequest = { isCategoryDropdownExpanded = false }
+                                                                    ) {
+                                                                        categories.forEach { category ->
+                                                                            DropdownMenuItem(
+                                                                                text = { Text("${category.iconEmoji} ${category.name}") },
+                                                                                onClick = {
+                                                                                    selectedCategoryId = category.id
+                                                                                    isCategoryDropdownExpanded = false
+                                                                                }
+                                                                            )
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+
+                                                        // Product Grid
+                                                        OlseraProductGrid(
+                                                            products = filteredProducts,
+                                                            onAddToCart = onAddToCart,
+                                                            columnsCount = 4,
+                                                            modifier = Modifier
+                                                                .weight(1f)
+                                                                .fillMaxWidth()
+                                                        )
+                                                    }
+                                                    "Barcode" -> {
+                                                        Box(
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Text(
+                                                                text = "Halaman Barcode",
+                                                                fontSize = 20.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color.DarkGray
+                                                            )
+                                                        }
+                                                    }
+                                                    "Custom" -> {
+                                                        Box(
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Text(
+                                                                text = "Halaman Custom",
+                                                                fontSize = 20.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color.DarkGray
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        // ==========================================
+                                        // PHONE PORTRAIT / SINGLE COLUMN LAYOUT
+                                        // ==========================================
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(innerPadding)
+                                                .background(Color.White)
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.fillMaxSize()
+                                            ) {
+                                                when (selectedRightTab) {
+                                                    "Produk" -> {
+                                                        OlseraProductGrid(
+                                                            products = filteredProducts,
+                                                            onAddToCart = onAddToCart,
+                                                            columnsCount = 2,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                    }
+                                                    "Barcode" -> {
+                                                        Box(
+                                                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Text(
+                                                                text = "Halaman Barcode",
+                                                                fontSize = 20.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color.DarkGray
+                                                            )
+                                                        }
+                                                    }
+                                                    "Custom" -> {
+                                                        Box(
+                                                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Text(
+                                                                text = "Halaman Custom",
+                                                                fontSize = 20.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color.DarkGray
+                                                            )
+                                                        }
+                                                    }
+                                                }
+
+                                                // Bottom Green Pay Bar
+                                                Surface(
+                                                    color = OlseraGreenPay,
+                                                    shape = RoundedCornerShape(0.dp),
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    onClick = {
+                                                        if (cartItems.isNotEmpty()) {
+                                                            if (orderType.isBlank()) {
+                                                                validationWarningMessage = "Silahkan pilih tipe pesanan"
+                                                            } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
+                                                                validationWarningMessage = "Silahkan isi nomor meja"
+                                                            } else if (selectedCustomer == null) {
+                                                                validationWarningMessage = "Silahkan pilih customer"
+                                                            } else {
+                                                                showPaymentInputDialog = true
+                                                            }
+                                                        }
+                                                    }
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(vertical = 14.dp),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Text(
+                                                            text = "Rp ${formatRawCurrency(cartTotalAmount)}",
+                                                            fontSize = 18.sp,
+                                                            fontWeight = FontWeight.ExtraBold,
+                                                            color = Color.White
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -884,12 +916,7 @@ fun HomeScreen(
         )
     }
 
-    if (selectedHistoryTransaction != null) {
-        TransactionDetailDialog(
-            transaction = selectedHistoryTransaction!!,
-            onDismiss = { selectedHistoryTransaction = null }
-        )
-    }
+
 
     if (viewModel.isSubmitting) {
         // Loading Overlay
