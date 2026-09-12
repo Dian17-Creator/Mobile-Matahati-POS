@@ -18,11 +18,17 @@ import androidx.compose.ui.window.Dialog
 import java.text.SimpleDateFormat
 import java.util.*
 
+data class DateFilterResult(
+    val displayLabel: String,
+    val startDate: String,
+    val endDate: String
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OlseraDateFilterDialog(
     onDismiss: () -> Unit,
-    onDateSelected: (String) -> Unit
+    onDateSelected: (DateFilterResult) -> Unit
 ) {
     val options = listOf("Hari Ini", "Kemarin", "Bulan Ini", "Bulan Lalu", "Pilih Tanggal")
     var showDatePicker by remember { mutableStateOf(false) }
@@ -34,8 +40,13 @@ fun OlseraDateFilterDialog(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val sdf = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
-                        onDateSelected(sdf.format(Date(millis)))
+                        val displaySdf = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
+                        val apiSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                        val date = Date(millis)
+                        val formatted = displaySdf.format(date)
+                        val apiDate = apiSdf.format(date)
+                        
+                        onDateSelected(DateFilterResult(formatted, apiDate, apiDate))
                         onDismiss()
                     }
                     showDatePicker = false
@@ -133,19 +144,22 @@ fun OlseraDateFilterDialog(
     }
 }
 
-private fun calculateDateRange(option: String): String {
+private fun calculateDateRange(option: String): DateFilterResult {
     val calendar = Calendar.getInstance()
     val localeId = Locale("id", "ID")
-    val sdf = SimpleDateFormat("dd MMM yyyy", localeId)
-    val sdfMonth = SimpleDateFormat("dd MMM", localeId)
+    val displaySdf = SimpleDateFormat("dd MMM yyyy", localeId)
+    val displaySdfMonth = SimpleDateFormat("dd MMM", localeId)
+    val apiSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
     return when (option) {
         "Hari Ini" -> {
-            sdf.format(calendar.time)
+            val dateStr = apiSdf.format(calendar.time)
+            DateFilterResult(displaySdf.format(calendar.time), dateStr, dateStr)
         }
         "Kemarin" -> {
             calendar.add(Calendar.DATE, -1)
-            sdf.format(calendar.time)
+            val dateStr = apiSdf.format(calendar.time)
+            DateFilterResult(displaySdf.format(calendar.time), dateStr, dateStr)
         }
         "Bulan Ini" -> {
             val start = calendar.clone() as Calendar
@@ -154,7 +168,11 @@ private fun calculateDateRange(option: String): String {
             val end = calendar.clone() as Calendar
             end.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
             
-            "${sdfMonth.format(start.time)} - ${sdf.format(end.time)}"
+            DateFilterResult(
+                "${displaySdfMonth.format(start.time)} - ${displaySdf.format(end.time)}",
+                apiSdf.format(start.time),
+                apiSdf.format(end.time)
+            )
         }
         "Bulan Lalu" -> {
             calendar.add(Calendar.MONTH, -1)
@@ -164,8 +182,15 @@ private fun calculateDateRange(option: String): String {
             val end = calendar.clone() as Calendar
             end.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
             
-            "${sdfMonth.format(start.time)} - ${sdf.format(end.time)}"
+            DateFilterResult(
+                "${displaySdfMonth.format(start.time)} - ${displaySdf.format(end.time)}",
+                apiSdf.format(start.time),
+                apiSdf.format(end.time)
+            )
         }
-        else -> sdf.format(calendar.time)
+        else -> {
+            val dateStr = apiSdf.format(calendar.time)
+            DateFilterResult(displaySdf.format(calendar.time), dateStr, dateStr)
+        }
     }
 }

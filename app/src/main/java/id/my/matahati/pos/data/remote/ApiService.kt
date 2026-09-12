@@ -37,4 +37,12 @@ interface ApiService {
 
     @POST("api/pos/transactions")
     suspend fun submitTransaction(@Body request: id.my.matahati.pos.model.TransactionRequest): Response<id.my.matahati.pos.model.TransactionResponse>
+
+    @GET("api/pos/transactions")
+    suspend fun getTransactions(
+        @retrofit2.http.Query("start_date") startDate: String? = null,
+        @retrofit2.http.Query("end_date") endDate: String? = null,
+        @retrofit2.http.Query("search") search: String? = null,
+        @retrofit2.http.Query("nid_outlet") outletId: String? = null
+    ): Response<id.my.matahati.pos.model.TransactionHistoryResponse>
 }
