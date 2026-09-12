@@ -134,8 +134,13 @@ fun HomeScreen(
     val onDecreaseQuantity: (CartItem) -> Unit = { item ->
         val index = cartItems.indexOfFirst { it.product.id == item.product.id }
         if (index >= 0) {
-            if (item.quantity > 1) {
-                cartItems[index] = item.copy(quantity = item.quantity - 1)
+            val currentItem = cartItems[index]
+            if (currentItem.quantity > 1) {
+                val newQty = currentItem.quantity - 1
+                cartItems[index] = currentItem.copy(
+                    quantity = newQty,
+                    sentQuantity = currentItem.sentQuantity.coerceAtMost(newQty)
+                )
             } else {
                 cartItems.removeAt(index)
             }
@@ -145,7 +150,12 @@ fun HomeScreen(
     val onUpdateCartItem: (String, Int, String) -> Unit = { productId, newQty, newNote ->
         val index = cartItems.indexOfFirst { it.product.id == productId }
         if (index >= 0) {
-            cartItems[index] = cartItems[index].copy(quantity = newQty, note = newNote)
+            val currentItem = cartItems[index]
+            cartItems[index] = currentItem.copy(
+                quantity = newQty,
+                note = newNote,
+                sentQuantity = currentItem.sentQuantity.coerceAtMost(newQty)
+            )
         }
     }
 
@@ -267,6 +277,9 @@ fun HomeScreen(
                                     TransactionDetailScreen(
                                         transaction = selectedHistoryTransaction!!,
                                         onBack = { currentScreen = "transaksi" },
+                                        onSendToKitchen = {
+                                            viewModel.openKitchenPrintDialogFromHistory(selectedHistoryTransaction!!)
+                                        },
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
@@ -307,6 +320,9 @@ fun HomeScreen(
                                                 onDiscountClick = { showDiscountDialog = true },
                                                 onClearCart = { 
                                                     showCancelDialog = true
+                                                },
+                                                onSendToKitchenClick = {
+                                                    viewModel.openKitchenPrintDialog(cartItems)
                                                 },
                                                 onCheckoutClick = {
                                                     if (cartItems.isNotEmpty()) {
@@ -916,7 +932,34 @@ fun HomeScreen(
         )
     }
 
+    // =============================================================
+    // KITCHEN PRINT DIALOGS
+    // =============================================================
+    if (viewModel.showKitchenPrintDialog) {
+        KitchenPrintSelectionDialog(
+            changesCount = viewModel.printChangesCount,
+            availableStations = viewModel.availableStations,
+            selectedStations = viewModel.selectedStations,
+            onToggleStation = { viewModel.toggleStationSelection(it) },
+            onConfirmPrint = { type ->
+                viewModel.onConfirmKitchenPrint(
+                    type = type,
+                    onUpdateActiveCart = { updatedList ->
+                        cartItems.clear()
+                        cartItems.addAll(updatedList)
+                    }
+                )
+            },
+            onDismiss = { viewModel.showKitchenPrintDialog = false }
+        )
+    }
 
+    if (viewModel.showSimulatedReceipt) {
+        SimulatedReceiptDialog(
+            tickets = viewModel.receiptTickets,
+            onDismiss = { viewModel.closeSimulatedReceipt() }
+        )
+    }
 
     if (viewModel.isSubmitting) {
         // Loading Overlay

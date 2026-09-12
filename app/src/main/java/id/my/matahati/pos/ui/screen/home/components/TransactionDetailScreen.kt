@@ -21,11 +21,13 @@ import androidx.compose.ui.unit.sp
 import id.my.matahati.pos.model.TransactionModel
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.runtime.*
 
 @Composable
 fun TransactionDetailScreen(
     transaction: TransactionModel,
     onBack: () -> Unit,
+    onSendToKitchen: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
@@ -213,7 +215,23 @@ fun TransactionDetailScreen(
                             }
                         }
 
-                        // Catatan Batal (White background like Item List or separate)
+                        // Jumlah Item row (White background like OlseraCartPanel)
+                        Surface(
+                            color = Color.White,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Jumlah Item: ${transaction.itemCount}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.DarkGray,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+
+                        // Catatan Batal (White background)
                         if (isCancelled && !transaction.cancelNote.isNullOrBlank()) {
                             Surface(
                                 color = Color.White,
@@ -284,19 +302,48 @@ fun TransactionDetailScreen(
                     )
                 }
 
-                // Option Button Right
-                Surface(
-                    color = Color(0xFF1565C0),
-                    modifier = Modifier
-                        .width(64.dp)
-                        .fillMaxHeight()
-                        .clickable { /* Opsi action */ }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.List,
-                            contentDescription = "Opsi",
-                            tint = Color.White
+                // Option Button Right with Pop-up Menu
+                var showOptionsMenu by remember { mutableStateOf(false) }
+
+                Box {
+                    Surface(
+                        color = Color(0xFF1565C0),
+                        modifier = Modifier
+                            .width(64.dp)
+                            .fillMaxHeight()
+                            .clickable { showOptionsMenu = true }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.List,
+                                contentDescription = "Opsi",
+                                tint = Color.White
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showOptionsMenu,
+                        onDismissRequest = { showOptionsMenu = false },
+                        modifier = Modifier.background(Color.White)
+                    ) {
+                        DropdownMenuItem(
+                            text = { 
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Restaurant,
+                                        contentDescription = null,
+                                        tint = Color(0xFF1565C0),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text("Kirim ke Dapur", color = Color.DarkGray)
+                                }
+                            },
+                            onClick = {
+                                showOptionsMenu = false
+                                onSendToKitchen()
+                            }
                         )
                     }
                 }
@@ -334,5 +381,3 @@ private fun InfoIconRow(
         Text(text = text, fontSize = 14.sp, color = textColor)
     }
 }
-
-

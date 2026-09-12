@@ -75,6 +75,7 @@ fun OlseraCartPanel(
     onDiscountClick: () -> Unit = {},
     onClearCart: () -> Unit,
     onCheckoutClick: () -> Unit,
+    onSendToKitchenClick: () -> Unit = {},
     selectedCustomerName: String,
     onCustomerSelected: (Customer) -> Unit,
     selectedTable: String = "",
@@ -357,7 +358,7 @@ fun OlseraCartPanel(
                         QuickActionButton(icon = Icons.Default.LocalShipping, label = "Ongkos Kirim", onClick = {})
                         QuickActionButton(icon = Icons.Default.ChatBubbleOutline, label = "Catatan Pesanan", onClick = {})
                         QuickActionButton(icon = Icons.Default.Person, label = "Dilayani Oleh", onClick = {})
-                        QuickActionButton(icon = Icons.Default.Restaurant, label = "Kirim ke Dapur", onClick = {})
+                        QuickActionButton(icon = Icons.Default.Restaurant, label = "Kirim ke Dapur", onClick = onSendToKitchenClick)
                         QuickActionButton(
                             icon = Icons.Default.Close,
                             label = "Batal Pesanan",

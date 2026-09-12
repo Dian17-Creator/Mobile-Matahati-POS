@@ -34,7 +34,8 @@ data class ProductDto(
             stock = 99,
             iconEmoji = "🍽️",
             imageUrl = cphotos,
-            isAvailable = cstatus?.lowercase() != "inactive"
+            isAvailable = cstatus?.lowercase() != "inactive",
+            stationName = if (cname.lowercase().contains("tea") || cname.lowercase().contains("kopi") || cname.lowercase().contains("ice")) "BAR" else "DAPUR"
         )
     }
 }
@@ -47,7 +48,8 @@ data class Product(
     val stock: Int,
     val iconEmoji: String = "📦",
     val imageUrl: String? = null,
-    val isAvailable: Boolean = true
+    val isAvailable: Boolean = true,
+    val stationName: String = "DAPUR" // Default station
 ) {
     val formattedPrice: String
         get() {

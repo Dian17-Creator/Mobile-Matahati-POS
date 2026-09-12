@@ -42,6 +42,17 @@ class HomeViewModel : ViewModel() {
     var lastTransaction by mutableStateOf<TransactionData?>(null)
     var showReceiptDialog by mutableStateOf(false)
 
+    // Kitchen Print States
+    var showKitchenPrintDialog by mutableStateOf(false)
+    var showSimulatedReceipt by mutableStateOf(false)
+    var printChangesCount by mutableStateOf(0)
+    var availableStations = mutableStateListOf<String>()
+    var selectedStations = mutableStateListOf<String>()
+    var receiptTickets = mutableMapOf<String, List<id.my.matahati.pos.model.CartItem>>()
+    var currentPrintType by mutableStateOf("")
+    var isPrintingFromHistory by mutableStateOf(false)
+    private var itemsToPrint: List<id.my.matahati.pos.model.CartItem> = emptyList()
+
     // History States
     val transactionHistory = mutableStateListOf<TransactionModel>()
     var isHistoryLoading by mutableStateOf(false)
@@ -325,6 +336,116 @@ class HomeViewModel : ViewModel() {
         showReceiptDialog = false
         lastTransaction = null
         selectedTable = ""
+    }
+
+    // Kitchen Printing logic
+    fun openKitchenPrintDialog(items: List<id.my.matahati.pos.model.CartItem>, isHistory: Boolean = false) {
+        if (items.isEmpty()) return
+        
+        itemsToPrint = items
+        isPrintingFromHistory = isHistory
+        
+        var totalChanges = 0
+        val stations = mutableSetOf<String>()
+        
+        items.forEach { item ->
+            val delta = if (isHistory) item.quantity else (item.quantity - item.sentQuantity).coerceAtLeast(0)
+            totalChanges += delta
+            stations.add(item.product.stationName)
+        }
+        
+        printChangesCount = totalChanges
+        availableStations.clear()
+        availableStations.addAll(stations)
+        selectedStations.clear()
+        selectedStations.addAll(stations)
+        
+        showKitchenPrintDialog = true
+    }
+
+    fun openKitchenPrintDialogFromHistory(transaction: TransactionModel) {
+        val items = transaction.details?.map { detail ->
+            id.my.matahati.pos.model.CartItem(
+                product = Product(
+                    id = detail.productId,
+                    name = detail.productName,
+                    price = detail.price.toDoubleOrNull() ?: 0.0,
+                    categoryId = "1",
+                    stock = 0,
+                    stationName = if (detail.productName.lowercase().contains("tea") || 
+                                     detail.productName.lowercase().contains("kopi") || 
+                                     detail.productName.lowercase().contains("ice")) "BAR" else "DAPUR"
+                ),
+                quantity = detail.quantity,
+                note = detail.note ?: "",
+                sentQuantity = 0 // History is always "new" to the printer
+            )
+        } ?: emptyList()
+        
+        openKitchenPrintDialog(items, isHistory = true)
+    }
+
+    fun onConfirmKitchenPrint(
+        type: String,
+        onUpdateActiveCart: (List<id.my.matahati.pos.model.CartItem>) -> Unit
+    ) {
+        val tickets = mutableMapOf<String, MutableList<id.my.matahati.pos.model.CartItem>>()
+        val itemsToProcess = itemsToPrint.toMutableList()
+        
+        if (type == "PERUBAHAN") {
+            itemsToProcess.forEachIndexed { index, item ->
+                val delta = if (isPrintingFromHistory) item.quantity else (item.quantity - item.sentQuantity).coerceAtLeast(0)
+                if (delta > 0 && selectedStations.contains(item.product.stationName)) {
+                    val station = item.product.stationName
+                    if (!tickets.containsKey(station)) tickets[station] = mutableListOf()
+                    tickets[station]?.add(item.copy(quantity = delta))
+                    
+                    if (!isPrintingFromHistory) {
+                        itemsToProcess[index] = item.copy(sentQuantity = item.quantity)
+                    }
+                }
+            }
+            if (!isPrintingFromHistory) {
+                onUpdateActiveCart(itemsToProcess)
+            }
+        } else if (type == "ULANG") {
+            itemsToProcess.forEachIndexed { index, item ->
+                if (selectedStations.contains(item.product.stationName)) {
+                    val station = item.product.stationName
+                    if (!tickets.containsKey(station)) tickets[station] = mutableListOf()
+                    tickets[station]?.add(item)
+                    
+                    if (!isPrintingFromHistory) {
+                        itemsToProcess[index] = item.copy(sentQuantity = item.quantity)
+                    }
+                }
+            }
+            if (!isPrintingFromHistory) {
+                onUpdateActiveCart(itemsToProcess)
+            }
+        }
+        
+        if (tickets.isNotEmpty()) {
+            receiptTickets = tickets.mapValues { it.value.toList() }.toMutableMap()
+            currentPrintType = if (type == "PERUBAHAN") "PERUBAHAN PESANAN" else "CETAK ULANG PESANAN"
+            showKitchenPrintDialog = false
+            showSimulatedReceipt = true
+        } else {
+            showKitchenPrintDialog = false
+        }
+    }
+
+    fun toggleStationSelection(station: String) {
+        if (selectedStations.contains(station)) {
+            selectedStations.remove(station)
+        } else {
+            selectedStations.add(station)
+        }
+    }
+
+    fun closeSimulatedReceipt() {
+        showSimulatedReceipt = false
+        receiptTickets.clear()
     }
 
     fun fetchTransactionHistory(
