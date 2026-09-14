@@ -40,6 +40,10 @@ fun ReceiptDialog(
         return formatter.format(str.toDoubleOrNull() ?: 0.0)
     }
 
+    fun formatDateTime(dateTime: String): String {
+        return dateTime.replace("T", " ").replace(".000000Z", "").replace("Z", "")
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(8.dp),
@@ -66,7 +70,7 @@ fun ReceiptDialog(
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     TextRow("No. Trx", trx.transactionNo)
-                    TextRow("Waktu", trx.transactionDate) // Simplified
+                    TextRow("Waktu", formatDateTime(trx.transactionDate))
                     TextRow("Kasir", cashierName)
                     TextRow("Order", trx.orderType)
                     if (trx.customerName != null) {
