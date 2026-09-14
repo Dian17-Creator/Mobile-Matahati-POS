@@ -50,8 +50,12 @@ fun TransactionHistoryList(
     // Grouping by date (Safe for API 24)
     val grouped = transactions.groupBy {
         try {
-            // Simple split for "2026-09-11T..." -> "2026-09-11"
-            it.transactionDate.substringBefore("T")
+            // Support both "2026-09-11T..." and "2026-09-11 ..."
+            if (it.transactionDate.length >= 10) {
+                it.transactionDate.substring(0, 10)
+            } else {
+                it.transactionDate
+            }
         } catch (_: Exception) {
             "Unknown"
         }
@@ -94,10 +98,14 @@ fun TransactionItemCard(
     val isCancelled = transaction.status == "CANCELLED"
     
     val timeStr = try {
-        // "2026-09-11T13:53:34.000000Z" -> "13:53"
-        val timePart = transaction.transactionDate.substringAfter("T").substringBefore(":")
-        val minutePart = transaction.transactionDate.substringAfter("T").substringAfter(":").substringBefore(":")
-        "$timePart:$minutePart"
+        // Handle "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss"
+        val dateTime = transaction.transactionDate.replace("T", " ")
+        if (dateTime.contains(" ")) {
+            val timePart = dateTime.substringAfter(" ") // HH:mm:ss
+            timePart.substring(0, 5) // HH:mm
+        } else {
+            ""
+        }
     } catch (e: Exception) {
         ""
     }

@@ -31,6 +31,10 @@ class EscPosFormatter(private val cols: Int = 32) {
             return formatter.format(str.toDoubleOrNull() ?: 0.0)
         }
 
+        fun formatDateTime(dateTime: String): String {
+            return dateTime.replace("T", " ").replace(".000000Z", "").replace("Z", "")
+        }
+
         val out = mutableListOf<Byte>()
 
         // 1. Initialize & Center Alignment
@@ -48,7 +52,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         // 3. Info Transaksi (Left Aligned)
         out.addAll(ALIGN_LEFT.toList())
         out.addAll(formatLabelValue("No. Trx", trx.transactionNo).toList())
-        out.addAll(formatLabelValue("Waktu", trx.transactionDate).toList())
+        out.addAll(formatLabelValue("Waktu", formatDateTime(trx.transactionDate)).toList())
         out.addAll(formatLabelValue("Kasir", cashierName).toList())
         out.addAll(formatLabelValue("Order", trx.orderType).toList())
         if (trx.customerName != null) {
