@@ -3,8 +3,6 @@ package id.my.matahati.pos.ui.screen.home.components
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -64,13 +62,11 @@ fun ReceiptDialog(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            val scrollState = rememberScrollState()
             Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .verticalScroll(scrollState),
+                modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Header (Fixed)
                 Text(
                     text = "OUTLET MH TA",
                     fontWeight = FontWeight.Bold,
@@ -80,80 +76,88 @@ fun ReceiptDialog(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    TextRow("No. Trx", trx.transactionNo)
-                    TextRow("Waktu", formatDateTime(trx.transactionDate))
-                    TextRow("Kasir", cashierName)
-                    TextRow("Order", trx.orderType)
-                    if (trx.customerName != null) {
-                        TextRow("Customer", trx.customerName)
-                    }
-                    if (trx.tableName != null) {
-                        TextRow("Meja", trx.tableName)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider(color = Color.Black, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // We use a Column instead of LazyColumn for items inside a scrollable Column
-                // to avoid nested scrolling issues, or we can use a fixed height for LazyColumn.
-                // Given the requirement to make the whole popup scrollable, 
-                // it's better to just use a Column for items if they aren't thousands.
-                details.forEach { item ->
-                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Text(text = item.productName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(
-                                text = "${item.quantity} x ${formatStringNum(item.price)}",
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 12.sp
-                            )
-                            Text(
-                                text = formatStringNum(item.subtotal),
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 12.sp
-                            )
+                // Scrollable Content Area
+                Box(modifier = Modifier.weight(1f, fill = false).heightIn(max = 450.dp)) {
+                    val scrollState = rememberScrollState()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(scrollState)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            TextRow("No. Trx", trx.transactionNo)
+                            TextRow("Waktu", formatDateTime(trx.transactionDate))
+                            TextRow("Kasir", cashierName)
+                            TextRow("Order", trx.orderType)
+                            if (trx.customerName != null) {
+                                TextRow("Customer", trx.customerName)
+                            }
+                            if (trx.tableName != null) {
+                                TextRow("Meja", trx.tableName)
+                            }
                         }
-                        if (!item.note.isNullOrBlank()) {
-                            Text(
-                                text = "Note: ${item.note}",
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 11.sp,
-                                color = Color.DarkGray
-                            )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(color = Color.Black, thickness = 1.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        details.forEach { item ->
+                            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                                Text(text = item.productName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(
+                                        text = "${item.quantity} x ${formatStringNum(item.price)}",
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp
+                                    )
+                                    Text(
+                                        text = formatStringNum(item.subtotal),
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                if (!item.note.isNullOrBlank()) {
+                                    Text(
+                                        text = "Note: ${item.note}",
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 11.sp,
+                                        color = Color.DarkGray
+                                    )
+                                }
+                            }
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(color = Color.Black, thickness = 1.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            RowAmount("Subtotal", formatStringNum(trx.subtotal))
+                            RowAmount("Discount", formatStringNum(trx.discount))
+                            RowAmount("Tax", formatStringNum(trx.tax))
+                            Spacer(modifier = Modifier.height(4.dp))
+                            HorizontalDivider(color = Color.Black, thickness = 1.dp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            RowAmount("GRAND TOTAL", formatStringNum(trx.grandTotal), true)
+                            RowAmount("Paid", formatStringNum(trx.paidAmount))
+                            RowAmount("Change", formatStringNum(trx.changeAmount))
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Status: ${trx.status}",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider(color = Color.Black, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    RowAmount("Subtotal", formatStringNum(trx.subtotal))
-                    RowAmount("Discount", formatStringNum(trx.discount))
-                    RowAmount("Tax", formatStringNum(trx.tax))
-                    Spacer(modifier = Modifier.height(4.dp))
-                    HorizontalDivider(color = Color.Black, thickness = 1.dp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    RowAmount("GRAND TOTAL", formatStringNum(trx.grandTotal), true)
-                    RowAmount("Paid", formatStringNum(trx.paidAmount))
-                    RowAmount("Change", formatStringNum(trx.changeAmount))
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Status: ${trx.status}",
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Tombol Cetak ke Printer Fisik
+                // Action Buttons (Fixed at bottom)
                 Button(
                     onClick = onPrint,
                     enabled = !isPrinting,

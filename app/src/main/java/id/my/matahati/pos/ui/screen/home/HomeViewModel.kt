@@ -147,6 +147,29 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    fun printKitchenTickets(context: android.content.Context, tickets: Map<String, List<id.my.matahati.pos.model.CartItem>>) {
+        val address = selectedPrinterAddress
+        if (address == null) {
+            printerError = "Printer belum dipilih."
+            return
+        }
+
+        isPrinting = true
+        printerError = null
+
+        viewModelScope.launch {
+            val printerManager = id.my.matahati.pos.data.printer.BluetoothPrinterManager(context)
+            val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
+            val kitchenBytes = formatter.formatKitchenTicket(tickets)
+            
+            val result = printerManager.printData(address, kitchenBytes)
+            if (result.isFailure) {
+                printerError = "Gagal mencetak pesanan: ${result.exceptionOrNull()?.message}"
+            }
+            isPrinting = false
+        }
+    }
+
     fun fetchData() {
         viewModelScope.launch {
             isLoading = true

@@ -117,7 +117,7 @@ fun HomeScreen(
         }
     }
 
-    fun checkAndPrint(data: id.my.matahati.pos.model.TransactionData) {
+    val runWithBluetoothPermission: (() -> Unit) -> Unit = { onPermissionGranted ->
         if (android.os.Build.VERSION.SDK_INT >= 31) {
             val permissions = arrayOf(
                 android.Manifest.permission.BLUETOOTH_CONNECT,
@@ -127,15 +127,17 @@ fun HomeScreen(
                 ContextCompat.checkSelfPermission(context, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
             }
             if (allGranted) {
-                if (viewModel.selectedPrinterAddress == null) {
-                    viewModel.openPrinterSelection(printerManager)
-                } else {
-                    viewModel.printReceipt(context, data, userName)
-                }
+                onPermissionGranted()
             } else {
                 permissionLauncher.launch(permissions)
             }
         } else {
+            onPermissionGranted()
+        }
+    }
+
+    fun checkAndPrint(data: id.my.matahati.pos.model.TransactionData) {
+        runWithBluetoothPermission {
             if (viewModel.selectedPrinterAddress == null) {
                 viewModel.openPrinterSelection(printerManager)
             } else {
@@ -1046,6 +1048,16 @@ fun HomeScreen(
     if (viewModel.showSimulatedReceipt) {
         SimulatedReceiptDialog(
             tickets = viewModel.receiptTickets,
+            isPrinting = viewModel.isPrinting,
+            onPrint = {
+                runWithBluetoothPermission {
+                    if (viewModel.selectedPrinterAddress == null) {
+                        viewModel.openPrinterSelection(printerManager)
+                    } else {
+                        viewModel.printKitchenTickets(context, viewModel.receiptTickets)
+                    }
+                }
+            },
             onDismiss = { viewModel.closeSimulatedReceipt() }
         )
     }

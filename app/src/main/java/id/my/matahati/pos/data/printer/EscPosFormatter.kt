@@ -1,5 +1,6 @@
 package id.my.matahati.pos.data.printer
 
+import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.TransactionData
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -129,6 +130,66 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll("TERIMA KASIH\n".toByteArray().toList())
         
         // 10. Paper Feed
+        out.addAll("\n\n\n\n\n".toByteArray().toList())
+
+        return out.toByteArray()
+    }
+
+    fun formatKitchenTicket(tickets: Map<String, List<CartItem>>): ByteArray {
+        val out = mutableListOf<Byte>()
+
+        // Initialize
+        out.addAll(INIT.toList())
+        
+        tickets.forEach { (station, items) ->
+            if (items.isEmpty()) return@forEach
+
+            // Station Header
+            out.addAll(ALIGN_CENTER.toList())
+            out.addAll(drawLine("-").toByteArray().toList())
+            out.addAll(BOLD_ON.toList())
+            out.addAll(SIZE_DOUBLE.toList())
+            out.addAll("$station\n".toByteArray().toList())
+            out.addAll(SIZE_NORMAL.toList())
+            out.addAll(BOLD_OFF.toList())
+            out.addAll(drawLine("-").toByteArray().toList())
+            out.addAll("\n".toByteArray().toList())
+
+            // Items
+            out.addAll(ALIGN_LEFT.toList())
+            items.forEach { item ->
+                // Format: Qty x ProductName
+                val qtyPart = "${item.quantity} x "
+                val nameLines = wrapText(item.product.name, cols - qtyPart.length)
+                
+                out.addAll(BOLD_ON.toList())
+                out.addAll("$qtyPart${nameLines[0]}\n".toByteArray().toList())
+                for (i in 1 until nameLines.size) {
+                    out.addAll((" ".repeat(qtyPart.length) + nameLines[i] + "\n").toByteArray().toList())
+                }
+                out.addAll(BOLD_OFF.toList())
+
+                if (!item.note.isNullOrBlank()) {
+                    val wrappedNote = wrapText("Note: ${item.note}", cols - 2)
+                    wrappedNote.forEach { line ->
+                        out.addAll("  $line\n".toByteArray().toList())
+                    }
+                }
+                out.addAll("\n".toByteArray().toList())
+            }
+            
+            out.addAll("\n".toByteArray().toList())
+        }
+
+        // Footer Separator
+        out.addAll(ALIGN_CENTER.toList())
+        out.addAll(drawLine("=").toByteArray().toList())
+        
+        // Date/Time for kitchen
+        val now = SimpleDateFormat("dd MMM yyyy HH:mm", Locale("id", "ID")).format(java.util.Date())
+        out.addAll("Waktu: $now\n".toByteArray().toList())
+        
+        // Paper Feed
         out.addAll("\n\n\n\n\n".toByteArray().toList())
 
         return out.toByteArray()
