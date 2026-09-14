@@ -1,8 +1,8 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -30,69 +30,66 @@ fun SimulatedReceiptDialog(
                 .width(360.dp)
                 .padding(16.dp)
         ) {
+            val scrollState = rememberScrollState()
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .padding(16.dp)
+                    .verticalScroll(scrollState)
             ) {
-                LazyColumn(modifier = Modifier.heightIn(max = 500.dp)) {
-                    tickets.forEach { (station, items) ->
-                        item {
-                            Spacer(modifier = Modifier.height(8.dp))
+                tickets.forEach { (station, items) ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "--------------------------------",
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = station,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = "--------------------------------",
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    items.forEach { item ->
+                        Column(modifier = Modifier.padding(vertical = 4.dp)) {
                             Text(
-                                text = "--------------------------------",
+                                text = "${item.quantity} x ${item.product.name}",
                                 fontFamily = FontFamily.Monospace,
-                                fontSize = 12.sp,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
                             )
-                            Text(
-                                text = station,
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Text(
-                                text = "--------------------------------",
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 12.sp,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        
-                        items(items) { item ->
-                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                            if (item.note.isNotBlank()) {
                                 Text(
-                                    text = "${item.quantity} x ${item.product.name}",
+                                    text = "Note: ${item.note}",
                                     fontFamily = FontFamily.Monospace,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 11.sp,
+                                    color = Color.DarkGray
                                 )
-                                if (item.note.isNotBlank()) {
-                                    Text(
-                                        text = "Note: ${item.note}",
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 11.sp,
-                                        color = Color.DarkGray
-                                    )
-                                }
                             }
                         }
                     }
-                    
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "================================",
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
                 }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "================================",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 Spacer(modifier = Modifier.height(24.dp))
                 

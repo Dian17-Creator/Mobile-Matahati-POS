@@ -58,6 +58,14 @@ class HomeViewModel : ViewModel() {
     var isHistoryLoading by mutableStateOf(false)
         private set
 
+    // Printer States
+    var isPrinting by mutableStateOf(false)
+    var printerError by mutableStateOf<String?>(null)
+    var showPrinterSelection by mutableStateOf(false)
+    val pairedDevices = mutableStateListOf<android.bluetooth.BluetoothDevice>()
+    var selectedPrinterAddress by mutableStateOf<String?>(null)
+        private set
+
     var isLoading by mutableStateOf(false)
         private set
     var errorMessage by mutableStateOf<String?>(null)
@@ -65,6 +73,78 @@ class HomeViewModel : ViewModel() {
 
     init {
         fetchData()
+    }
+
+    fun loadPrinterSettings(context: android.content.Context) {
+        val prefs = context.getSharedPreferences("printer_prefs", android.content.Context.MODE_PRIVATE)
+        selectedPrinterAddress = prefs.getString("selected_printer_address", null)
+    }
+
+    fun savePrinterSettings(context: android.content.Context, address: String) {
+        val prefs = context.getSharedPreferences("printer_prefs", android.content.Context.MODE_PRIVATE)
+        prefs.edit().putString("selected_printer_address", address).apply()
+        selectedPrinterAddress = address
+    }
+
+    fun openPrinterSelection(printerManager: id.my.matahati.pos.data.printer.BluetoothPrinterManager) {
+        pairedDevices.clear()
+        pairedDevices.addAll(printerManager.getPairedDevices())
+        showPrinterSelection = true
+    }
+
+    fun selectPrinter(context: android.content.Context, deviceAddress: String) {
+        savePrinterSettings(context, deviceAddress)
+        showPrinterSelection = false
+    }
+
+    fun printReceipt(
+        context: android.content.Context,
+        data: TransactionData,
+        cashierName: String
+    ) {
+        val address = selectedPrinterAddress
+        if (address == null) {
+            printerError = "Printer belum dipilih."
+            return
+        }
+
+        isPrinting = true
+        printerError = null
+
+        viewModelScope.launch {
+            val printerManager = id.my.matahati.pos.data.printer.BluetoothPrinterManager(context)
+            val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
+            val receiptBytes = formatter.formatReceipt(data, cashierName)
+            
+            val result = printerManager.printData(address, receiptBytes)
+            if (result.isFailure) {
+                printerError = "Gagal mencetak: ${result.exceptionOrNull()?.message ?: "Cek koneksi printer"}"
+            }
+            isPrinting = false
+        }
+    }
+
+    fun testPrint(context: android.content.Context) {
+        val address = selectedPrinterAddress
+        if (address == null) {
+            printerError = "Printer belum dipilih."
+            return
+        }
+
+        isPrinting = true
+        printerError = null
+
+        viewModelScope.launch {
+            val printerManager = id.my.matahati.pos.data.printer.BluetoothPrinterManager(context)
+            val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
+            val testBytes = formatter.formatTestPrint()
+            
+            val result = printerManager.printData(address, testBytes)
+            if (result.isFailure) {
+                printerError = "Test print gagal: ${result.exceptionOrNull()?.message}"
+            }
+            isPrinting = false
+        }
     }
 
     fun fetchData() {

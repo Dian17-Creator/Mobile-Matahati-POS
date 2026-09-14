@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -23,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,7 +33,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import id.my.matahati.pos.data.printer.BluetoothPrinterManager
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.ui.screen.home.components.*
@@ -51,6 +56,9 @@ fun HomeScreen(
     onLogout: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val printerManager = remember { BluetoothPrinterManager(context) }
+    
     // Drawer State
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
@@ -98,8 +106,47 @@ fun HomeScreen(
 
     val orderTypes by viewModel.orderTypes.collectAsState()
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions.entries.all { it.value }
+        if (granted) {
+            viewModel.openPrinterSelection(printerManager)
+        } else {
+            viewModel.printerError = "Izin Bluetooth diperlukan untuk menghubungkan printer."
+        }
+    }
+
+    fun checkAndPrint(data: id.my.matahati.pos.model.TransactionData) {
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            val permissions = arrayOf(
+                android.Manifest.permission.BLUETOOTH_CONNECT,
+                android.Manifest.permission.BLUETOOTH_SCAN
+            )
+            val allGranted = permissions.all {
+                ContextCompat.checkSelfPermission(context, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            }
+            if (allGranted) {
+                if (viewModel.selectedPrinterAddress == null) {
+                    viewModel.openPrinterSelection(printerManager)
+                } else {
+                    viewModel.printReceipt(context, data, userName)
+                }
+            } else {
+                permissionLauncher.launch(permissions)
+            }
+        } else {
+            if (viewModel.selectedPrinterAddress == null) {
+                viewModel.openPrinterSelection(printerManager)
+            } else {
+                viewModel.printReceipt(context, data, userName)
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.loadOrderTypes()
+        viewModel.loadPrinterSettings(context)
     }
 
     LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate) {
@@ -923,11 +970,53 @@ fun HomeScreen(
         ReceiptDialog(
             transactionData = viewModel.lastTransaction!!,
             cashierName = userName,
+            isPrinting = viewModel.isPrinting,
+            onPrint = {
+                checkAndPrint(viewModel.lastTransaction!!)
+            },
             onDismiss = {
                 viewModel.closeReceiptDialog()
                 cartItems.clear()
                 orderType = ""
                 selectedCustomer = null
+            }
+        )
+    }
+
+    // =============================================================
+    // PRINTER DIALOGS & ERROR HANDLING
+    // =============================================================
+    if (viewModel.showPrinterSelection) {
+        PrinterSelectionDialog(
+            pairedDevices = viewModel.pairedDevices,
+            selectedAddress = viewModel.selectedPrinterAddress,
+            onDeviceSelected = { device ->
+                viewModel.selectPrinter(context, device.address)
+            },
+            onTestPrint = {
+                viewModel.testPrint(context)
+            },
+            onDismiss = { viewModel.showPrinterSelection = false }
+        )
+    }
+
+    if (viewModel.printerError != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.printerError = null },
+            title = { Text("Printer Error") },
+            text = { Text(viewModel.printerError ?: "") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.printerError = null }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    viewModel.printerError = null
+                    viewModel.openPrinterSelection(printerManager)
+                }) {
+                    Text("Ganti Printer")
+                }
             }
         )
     }
