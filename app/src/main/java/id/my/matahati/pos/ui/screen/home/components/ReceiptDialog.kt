@@ -1,6 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +25,8 @@ import java.util.Locale
 fun ReceiptDialog(
     transactionData: TransactionData,
     cashierName: String,
+    onPrint: () -> Unit = {},
+    isPrinting: Boolean = false,
     onDismiss: () -> Unit
 ) {
     val trx = transactionData.transaction ?: return
@@ -45,8 +48,11 @@ fun ReceiptDialog(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            val scrollState = rememberScrollState()
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -75,30 +81,32 @@ fun ReceiptDialog(
                 HorizontalDivider(color = Color.Black, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                    items(details) { item ->
-                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                            Text(text = item.productName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(
-                                    text = "${item.quantity} x ${formatStringNum(item.price)}",
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 12.sp
-                                )
-                                Text(
-                                    text = formatStringNum(item.subtotal),
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 12.sp
-                                )
-                            }
-                            if (!item.note.isNullOrBlank()) {
-                                Text(
-                                    text = "Note: ${item.note}",
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 11.sp,
-                                    color = Color.DarkGray
-                                )
-                            }
+                // We use a Column instead of LazyColumn for items inside a scrollable Column
+                // to avoid nested scrolling issues, or we can use a fixed height for LazyColumn.
+                // Given the requirement to make the whole popup scrollable, 
+                // it's better to just use a Column for items if they aren't thousands.
+                details.forEach { item ->
+                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Text(text = item.productName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(
+                                text = "${item.quantity} x ${formatStringNum(item.price)}",
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = formatStringNum(item.subtotal),
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 12.sp
+                            )
+                        }
+                        if (!item.note.isNullOrBlank()) {
+                            Text(
+                                text = "Note: ${item.note}",
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 11.sp,
+                                color = Color.DarkGray
+                            )
                         }
                     }
                 }
@@ -128,12 +136,37 @@ fun ReceiptDialog(
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
+
+                // Tombol Cetak ke Printer Fisik
+                Button(
+                    onClick = onPrint,
+                    enabled = !isPrinting,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), // Green
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    if (isPrinting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("MENCETAK...", color = Color.White)
+                    } else {
+                        Text("CETAK KE PRINTER FISIK", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(4.dp)
                 ) {
-                    Text("Tutup")
+                    Text("TUTUP", color = Color.White)
                 }
             }
         }
