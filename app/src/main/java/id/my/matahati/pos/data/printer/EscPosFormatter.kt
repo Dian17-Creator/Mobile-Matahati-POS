@@ -2,6 +2,7 @@ package id.my.matahati.pos.data.printer
 
 import id.my.matahati.pos.model.TransactionData
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.Locale
 
 class EscPosFormatter(private val cols: Int = 32) {
@@ -32,7 +33,18 @@ class EscPosFormatter(private val cols: Int = 32) {
         }
 
         fun formatDateTime(dateTime: String): String {
-            return dateTime.replace("T", " ").replace(".000000Z", "").replace("Z", "")
+            return try {
+                val inputFormat = if (dateTime.contains("T")) {
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                } else {
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+                }
+                val outputFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale("id", "ID"))
+                val date = inputFormat.parse(dateTime.replace(".000000Z", "").replace("Z", ""))
+                if (date != null) outputFormat.format(date) else dateTime
+            } catch (e: Exception) {
+                dateTime.replace("T", " ").replace(".000000Z", "").replace("Z", "")
+            }
         }
 
         val out = mutableListOf<Byte>()

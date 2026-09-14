@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import id.my.matahati.pos.model.TransactionModel
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
@@ -61,10 +62,21 @@ fun TransactionHistoryList(
         }
     }
 
+    fun formatDateHeader(dateStr: String): String {
+        return try {
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
+            val date = inputFormat.parse(dateStr)
+            if (date != null) outputFormat.format(date) else dateStr
+        } catch (e: Exception) {
+            dateStr
+        }
+    }
+
     LazyColumn(modifier = modifier.fillMaxSize()) {
         grouped.forEach { (date, items) ->
             item {
-                TransactionDateHeader(date)
+                TransactionDateHeader(formatDateHeader(date))
             }
             items(items) { trx ->
                 TransactionItemCard(trx, onClick = { onTransactionClick(trx) })
