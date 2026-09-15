@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -29,7 +30,8 @@ fun SidebarDrawer(
     onNavigateToPos: () -> Unit,
     onNavigateToTransaksi: () -> Unit,
     onLogout: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToPengaturan: () -> Unit = {}
 ) {
     val rolesList = mutableListOf<String>()
     if (roleOwner) rolesList.add("Owner")
@@ -39,7 +41,8 @@ fun SidebarDrawer(
 
     ModalDrawerSheet(
         modifier = modifier.width(300.dp),
-        drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp)
+        drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp),
+        windowInsets = WindowInsets(0.dp)
     ) {
         // Drawer Header with blue background extending to the top
         Box(
@@ -110,6 +113,20 @@ fun SidebarDrawer(
             label = { Text("Transaksi", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) },
             selected = currentScreen == "transaksi",
             onClick = onNavigateToTransaksi,
+            shape = RoundedCornerShape(4.dp),
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            color = Color.LightGray.copy(alpha = 0.5f)
+        )
+
+        NavigationDrawerItem(
+            icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = "Pengaturan") },
+            label = { Text("Pengaturan", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) },
+            selected = currentScreen == "pengaturan",
+            onClick = onNavigateToPengaturan,
             shape = RoundedCornerShape(4.dp),
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
