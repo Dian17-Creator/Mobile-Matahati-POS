@@ -6,12 +6,13 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class EscPosFormatter(private val cols: Int = 32) {
+class EscPosFormatter(private val cols: Int = 42) {
 
     private val ESC: Byte = 0x1B
     private val GS: Byte = 0x1D
     
     private val INIT = byteArrayOf(ESC, 0x40)
+    private val FONT_B = byteArrayOf(ESC, 0x4D, 0x01) // Smaller font (Font B)
     private val ALIGN_LEFT = byteArrayOf(ESC, 0x61, 0x00)
     private val ALIGN_CENTER = byteArrayOf(ESC, 0x61, 0x01)
     
@@ -52,6 +53,7 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         // 1. Initialize & Center Alignment
         out.addAll(INIT.toList())
+        out.addAll(FONT_B.toList())
         out.addAll(ALIGN_CENTER.toList())
         
         // 2. Header Outlet (Bold & Double Size)
@@ -140,6 +142,7 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         // Initialize
         out.addAll(INIT.toList())
+        out.addAll(FONT_B.toList())
         
         tickets.forEach { (station, items) ->
             if (items.isEmpty()) return@forEach
@@ -256,8 +259,10 @@ class EscPosFormatter(private val cols: Int = 32) {
     }
     
     fun formatTestPrint(): ByteArray {
+        val nowStr = SimpleDateFormat("dd MMM yyyy HH:mm", Locale("id", "ID")).format(java.util.Date())
         val out = mutableListOf<Byte>()
         out.addAll(INIT.toList())
+        out.addAll(FONT_B.toList())
         out.addAll(ALIGN_CENTER.toList())
         out.addAll(BOLD_ON.toList())
         out.addAll(SIZE_DOUBLE.toList())
@@ -267,7 +272,8 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(BOLD_OFF.toList())
         out.addAll("\n".toByteArray().toList())
         out.addAll(ALIGN_LEFT.toList())
-        out.addAll("Bluetooth connection OK\n".toByteArray().toList())
+        out.addAll("Waktu: $nowStr\n".toByteArray().toList())
+        out.addAll("Koneksi Printer: OK\n".toByteArray().toList())
         out.addAll(drawLine("=").toByteArray().toList())
         out.addAll("Printable width: $cols columns\n".toByteArray().toList())
         out.addAll(drawLine("-").toByteArray().toList())
