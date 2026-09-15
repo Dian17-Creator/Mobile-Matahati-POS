@@ -346,20 +346,9 @@ fun HomeScreen(
                                 }
                             }
                             "pengaturan" -> {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(innerPadding)
-                                        .background(Color.White),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "Halaman pengaturan",
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.DarkGray
-                                    )
-                                }
+                                id.my.matahati.pos.ui.screen.settings.SettingsScreen(
+                                    modifier = Modifier.padding(innerPadding)
+                                )
                             }
                             else -> {
                                 // Default POS Screen
