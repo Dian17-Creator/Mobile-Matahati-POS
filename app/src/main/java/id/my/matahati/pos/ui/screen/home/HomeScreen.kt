@@ -251,6 +251,10 @@ fun HomeScreen(
                         currentScreen = "transaksi"
                         coroutineScope.launch { drawerState.close() }
                     },
+                    onNavigateToPengaturan = {
+                        currentScreen = "pengaturan"
+                        coroutineScope.launch { drawerState.close() }
+                    },
                     onLogout = onLogout
                 )
             }
@@ -280,6 +284,14 @@ fun HomeScreen(
                             onDateClick = { showDateFilterDialog = true },
                             selectedPaymentType = selectedPaymentType,
                             onPaymentTypeClick = { showPaymentTypeDialog = true },
+                            onMenuClick = {
+                                coroutineScope.launch {
+                                    if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                }
+                            }
+                        )
+                    } else if (currentScreen == "pengaturan") {
+                        PengaturanHeaderBar(
                             onMenuClick = {
                                 coroutineScope.launch {
                                     if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -330,6 +342,22 @@ fun HomeScreen(
                                             viewModel.openKitchenPrintDialogFromHistory(selectedHistoryTransaction!!)
                                         },
                                         modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                            }
+                            "pengaturan" -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(innerPadding)
+                                        .background(Color.White),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Halaman pengaturan",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.DarkGray
                                     )
                                 }
                             }

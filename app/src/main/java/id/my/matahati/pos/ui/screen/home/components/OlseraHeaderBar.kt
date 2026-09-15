@@ -271,6 +271,35 @@ fun TransaksiHeaderBar(
 }
 
 @Composable
+fun PengaturanHeaderBar(
+    onMenuClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = OlseraBlueHeader,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .height(56.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = Color.White
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun HeaderTabItem(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
