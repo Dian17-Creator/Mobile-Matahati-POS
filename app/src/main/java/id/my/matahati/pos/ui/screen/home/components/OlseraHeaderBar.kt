@@ -295,6 +295,15 @@ fun PengaturanHeaderBar(
                     tint = Color.White
                 )
             }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Text(
+                text = "Pengaturan",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
