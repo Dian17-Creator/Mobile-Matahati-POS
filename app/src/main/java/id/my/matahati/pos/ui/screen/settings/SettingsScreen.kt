@@ -16,18 +16,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lan
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.model.LocalPrinter
 import id.my.matahati.pos.model.PrinterRole
@@ -182,54 +185,105 @@ fun PrinterCard(
     onDelete: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth().clickable { onEdit() }
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 720.dp)
+            .clickable { onEdit() }
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Printer Icon Container
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = SettingsBlue.copy(alpha = 0.1f),
+                modifier = Modifier.size(48.dp)
             ) {
-                Column {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = if (printer.type == PrinterType.BLUETOOTH) Icons.Default.BluetoothConnected else Icons.Default.Print,
+                        contentDescription = null,
+                        tint = SettingsBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Printer Info
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         text = printer.name,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Color.Black
+                        color = Color(0xFF212121)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Fungsi: ${printer.role.name}",
-                        fontSize = 13.sp,
-                        color = Color.DarkGray,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Tipe: ${printer.type.name}",
-                        fontSize = 13.sp,
-                        color = Color.Gray
-                    )
-                    if (printer.type == PrinterType.TCP_IP) {
+                    
+                    // Role Badge (Pill)
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = when (printer.role) {
+                            PrinterRole.RECEIPT -> Color(0xFF1565C0) // Blue
+                            PrinterRole.KITCHEN -> Color(0xFFE65100) // Orange
+                            PrinterRole.BAR -> Color(0xFF6A1B9A) // Purple
+                        }
+                    ) {
                         Text(
-                            text = "${printer.address}:${printer.port}",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-                    } else {
-                        Text(
-                            text = printer.address,
-                            fontSize = 13.sp,
-                            color = Color.Gray
+                            text = printer.role.name,
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
                 }
 
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Hapus", tint = Color.Red)
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = if (printer.type == PrinterType.BLUETOOTH) Icons.Default.BluetoothConnected else Icons.Default.Lan,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = if (printer.type == PrinterType.TCP_IP) "${printer.address}:${printer.port}" else printer.address,
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
                 }
+            }
+
+            // Delete Action Button with subtle background
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(Color(0xFFFFEBEE), RoundedCornerShape(8.dp))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Hapus",
+                    tint = Color(0xFFD32F2F),
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
@@ -271,10 +325,9 @@ fun PrinterConfigDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 24.dp)
-            .fillMaxWidth()
+            .padding(16.dp)
+            .widthIn(max = 480.dp)
             .wrapContentHeight(),
         title = {
             Row(
@@ -332,20 +385,52 @@ fun PrinterConfigDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Type Selection
+                // Type Selection (Modern Segmented Pill Toggle)
                 Text("Tipe Koneksi", fontSize = 12.sp, color = Color.Gray)
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    RadioButton(
-                        selected = selectedType == PrinterType.BLUETOOTH,
-                        onClick = { selectedType = PrinterType.BLUETOOTH }
-                    )
-                    Text("Bluetooth", modifier = Modifier.align(Alignment.CenterVertically))
-                    Spacer(modifier = Modifier.width(16.dp))
-                    RadioButton(
-                        selected = selectedType == PrinterType.TCP_IP,
-                        onClick = { selectedType = PrinterType.TCP_IP }
-                    )
-                    Text("TCP/IP", modifier = Modifier.align(Alignment.CenterVertically))
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .background(Color(0xFFF0F0F0), RoundedCornerShape(22.dp))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val isBt = selectedType == PrinterType.BLUETOOTH
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(if (isBt) SettingsBlue else Color.Transparent)
+                            .clickable { selectedType = PrinterType.BLUETOOTH },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Bluetooth",
+                            color = if (isBt) Color.White else Color.DarkGray,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    val isTcp = selectedType == PrinterType.TCP_IP
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(if (isTcp) SettingsBlue else Color.Transparent)
+                            .clickable { selectedType = PrinterType.TCP_IP },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "TCP/IP",
+                            color = if (isTcp) Color.White else Color.DarkGray,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
