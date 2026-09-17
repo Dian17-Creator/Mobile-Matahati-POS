@@ -10,8 +10,10 @@ import id.my.matahati.pos.model.ProductResponse
 import id.my.matahati.pos.model.VoucherResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface ApiService {
     @POST("api/login")
@@ -45,4 +47,7 @@ interface ApiService {
         @retrofit2.http.Query("search") search: String? = null,
         @retrofit2.http.Query("nid_outlet") outletId: String? = null
     ): Response<id.my.matahati.pos.model.TransactionHistoryResponse>
+
+    @DELETE("api/pos/transactions/{id}")
+    suspend fun deleteTransaction(@Path("id") id: String): Response<id.my.matahati.pos.model.TransactionResponse>
 }

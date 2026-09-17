@@ -66,6 +66,43 @@ class HomeViewModel : ViewModel() {
     var selectedPrinterAddress by mutableStateOf<String?>(null)
         private set
 
+    // Held Orders States (Backend DRAFT Status)
+    val heldOrders = mutableStateListOf<TransactionModel>()
+    var showHeldOrdersDialog by mutableStateOf(false)
+
+    fun fetchHeldOrders(nidOutlet: String?) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getTransactions(outletId = nidOutlet)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val allTrx = response.body()?.data ?: emptyList()
+                    val drafts = allTrx.filter { it.status.uppercase() == "DRAFT" }
+                    heldOrders.clear()
+                    heldOrders.addAll(drafts)
+                }
+            } catch (e: Exception) {
+                Log.e("HeldOrders", "Error fetching DRAFT orders: ${e.message}", e)
+            }
+        }
+    }
+
+    fun removeHeldOrderLocal(id: String) {
+        heldOrders.removeAll { it.id == id }
+    }
+
+    fun deleteHeldOrder(context: android.content.Context, id: String, nidOutlet: String?) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.deleteTransaction(id)
+                if (response.isSuccessful) {
+                    fetchHeldOrders(nidOutlet)
+                }
+            } catch (e: Exception) {
+                Log.e("HeldOrders", "Error deleting draft: ${e.message}", e)
+            }
+        }
+    }
+
     var isLoading by mutableStateOf(false)
         private set
     var errorMessage by mutableStateOf<String?>(null)
@@ -356,6 +393,30 @@ class HomeViewModel : ViewModel() {
         )
     }
 
+    fun holdCurrentCart(
+        cartItems: List<id.my.matahati.pos.model.CartItem>,
+        orderType: String,
+        selectedCustomer: Customer?,
+        discount: Double,
+        tax: Double,
+        nidOutlet: String?,
+        onSuccess: () -> Unit = {}
+    ) {
+        executeTransaction(
+            cartItems = cartItems,
+            orderType = orderType,
+            selectedCustomer = selectedCustomer,
+            selectedPayment = null,
+            discount = discount,
+            tax = tax,
+            paidAmount = 0.0,
+            nidOutlet = nidOutlet,
+            status = "DRAFT",
+            cancelNote = null,
+            onSuccess = onSuccess
+        )
+    }
+
     private fun executeTransaction(
         cartItems: List<id.my.matahati.pos.model.CartItem>,
         orderType: String,
@@ -366,13 +427,14 @@ class HomeViewModel : ViewModel() {
         paidAmount: Double,
         nidOutlet: String?,
         status: String?,
-        cancelNote: String?
+        cancelNote: String?,
+        onSuccess: (() -> Unit)? = null
     ) {
         if (status != "CANCELLED" && cartItems.isEmpty()) {
             transactionError = "Cart kosong."
             return
         }
-        if (status != "CANCELLED") {
+        if (status != "CANCELLED" && status != "DRAFT") {
             if (orderType.isBlank()) {
                 transactionError = "Silakan pilih In/Aw (Order Type) terlebih dahulu."
                 return
@@ -383,6 +445,11 @@ class HomeViewModel : ViewModel() {
             }
             if (selectedPayment == null) {
                 transactionError = "Silakan pilih metode pembayaran."
+                return
+            }
+        } else if (status == "DRAFT") {
+            if (orderType.isBlank()) {
+                transactionError = "Silakan pilih In/Aw (Order Type) terlebih dahulu."
                 return
             }
         }
@@ -403,7 +470,7 @@ class HomeViewModel : ViewModel() {
         val request = TransactionRequest(
             nidCustomer = selectedCustomer?.id,
             nidOutlet = parsedOutlet,
-            nidPayment = selectedPayment?.id ?: "1", // Fallback to 1 if cancelled
+            nidPayment = selectedPayment?.id,
             nidVoucher = null,
             customerName = selectedCustomer?.name,
             orderType = orderType.ifBlank { "TAKE_AWAY" },
@@ -424,12 +491,17 @@ class HomeViewModel : ViewModel() {
                     val body = response.body()
                     if (body?.success == true && body.data != null) {
                         if (status == "CANCELLED") {
-                            // If cancelled, just reset directly without receipt
                             closeReceiptDialog()
                             transactionSuccessMessage = "Pesanan berhasil dibatalkan dan dicatat."
+                            onSuccess?.invoke()
+                        } else if (status == "DRAFT") {
+                            transactionSuccessMessage = "Pesanan berhasil digantung (Draft)."
+                            fetchHeldOrders(nidOutlet)
+                            onSuccess?.invoke()
                         } else {
                             lastTransaction = body.data
                             showReceiptDialog = true
+                            onSuccess?.invoke()
                         }
                     } else {
                         transactionError = body?.message ?: "Gagal memproses transaksi."

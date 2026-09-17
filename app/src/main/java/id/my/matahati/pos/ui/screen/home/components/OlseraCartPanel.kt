@@ -79,6 +79,7 @@ fun OlseraCartPanel(
     selectedCustomerName: String,
     onCustomerSelected: (Customer) -> Unit,
     selectedTable: String = "",
+    onHoldCart: () -> Unit = {},
     modifier: Modifier = Modifier,
     cashierName: String = "april"
 ) {
@@ -170,7 +171,7 @@ fun OlseraCartPanel(
 
                     // Right: Plus Button
                     IconButton(
-                        onClick = { showCustomerDialog = true },
+                        onClick = onHoldCart,
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
@@ -178,7 +179,7 @@ fun OlseraCartPanel(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Tambah/Pilih Pelanggan",
+                            contentDescription = "Simpan ke Pesanan Menggantung",
                             tint = Color.White,
                             modifier = Modifier.size(22.dp)
                         )

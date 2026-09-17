@@ -149,6 +149,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadOrderTypes()
         viewModel.loadPrinterSettings(context)
+        viewModel.fetchHeldOrders(nidOutlet)
     }
 
     LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate) {
@@ -269,7 +270,8 @@ fun HomeScreen(
                             onTableClick = { showTableInputDialog = true },
                             selectedRightTab = selectedRightTab,
                             onRightTabSelected = { selectedRightTab = it },
-                            onNotificationClick = { showNotificationPopup = true },
+                            heldOrdersCount = viewModel.heldOrders.size,
+                            onHeldOrdersClick = { viewModel.showHeldOrdersDialog = true },
                             onMenuClick = {
                                 coroutineScope.launch {
                                     if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -386,6 +388,24 @@ fun HomeScreen(
                                                 onDiscountClick = { showDiscountDialog = true },
                                                 onClearCart = { 
                                                     showCancelDialog = true
+                                                },
+                                                onHoldCart = {
+                                                    if (cartItems.isNotEmpty()) {
+                                                        viewModel.holdCurrentCart(
+                                                            cartItems = cartItems,
+                                                            orderType = orderType,
+                                                            selectedCustomer = selectedCustomer,
+                                                            discount = 0.0,
+                                                            tax = 0.0,
+                                                            nidOutlet = nidOutlet,
+                                                            onSuccess = {
+                                                                cartItems.clear()
+                                                                orderType = ""
+                                                                viewModel.selectedTable = ""
+                                                                selectedCustomer = null
+                                                            }
+                                                        )
+                                                    }
                                                 },
                                                 onSendToKitchenClick = {
                                                     viewModel.openKitchenPrintDialog(context, cartItems)
@@ -1071,6 +1091,37 @@ fun HomeScreen(
                 viewModel.printKitchenTickets(context, viewModel.receiptTickets)
             },
             onDismiss = { viewModel.closeSimulatedReceipt() }
+        )
+    }
+
+    if (viewModel.showHeldOrdersDialog) {
+        HeldOrdersDialog(
+            heldOrders = viewModel.heldOrders,
+            onOpenOrder = { heldOrder ->
+                cartItems.clear()
+                heldOrder.details?.forEach { detail ->
+                    val product = allProducts.find { it.id == detail.productId } ?: Product(
+                        id = detail.productId,
+                        name = detail.productName,
+                        price = detail.price.toDoubleOrNull() ?: 0.0,
+                        categoryId = "1",
+                        stock = 99
+                    )
+                    cartItems.add(
+                        CartItem(
+                            product = product,
+                            quantity = detail.quantity,
+                            note = detail.note ?: ""
+                        )
+                    )
+                }
+                viewModel.selectedTable = heldOrder.tableName ?: ""
+                orderType = heldOrder.orderType ?: ""
+                selectedCustomer = viewModel.customers.find { it.name == heldOrder.customerName }
+                viewModel.deleteHeldOrder(context, heldOrder.id, nidOutlet)
+                viewModel.showHeldOrdersDialog = false
+            },
+            onDismiss = { viewModel.showHeldOrdersDialog = false }
         )
     }
 
