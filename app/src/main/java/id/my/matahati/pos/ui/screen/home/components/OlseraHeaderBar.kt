@@ -20,7 +20,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import id.my.matahati.pos.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,10 +86,10 @@ fun OlseraHeaderBar(
                 Box(modifier = Modifier.padding(end = 8.dp)) {
                     IconButton(onClick = onNotificationClick) {
                         Icon(
-                            imageVector = Icons.Default.Notifications,
+                            painter = painterResource(id = R.drawable.sandwatch2),
                             contentDescription = "Notifikasi",
                             tint = Color.White.copy(alpha = 0.9f),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
