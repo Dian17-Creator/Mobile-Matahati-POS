@@ -5,12 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,9 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import id.my.matahati.pos.R
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +39,8 @@ val OlseraHeaderTabActive = Color(0xFF1E88E5)
 fun OlseraHeaderBar(
     onMenuClick: () -> Unit,
     onNotificationClick: () -> Unit = {},
+    heldOrdersCount: Int = 0,
+    onHeldOrdersClick: () -> Unit = {},
     selectedOrderType: String = "",
     onInAwayClick: () -> Unit = {},
     selectedTable: String = "",
@@ -84,13 +90,42 @@ fun OlseraHeaderBar(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Box(modifier = Modifier.padding(end = 8.dp)) {
-                    IconButton(onClick = onNotificationClick) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.sandwatch2),
-                            contentDescription = "Notifikasi",
-                            tint = Color.White.copy(alpha = 0.9f),
-                            modifier = Modifier.size(18.dp)
-                        )
+                    IconButton(onClick = onHeldOrdersClick) {
+                        Box(contentAlignment = Alignment.TopEnd) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.sandwatch2),
+                                contentDescription = "Pesanan Menggantung",
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            if (heldOrdersCount > 0) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color.Red,
+                                    modifier = Modifier
+                                        .offset(x = 8.dp, y = (-4).dp)
+                                        .size(16.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = heldOrdersCount.toString(),
+                                            color = Color.White,
+                                            fontSize = 9.sp,
+                                            lineHeight = 9.sp, // samakan dengan fontSize
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            style = LocalTextStyle.current.copy(
+                                                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                                            ),
+                                            modifier = Modifier.wrapContentSize(Alignment.Center) // ganti dari fillMaxWidth
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
