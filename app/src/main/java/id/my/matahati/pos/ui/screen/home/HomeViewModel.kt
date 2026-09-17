@@ -97,14 +97,24 @@ class HomeViewModel : ViewModel() {
         showPrinterSelection = false
     }
 
+    val savedPrinters = mutableStateListOf<id.my.matahati.pos.model.LocalPrinter>()
+
+    fun loadSavedPrinters(context: android.content.Context) {
+        savedPrinters.clear()
+        savedPrinters.addAll(id.my.matahati.pos.data.repository.PrinterRepository(context).getPrinters())
+    }
+
     fun printReceipt(
         context: android.content.Context,
         data: TransactionData,
         cashierName: String
     ) {
-        val address = selectedPrinterAddress
-        if (address == null) {
-            printerError = "Printer belum dipilih."
+        val repo = id.my.matahati.pos.data.repository.PrinterRepository(context)
+        val printers = repo.getPrinters()
+        val receiptPrinter = printers.find { it.role == id.my.matahati.pos.model.PrinterRole.RECEIPT }
+
+        if (receiptPrinter == null) {
+            printerError = "Printer Struk Kasir (RECEIPT) belum dikonfigurasi di Pengaturan."
             return
         }
 
@@ -112,13 +122,13 @@ class HomeViewModel : ViewModel() {
         printerError = null
 
         viewModelScope.launch {
-            val printerManager = id.my.matahati.pos.data.printer.BluetoothPrinterManager(context)
+            val connectionManager = id.my.matahati.pos.data.printer.PrinterConnectionManager(context)
             val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
             val receiptBytes = formatter.formatReceipt(data, cashierName)
             
-            val result = printerManager.printData(address, receiptBytes)
+            val result = connectionManager.printData(receiptPrinter, receiptBytes)
             if (result.isFailure) {
-                printerError = "Gagal mencetak: ${result.exceptionOrNull()?.message ?: "Cek koneksi printer"}"
+                printerError = "Gagal mencetak struk: ${result.exceptionOrNull()?.message ?: "Cek koneksi printer"}"
             }
             isPrinting = false
         }
@@ -148,9 +158,26 @@ class HomeViewModel : ViewModel() {
     }
 
     fun printKitchenTickets(context: android.content.Context, tickets: Map<String, List<id.my.matahati.pos.model.CartItem>>) {
-        val address = selectedPrinterAddress
-        if (address == null) {
-            printerError = "Printer belum dipilih."
+        val repo = id.my.matahati.pos.data.repository.PrinterRepository(context)
+        val printers = repo.getPrinters()
+        
+        val kitchenPrinter = printers.find { it.role == id.my.matahati.pos.model.PrinterRole.KITCHEN }
+        val barPrinter = printers.find { it.role == id.my.matahati.pos.model.PrinterRole.BAR }
+
+        val hasDapurItems = tickets["DAPUR"]?.isNotEmpty() == true
+        val hasBarItems = tickets["BAR"]?.isNotEmpty() == true
+
+        if (hasDapurItems && kitchenPrinter == null) {
+            printerError = "Printer Dapur (KITCHEN) belum dikonfigurasi di Pengaturan."
+            return
+        }
+        if (hasBarItems && barPrinter == null) {
+            printerError = "Printer Bar (BAR) belum dikonfigurasi di Pengaturan."
+            return
+        }
+
+        if (tickets.isEmpty()) {
+            printerError = "Tidak ada tiket untuk dicetak."
             return
         }
 
@@ -158,13 +185,32 @@ class HomeViewModel : ViewModel() {
         printerError = null
 
         viewModelScope.launch {
-            val printerManager = id.my.matahati.pos.data.printer.BluetoothPrinterManager(context)
+            val connectionManager = id.my.matahati.pos.data.printer.PrinterConnectionManager(context)
             val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
-            val kitchenBytes = formatter.formatKitchenTicket(tickets)
-            
-            val result = printerManager.printData(address, kitchenBytes)
-            if (result.isFailure) {
-                printerError = "Gagal mencetak pesanan: ${result.exceptionOrNull()?.message}"
+
+            var anyFailure = false
+            val errors = mutableListOf<String>()
+
+            tickets.forEach { (station, items) ->
+                if (items.isNotEmpty()) {
+                    val targetPrinter = if (station.uppercase() == "BAR") barPrinter else kitchenPrinter
+                    if (targetPrinter != null) {
+                        val singleStationTicket = mapOf(station to items)
+                        val bytes = formatter.formatKitchenTicket(singleStationTicket)
+                        val result = connectionManager.printData(targetPrinter, bytes)
+                        if (result.isFailure) {
+                            anyFailure = true
+                            errors.add("Station $station: ${result.exceptionOrNull()?.message}")
+                        }
+                    } else {
+                        anyFailure = true
+                        errors.add("Printer untuk station $station belum diatur.")
+                    }
+                }
+            }
+
+            if (anyFailure) {
+                printerError = "Gagal mencetak pesanan: ${errors.joinToString(", ")}"
             }
             isPrinting = false
         }
@@ -442,9 +488,10 @@ class HomeViewModel : ViewModel() {
     }
 
     // Kitchen Printing logic
-    fun openKitchenPrintDialog(items: List<id.my.matahati.pos.model.CartItem>, isHistory: Boolean = false) {
+    fun openKitchenPrintDialog(context: android.content.Context, items: List<id.my.matahati.pos.model.CartItem>, isHistory: Boolean = false) {
         if (items.isEmpty()) return
         
+        loadSavedPrinters(context)
         itemsToPrint = items
         isPrintingFromHistory = isHistory
         
@@ -466,7 +513,7 @@ class HomeViewModel : ViewModel() {
         showKitchenPrintDialog = true
     }
 
-    fun openKitchenPrintDialogFromHistory(transaction: TransactionModel) {
+    fun openKitchenPrintDialogFromHistory(context: android.content.Context, transaction: TransactionModel) {
         val items = transaction.details?.map { detail ->
             id.my.matahati.pos.model.CartItem(
                 product = Product(
@@ -485,7 +532,7 @@ class HomeViewModel : ViewModel() {
             )
         } ?: emptyList()
         
-        openKitchenPrintDialog(items, isHistory = true)
+        openKitchenPrintDialog(context, items, isHistory = true)
     }
 
     fun onConfirmKitchenPrint(
