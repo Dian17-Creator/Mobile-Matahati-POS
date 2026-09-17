@@ -14,12 +14,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import id.my.matahati.pos.model.LocalPrinter
+import id.my.matahati.pos.model.PrinterRole
 
 @Composable
 fun KitchenPrintSelectionDialog(
     changesCount: Int,
     availableStations: List<String>,
     selectedStations: List<String>,
+    savedPrinters: List<LocalPrinter>,
     onToggleStation: (String) -> Unit,
     onConfirmPrint: (String) -> Unit, // "PERUBAHAN" or "ULANG"
     onDismiss: () -> Unit
@@ -55,6 +58,9 @@ fun KitchenPrintSelectionDialog(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 availableStations.forEach { station ->
+                    val role = if (station.uppercase() == "BAR") PrinterRole.BAR else PrinterRole.KITCHEN
+                    val assignedPrinter = savedPrinters.find { it.role == role }
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -72,13 +78,22 @@ fun KitchenPrintSelectionDialog(
                             Text(
                                 text = "Printer $station",
                                 fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = Color.DarkGray
                             )
-                            Text(
-                                text = "Simulated Station",
-                                fontSize = 13.sp,
-                                color = Color.Gray
-                            )
+                            if (assignedPrinter != null) {
+                                Text(
+                                    text = "${assignedPrinter.name} (${assignedPrinter.type.name}: ${assignedPrinter.address}${if (assignedPrinter.port != null) ":${assignedPrinter.port}" else ""})",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF2E7D32)
+                                )
+                            } else {
+                                Text(
+                                    text = "Belum dikonfigurasi di Pengaturan",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFFD32F2F)
+                                )
+                            }
                         }
                     }
                 }

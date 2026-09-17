@@ -339,7 +339,7 @@ fun HomeScreen(
                                         transaction = selectedHistoryTransaction!!,
                                         onBack = { currentScreen = "transaksi" },
                                         onSendToKitchen = {
-                                            viewModel.openKitchenPrintDialogFromHistory(selectedHistoryTransaction!!)
+                                            viewModel.openKitchenPrintDialogFromHistory(context, selectedHistoryTransaction!!)
                                         },
                                         modifier = Modifier.fillMaxSize()
                                     )
@@ -388,7 +388,7 @@ fun HomeScreen(
                                                     showCancelDialog = true
                                                 },
                                                 onSendToKitchenClick = {
-                                                    viewModel.openKitchenPrintDialog(cartItems)
+                                                    viewModel.openKitchenPrintDialog(context, cartItems)
                                                 },
                                                 onCheckoutClick = {
                                                     if (cartItems.isNotEmpty()) {
@@ -1048,6 +1048,7 @@ fun HomeScreen(
             changesCount = viewModel.printChangesCount,
             availableStations = viewModel.availableStations,
             selectedStations = viewModel.selectedStations,
+            savedPrinters = viewModel.savedPrinters,
             onToggleStation = { viewModel.toggleStationSelection(it) },
             onConfirmPrint = { type ->
                 viewModel.onConfirmKitchenPrint(
@@ -1067,13 +1068,7 @@ fun HomeScreen(
             tickets = viewModel.receiptTickets,
             isPrinting = viewModel.isPrinting,
             onPrint = {
-                runWithBluetoothPermission {
-                    if (viewModel.selectedPrinterAddress == null) {
-                        viewModel.openPrinterSelection(printerManager)
-                    } else {
-                        viewModel.printKitchenTickets(context, viewModel.receiptTickets)
-                    }
-                }
+                viewModel.printKitchenTickets(context, viewModel.receiptTickets)
             },
             onDismiss = { viewModel.closeSimulatedReceipt() }
         )
