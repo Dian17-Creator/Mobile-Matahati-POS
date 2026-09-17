@@ -1,9 +1,12 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -53,8 +56,16 @@ fun HeldOrdersDialog(
                         fontWeight = FontWeight.Bold,
                         color = Color.DarkGray
                     )
-                    TextButton(onClick = onDismiss) {
-                        Text("Tutup", color = Color.Gray, fontWeight = FontWeight.Bold)
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Tutup",
+                            tint = Color(0xFFD32F2F),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
 
@@ -85,47 +96,50 @@ fun HeldOrdersDialog(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenOrder(order) }
                             ) {
-                                Column(
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp)
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
                                         Text(
-                                            text = "${order.transactionNo} ${order.tableName?.let { "• Meja $it" } ?: ""} ${order.customerName?.let { "• $it" } ?: ""}",
+                                            text = order.transactionNo,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp,
                                             color = Color.Black
                                         )
+                                        val subInfo = listOfNotNull(
+                                            order.tableName?.let { "Meja $it" },
+                                            order.customerName?.let { it }
+                                        ).joinToString(" • ")
+                                        if (subInfo.isNotBlank()) {
+                                            Text(
+                                                text = subInfo,
+                                                fontSize = 13.sp,
+                                                color = Color.DarkGray
+                                            )
+                                        }
                                         Text(
                                             text = order.transactionDate,
-                                            fontSize = 12.sp,
+                                            fontSize = 11.sp,
                                             color = Color.Gray
                                         )
                                     }
 
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
 
-                                    order.details?.forEach { item ->
-                                        Text(
-                                            text = "• ${item.quantity}x ${item.productName}",
-                                            fontSize = 13.sp,
-                                            color = Color.DarkGray
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                    Column(
+                                        horizontalAlignment = Alignment.End,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
                                         val grandTotalVal = order.grandTotal.toDoubleOrNull() ?: 0.0
                                         Text(
@@ -134,15 +148,11 @@ fun HeldOrdersDialog(
                                             fontSize = 15.sp,
                                             color = Color(0xFF1565C0)
                                         )
-
-                                        Button(
-                                            onClick = { onOpenOrder(order) },
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
-                                            shape = RoundedCornerShape(8.dp),
-                                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
-                                        ) {
-                                            Text("BUKA", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                        }
+                                        Text(
+                                            text = "Ketuk untuk Buka",
+                                            fontSize = 11.sp,
+                                            color = Color.Gray
+                                        )
                                     }
                                 }
                             }
