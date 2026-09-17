@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -54,7 +55,8 @@ fun OlseraHeaderBar(
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // LEFT PORTION
@@ -89,9 +91,21 @@ fun OlseraHeaderBar(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                Box(modifier = Modifier.padding(end = 8.dp)) {
-                    IconButton(onClick = onHeldOrdersClick) {
-                        Box(contentAlignment = Alignment.TopEnd) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = 8.dp, top = 8.dp)
+                        .graphicsLayer(clip = false)
+                ) {
+                    IconButton(
+                        onClick = onHeldOrdersClick,
+                        modifier = Modifier.size(46.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .graphicsLayer(clip = false)
+                                .offset(x = (-5).dp),
+                            contentAlignment = Alignment.TopEnd
+                        ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.sandwatch2),
                                 contentDescription = "Pesanan Menggantung",
@@ -103,7 +117,7 @@ fun OlseraHeaderBar(
                                     shape = CircleShape,
                                     color = Color.Red,
                                     modifier = Modifier
-                                        .offset(x = 8.dp, y = (-4).dp)
+                                        .offset(x = 8.dp, y = (-8).dp)
                                         .size(16.dp)
                                 ) {
                                     Box(
