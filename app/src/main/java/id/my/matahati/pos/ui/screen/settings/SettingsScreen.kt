@@ -309,6 +309,8 @@ fun PrinterConfigDialog(
     var port by remember { 
         mutableStateOf(if (initialPrinter?.type == PrinterType.TCP_IP) (initialPrinter.port?.toString() ?: "9100") else "9100") 
     }
+    var copies by remember { mutableStateOf(initialPrinter?.copies ?: 1) }
+    var showCopiesDialog by remember { mutableStateOf(false) }
 
     // Bluetooth selection
     val pairedDevices = remember { viewModel.getPairedBluetoothDevices() }
@@ -492,6 +494,29 @@ fun PrinterConfigDialog(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Jumlah Salinan Section
+                Text("Jumlah Salinan", fontSize = 12.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedButton(
+                    onClick = { showCopiesDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.DarkGray)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = copies.toString(), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.Gray)
+                    }
+                }
             }
         },
         confirmButton = {
@@ -511,7 +536,8 @@ fun PrinterConfigDialog(
                                 type = selectedType,
                                 address = address,
                                 port = pPort,
-                                role = selectedRole
+                                role = selectedRole,
+                                copies = copies
                             )
                             onTestPrint(printerToTest)
                         }
@@ -537,7 +563,8 @@ fun PrinterConfigDialog(
                                     type = selectedType,
                                     address = address,
                                     port = pPort,
-                                    role = selectedRole
+                                    role = selectedRole,
+                                    copies = copies
                                 )
                             )
                         }
@@ -552,4 +579,43 @@ fun PrinterConfigDialog(
         },
         dismissButton = null
     )
+
+    if (showCopiesDialog) {
+        AlertDialog(
+            onDismissRequest = { showCopiesDialog = false },
+            containerColor = Color.White,
+            title = { Text("Jumlah Salinan", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    listOf(1, 2, 3).forEach { count ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    copies = count
+                                    showCopiesDialog = false
+                                }
+                                .padding(vertical = 12.dp, horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = count.toString(),
+                                fontSize = 16.sp,
+                                fontWeight = if (copies == count) FontWeight.Bold else FontWeight.Normal,
+                                color = if (copies == count) SettingsBlue else Color.DarkGray
+                            )
+                        }
+                        if (count < 3) {
+                            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f), thickness = 0.5.dp)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showCopiesDialog = false }) {
+                    Text("BATAL", color = SettingsBlue, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
 }
