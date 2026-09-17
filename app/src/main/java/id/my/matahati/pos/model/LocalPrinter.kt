@@ -19,5 +19,6 @@ data class LocalPrinter(
     val type: PrinterType,
     val address: String, // Bluetooth MAC Address or IP Address
     val port: Int? = null, // Only used for TCP_IP
-    val role: PrinterRole
+    val role: PrinterRole,
+    val copies: Int = 1
 )

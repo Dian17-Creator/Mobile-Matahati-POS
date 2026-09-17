@@ -64,6 +64,7 @@ class PrinterConnectionManager(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     suspend fun printData(printer: LocalPrinter, data: ByteArray): Result<Unit> = withContext(Dispatchers.IO) {
+        val copies = printer.copies.coerceAtLeast(1)
         if (printer.type == PrinterType.TCP_IP) {
             var socket: Socket? = null
             try {
@@ -72,8 +73,13 @@ class PrinterConnectionManager(private val context: Context) {
                 socket = Socket()
                 socket.connect(InetSocketAddress(ip, port), 3000)
                 val out = socket.getOutputStream()
-                out.write(data)
-                out.flush()
+                repeat(copies) { i ->
+                    out.write(data)
+                    out.flush()
+                    if (i < copies - 1) {
+                        kotlinx.coroutines.delay(500)
+                    }
+                }
                 Result.success(Unit)
             } catch (e: Exception) {
                 Log.e("PrinterConnection", "TCP/IP print failed: ${e.message}", e)
@@ -94,8 +100,13 @@ class PrinterConnectionManager(private val context: Context) {
                 socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
                 socket.connect()
                 val out = socket.outputStream
-                out.write(data)
-                out.flush()
+                repeat(copies) { i ->
+                    out.write(data)
+                    out.flush()
+                    if (i < copies - 1) {
+                        kotlinx.coroutines.delay(500)
+                    }
+                }
                 Result.success(Unit)
             } catch (e: Exception) {
                 Log.e("PrinterConnection", "Bluetooth print failed: ${e.message}", e)
