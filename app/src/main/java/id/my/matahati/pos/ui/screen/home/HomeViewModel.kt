@@ -509,7 +509,6 @@ class HomeViewModel : ViewModel() {
                             onSuccess?.invoke()
                         } else {
                             lastTransaction = body.data
-                            showPaymentScreen = false
                             pendingShowReceipt = true
                             if (context != null) {
                                 openKitchenPrintDialog(context, cartItems)
