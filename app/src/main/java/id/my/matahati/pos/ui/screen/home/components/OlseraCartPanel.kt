@@ -81,7 +81,9 @@ fun OlseraCartPanel(
     selectedTable: String = "",
     onHoldCart: () -> Unit = {},
     modifier: Modifier = Modifier,
-    cashierName: String = "april"
+    cashierName: String = "april",
+    servedByName: String = cashierName,
+    onServedByClick: () -> Unit = {}
 ) {
     val totalAmount = cartItems.sumOf { it.totalPrice }
     val totalItemsCount = cartItems.sumOf { it.quantity }
@@ -317,7 +319,7 @@ fun OlseraCartPanel(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Dilayani Oleh: $cashierName",
+                                text = "Dilayani Oleh: $servedByName",
                                 fontSize = 12.sp,
                                 color = Color.Black,
                                 modifier = Modifier
@@ -358,7 +360,7 @@ fun OlseraCartPanel(
                         QuickActionButton(icon = Icons.Default.LocalOffer, label = "Disc. Pesanan", onClick = onDiscountClick)
                         QuickActionButton(icon = Icons.Default.LocalShipping, label = "Ongkos Kirim", onClick = {})
                         QuickActionButton(icon = Icons.Default.ChatBubbleOutline, label = "Catatan Pesanan", onClick = {})
-                        QuickActionButton(icon = Icons.Default.Person, label = "Dilayani Oleh", onClick = {})
+                        QuickActionButton(icon = Icons.Default.Person, label = "Dilayani Oleh", onClick = onServedByClick)
                         QuickActionButton(icon = Icons.Default.Restaurant, label = "Kirim ke Dapur", onClick = onSendToKitchenClick)
                         QuickActionButton(
                             icon = Icons.Default.Close,

@@ -152,6 +152,11 @@ fun HomeScreen(
         viewModel.fetchHeldOrders(nidOutlet)
     }
 
+    LaunchedEffect(nidOutlet) {
+        val outletId = nidOutlet?.toIntOrNull() ?: 1
+        viewModel.loadServedByUsers(outletId)
+    }
+
     LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate) {
         if (currentScreen == "transaksi") {
             viewModel.fetchTransactionHistory(
@@ -429,6 +434,8 @@ fun HomeScreen(
                                                 },
                                                 selectedTable = viewModel.selectedTable,
                                                 cashierName = userName,
+                                                servedByName = viewModel.selectedServedBy?.name ?: userName,
+                                                onServedByClick = { viewModel.showServedByDialog = true },
                                                 modifier = Modifier
                                                     .weight(0.40f)
                                                     .fillMaxHeight()
@@ -913,12 +920,24 @@ fun HomeScreen(
         )
     }
 
+    if (viewModel.showServedByDialog) {
+        ServedByDialog(
+            users = viewModel.servedByUsers,
+            selectedUser = viewModel.selectedServedBy,
+            onUserSelected = { user ->
+                viewModel.selectedServedBy = user
+                viewModel.showServedByDialog = false
+            },
+            onDismiss = { viewModel.showServedByDialog = false }
+        )
+    }
+
     // =============================================================
     // CASHIER CONFIRMATION & PAYMENT SCREEN
     // =============================================================
     if (viewModel.showCashierConfirmDialog) {
         CashierConfirmationDialog(
-            cashierName = userName,
+            cashierName = viewModel.selectedServedBy?.name ?: userName,
             onDismiss = { viewModel.showCashierConfirmDialog = false },
             onConfirm = {
                 viewModel.showCashierConfirmDialog = false
@@ -1067,6 +1086,7 @@ fun HomeScreen(
                 viewModel.selectedTable = heldOrder.tableName ?: ""
                 orderType = heldOrder.orderType ?: ""
                 selectedCustomer = viewModel.customers.find { it.name == heldOrder.customerName }
+                viewModel.removeHeldOrderLocal(heldOrder.id)
                 viewModel.deleteHeldOrder(context, heldOrder.id, nidOutlet)
                 viewModel.showHeldOrdersDialog = false
             },
