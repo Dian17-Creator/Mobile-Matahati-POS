@@ -69,6 +69,9 @@ class HomeViewModel : ViewModel() {
     // Held Orders States (Backend DRAFT Status)
     val heldOrders = mutableStateListOf<TransactionModel>()
     var showHeldOrdersDialog by mutableStateOf(false)
+    var showCashierConfirmDialog by mutableStateOf(false)
+    var showPaymentScreen by mutableStateOf(false)
+    var pendingShowReceipt by mutableStateOf(false)
 
     fun fetchHeldOrders(nidOutlet: String?) {
         viewModelScope.launch {
@@ -349,6 +352,7 @@ class HomeViewModel : ViewModel() {
     }
 
     fun submitTransaction(
+        context: android.content.Context,
         cartItems: List<id.my.matahati.pos.model.CartItem>,
         orderType: String,
         selectedCustomer: Customer?,
@@ -359,6 +363,7 @@ class HomeViewModel : ViewModel() {
         nidOutlet: String?
     ) {
         executeTransaction(
+            context = context,
             cartItems = cartItems,
             orderType = orderType,
             selectedCustomer = selectedCustomer,
@@ -373,6 +378,7 @@ class HomeViewModel : ViewModel() {
     }
 
     fun submitCancelTransaction(
+        context: android.content.Context,
         cartItems: List<id.my.matahati.pos.model.CartItem>,
         orderType: String,
         selectedCustomer: Customer?,
@@ -380,6 +386,7 @@ class HomeViewModel : ViewModel() {
         nidOutlet: String?
     ) {
         executeTransaction(
+            context = context,
             cartItems = cartItems,
             orderType = orderType,
             selectedCustomer = selectedCustomer,
@@ -403,6 +410,7 @@ class HomeViewModel : ViewModel() {
         onSuccess: () -> Unit = {}
     ) {
         executeTransaction(
+            context = null,
             cartItems = cartItems,
             orderType = orderType,
             selectedCustomer = selectedCustomer,
@@ -418,6 +426,7 @@ class HomeViewModel : ViewModel() {
     }
 
     private fun executeTransaction(
+        context: android.content.Context? = null,
         cartItems: List<id.my.matahati.pos.model.CartItem>,
         orderType: String,
         selectedCustomer: Customer?,
@@ -500,7 +509,11 @@ class HomeViewModel : ViewModel() {
                             onSuccess?.invoke()
                         } else {
                             lastTransaction = body.data
-                            showReceiptDialog = true
+                            showPaymentScreen = false
+                            pendingShowReceipt = true
+                            if (context != null) {
+                                openKitchenPrintDialog(context, cartItems)
+                            }
                             onSuccess?.invoke()
                         }
                     } else {
@@ -668,6 +681,18 @@ class HomeViewModel : ViewModel() {
     fun closeSimulatedReceipt() {
         showSimulatedReceipt = false
         receiptTickets.clear()
+        if (pendingShowReceipt) {
+            pendingShowReceipt = false
+            showReceiptDialog = true
+        }
+    }
+
+    fun closeKitchenPrintDialog() {
+        showKitchenPrintDialog = false
+        if (pendingShowReceipt) {
+            pendingShowReceipt = false
+            showReceiptDialog = true
+        }
     }
 
     fun fetchTransactionHistory(

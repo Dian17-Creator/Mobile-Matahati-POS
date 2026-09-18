@@ -419,7 +419,7 @@ fun HomeScreen(
                                                         } else if (selectedCustomer == null) {
                                                             validationWarningMessage = "Silahkan pilih customer"
                                                         } else {
-                                                            showPaymentInputDialog = true
+                                                            viewModel.showCashierConfirmDialog = true
                                                         }
                                                     }
                                                 },
@@ -914,16 +914,29 @@ fun HomeScreen(
     }
 
     // =============================================================
-    // PAYMENT INPUT DIALOG & ERROR HANDLING
+    // CASHIER CONFIRMATION & PAYMENT SCREEN
     // =============================================================
-    if (showPaymentInputDialog) {
-        PaymentInputDialog(
-            grandTotal = cartTotalAmount, // Ideally apply discount/tax if present
+    if (viewModel.showCashierConfirmDialog) {
+        CashierConfirmationDialog(
+            cashierName = userName,
+            onDismiss = { viewModel.showCashierConfirmDialog = false },
+            onConfirm = {
+                viewModel.showCashierConfirmDialog = false
+                viewModel.showPaymentScreen = true
+            }
+        )
+    }
+
+    if (viewModel.showPaymentScreen) {
+        PaymentScreen(
+            grandTotal = cartTotalAmount,
             paymentMethods = viewModel.paymentMethods,
-            onDismiss = { showPaymentInputDialog = false },
-            onSubmit = { method, amount ->
-                showPaymentInputDialog = false
+            isSubmitting = viewModel.isSubmitting,
+            errorMessage = viewModel.transactionError,
+            onBack = { viewModel.showPaymentScreen = false },
+            onPay = { method, amount ->
                 viewModel.submitTransaction(
+                    context = context,
                     cartItems = cartItems,
                     orderType = orderType,
                     selectedCustomer = selectedCustomer,
@@ -946,6 +959,7 @@ fun HomeScreen(
             onConfirm = { note ->
                 showCancelDialog = false
                 viewModel.submitCancelTransaction(
+                    context = context,
                     cartItems = cartItems,
                     orderType = orderType,
                     selectedCustomer = selectedCustomer,
@@ -1079,7 +1093,7 @@ fun HomeScreen(
                     }
                 )
             },
-            onDismiss = { viewModel.showKitchenPrintDialog = false }
+            onDismiss = { viewModel.closeKitchenPrintDialog() }
         )
     }
 
