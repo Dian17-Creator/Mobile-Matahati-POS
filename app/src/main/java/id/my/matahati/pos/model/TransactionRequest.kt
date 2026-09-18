@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 data class TransactionRequest(
     @SerializedName("nid_customer") val nidCustomer: String?,
     @SerializedName("nid_outlet") val nidOutlet: Int,
+    @SerializedName("nid_user") val nidUser: Int? = null,
     @SerializedName("nid_payment") val nidPayment: String?,
     @SerializedName("nid_voucher") val nidVoucher: String?,
     @SerializedName("cname_customer") val customerName: String?,

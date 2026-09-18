@@ -73,6 +73,29 @@ class HomeViewModel : ViewModel() {
     var showPaymentScreen by mutableStateOf(false)
     var pendingShowReceipt by mutableStateOf(false)
 
+    // Served By States
+    val servedByUsers = mutableStateListOf<id.my.matahati.pos.model.PosUser>()
+    var selectedServedBy by mutableStateOf<id.my.matahati.pos.model.PosUser?>(null)
+    var showServedByDialog by mutableStateOf(false)
+
+    fun loadServedByUsers(outletId: Int?) {
+        viewModelScope.launch {
+            try {
+                val validOutlet = if (outletId != null && outletId > 0) outletId else 1
+                val response = RetrofitClient.apiService.getPosUsers(validOutlet)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    servedByUsers.clear()
+                    servedByUsers.addAll(response.body()?.data ?: emptyList())
+                    if (selectedServedBy == null && servedByUsers.isNotEmpty()) {
+                        selectedServedBy = servedByUsers.firstOrNull()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ServedBy", "Gagal mengambil daftar dilayani oleh", e)
+            }
+        }
+    }
+
     fun fetchHeldOrders(nidOutlet: String?) {
         viewModelScope.launch {
             try {
@@ -94,12 +117,11 @@ class HomeViewModel : ViewModel() {
     }
 
     fun deleteHeldOrder(context: android.content.Context, id: String, nidOutlet: String?) {
+        removeHeldOrderLocal(id)
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.apiService.deleteTransaction(id)
-                if (response.isSuccessful) {
-                    fetchHeldOrders(nidOutlet)
-                }
+                RetrofitClient.apiService.deleteTransaction(id)
+                fetchHeldOrders(nidOutlet)
             } catch (e: Exception) {
                 Log.e("HeldOrders", "Error deleting draft: ${e.message}", e)
             }
@@ -479,6 +501,7 @@ class HomeViewModel : ViewModel() {
         val request = TransactionRequest(
             nidCustomer = selectedCustomer?.id,
             nidOutlet = parsedOutlet,
+            nidUser = selectedServedBy?.id,
             nidPayment = selectedPayment?.id,
             nidVoucher = null,
             customerName = selectedCustomer?.name,

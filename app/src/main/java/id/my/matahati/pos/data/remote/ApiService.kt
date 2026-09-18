@@ -34,6 +34,9 @@ interface ApiService {
     @GET("api/payment-methods")
     suspend fun getPaymentMethods(): Response<PaymentMethodResponse>
 
+    @GET("api/pos-users")
+    suspend fun getPosUsers(@retrofit2.http.Query("outlet_id") outletId: Int): Response<id.my.matahati.pos.model.PosUserResponse>
+
     @GET("api/pos/order-types")
     suspend fun getOrderTypes(): Response<OrderTypeResponse>
 
