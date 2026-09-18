@@ -933,6 +933,9 @@ fun HomeScreen(
             paymentMethods = viewModel.paymentMethods,
             isSubmitting = viewModel.isSubmitting,
             errorMessage = viewModel.transactionError,
+            viewModel = viewModel,
+            cashierName = userName,
+            context = context,
             onBack = { viewModel.showPaymentScreen = false },
             onPay = { method, amount ->
                 viewModel.submitTransaction(
@@ -946,6 +949,13 @@ fun HomeScreen(
                     paidAmount = amount,
                     nidOutlet = nidOutlet
                 )
+            },
+            onFinishPayment = {
+                cartItems.clear()
+                orderType = ""
+                viewModel.selectedTable = ""
+                selectedCustomer = null
+                viewModel.showPaymentScreen = false
             }
         )
     }
@@ -1028,94 +1038,10 @@ fun HomeScreen(
         )
     }
 
-    if (viewModel.showReceiptDialog && viewModel.lastTransaction != null) {
-        ReceiptDialog(
-            transactionData = viewModel.lastTransaction!!,
-            cashierName = userName,
-            isPrinting = viewModel.isPrinting,
-            onPrint = {
-                checkAndPrint(viewModel.lastTransaction!!)
-            },
-            onDismiss = {
-                viewModel.closeReceiptDialog()
-                cartItems.clear()
-                orderType = ""
-                selectedCustomer = null
-            }
-        )
-    }
-
-    // =============================================================
-    // PRINTER DIALOGS & ERROR HANDLING
-    // =============================================================
-    if (viewModel.showPrinterSelection) {
-        PrinterSelectionDialog(
-            pairedDevices = viewModel.pairedDevices,
-            selectedAddress = viewModel.selectedPrinterAddress,
-            onDeviceSelected = { device ->
-                viewModel.selectPrinter(context, device.address)
-            },
-            onTestPrint = {
-                viewModel.testPrint(context)
-            },
-            onDismiss = { viewModel.showPrinterSelection = false }
-        )
-    }
-
-    if (viewModel.printerError != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.printerError = null },
-            title = { Text("Printer Error") },
-            text = { Text(viewModel.printerError ?: "") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.printerError = null }) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { 
-                    viewModel.printerError = null
-                    viewModel.openPrinterSelection(printerManager)
-                }) {
-                    Text("Ganti Printer")
-                }
-            }
-        )
-    }
-
     // =============================================================
     // KITCHEN PRINT DIALOGS
     // =============================================================
-    if (viewModel.showKitchenPrintDialog) {
-        KitchenPrintSelectionDialog(
-            changesCount = viewModel.printChangesCount,
-            availableStations = viewModel.availableStations,
-            selectedStations = viewModel.selectedStations,
-            savedPrinters = viewModel.savedPrinters,
-            onToggleStation = { viewModel.toggleStationSelection(it) },
-            onConfirmPrint = { type ->
-                viewModel.onConfirmKitchenPrint(
-                    type = type,
-                    onUpdateActiveCart = { updatedList ->
-                        cartItems.clear()
-                        cartItems.addAll(updatedList)
-                    }
-                )
-            },
-            onDismiss = { viewModel.closeKitchenPrintDialog() }
-        )
-    }
-
-    if (viewModel.showSimulatedReceipt) {
-        SimulatedReceiptDialog(
-            tickets = viewModel.receiptTickets,
-            isPrinting = viewModel.isPrinting,
-            onPrint = {
-                viewModel.printKitchenTickets(context, viewModel.receiptTickets)
-            },
-            onDismiss = { viewModel.closeSimulatedReceipt() }
-        )
-    }
+    // (Handled inside PaymentScreen during checkout flow)
 
     if (viewModel.showHeldOrdersDialog) {
         HeldOrdersDialog(
