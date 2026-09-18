@@ -977,17 +977,26 @@ fun HomeScreen(
                 cartItems.clear()
                 orderType = ""
                 selectedCustomer = null
+                viewModel.selectedTable = ""
             },
-            title = { Text("Berhasil") },
-            text = { Text(viewModel.transactionSuccessMessage ?: "") },
+            containerColor = Color.White,
+            modifier = Modifier.width(480.dp).wrapContentHeight(),
+            title = { Text("Berhasil", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+            text = { Text(viewModel.transactionSuccessMessage ?: "", fontSize = 16.sp) },
             confirmButton = {
-                TextButton(onClick = { 
-                    viewModel.clearTransactionSuccess() 
-                    cartItems.clear()
-                    orderType = ""
-                    selectedCustomer = null
-                }) {
-                    Text("Selesai")
+                Button(
+                    onClick = { 
+                        viewModel.clearTransactionSuccess() 
+                        cartItems.clear()
+                        orderType = ""
+                        selectedCustomer = null
+                        viewModel.selectedTable = ""
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) {
+                    Text("Selesai", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
             }
         )
