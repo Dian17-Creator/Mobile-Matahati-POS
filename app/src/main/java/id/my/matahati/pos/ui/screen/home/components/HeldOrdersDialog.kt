@@ -1,5 +1,6 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,8 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import id.my.matahati.pos.model.TransactionModel
-import java.text.NumberFormat
-import java.util.Locale
 
 @Composable
 fun HeldOrdersDialog(
@@ -26,8 +25,12 @@ fun HeldOrdersDialog(
     onOpenOrder: (TransactionModel) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
-        maximumFractionDigits = 0
+    val formatDateTime: (String) -> String = { dateStr ->
+        try {
+            if (dateStr.length >= 16) dateStr.substring(0, 16) else dateStr
+        } catch (_: Exception) {
+            dateStr
+        }
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -35,7 +38,7 @@ fun HeldOrdersDialog(
             shape = RoundedCornerShape(16.dp),
             color = Color.White,
             modifier = Modifier
-                .width(480.dp)
+                .width(580.dp)
                 .heightIn(max = 600.dp)
                 .padding(16.dp)
         ) {
@@ -94,8 +97,9 @@ fun HeldOrdersDialog(
                         items(heldOrders) { order ->
                             Card(
                                 shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { onOpenOrder(order) }
@@ -107,16 +111,30 @@ fun HeldOrdersDialog(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    // Sisi Kiri (2 baris)
                                     Column(
                                         modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Text(
-                                            text = order.transactionNo,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp,
-                                            color = Color.Black
-                                        )
+                                        // Baris 1: ID Transaksi | Tanggal dan Jam Menit
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = order.transactionNo,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.sp,
+                                                color = Color.Black
+                                            )
+                                            Text(
+                                                text = formatDateTime(order.transactionDate),
+                                                fontSize = 12.sp,
+                                                color = Color.Gray
+                                            )
+                                        }
+
+                                        // Baris 2: Meja & Nama Pelanggan
                                         val subInfo = listOfNotNull(
                                             order.tableName?.let { "Meja $it" },
                                             order.customerName?.let { it }
@@ -125,33 +143,24 @@ fun HeldOrdersDialog(
                                             Text(
                                                 text = subInfo,
                                                 fontSize = 13.sp,
-                                                color = Color.DarkGray
+                                                color = Color.DarkGray,
+                                                fontWeight = FontWeight.Medium
                                             )
                                         }
-                                        Text(
-                                            text = order.transactionDate,
-                                            fontSize = 11.sp,
-                                            color = Color.Gray
-                                        )
                                     }
 
                                     Spacer(modifier = Modifier.width(16.dp))
 
-                                    Column(
-                                        horizontalAlignment = Alignment.End,
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    // Sisi Kanan: Teks "Ketuk untuk membuka" rata tengah vertikal
+                                    Box(
+                                        modifier = Modifier.fillMaxHeight(),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        val grandTotalVal = order.grandTotal.toDoubleOrNull() ?: 0.0
                                         Text(
-                                            text = "Rp ${formatter.format(grandTotalVal)}",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp,
+                                            text = "Ketuk untuk membuka",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
                                             color = Color(0xFF1565C0)
-                                        )
-                                        Text(
-                                            text = "Ketuk untuk Buka",
-                                            fontSize = 11.sp,
-                                            color = Color.Gray
                                         )
                                     }
                                 }
