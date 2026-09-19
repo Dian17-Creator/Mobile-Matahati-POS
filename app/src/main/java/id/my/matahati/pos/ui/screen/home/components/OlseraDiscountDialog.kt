@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -58,14 +59,29 @@ fun OlseraDiscountDialog(
                     .fillMaxWidth()
                     .padding(vertical = 24.dp)
             ) {
-                // Title
-                Text(
-                    text = "Terapkan Diskon",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
+                // Title Area with Close Button
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Terapkan Diskon",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Tutup",
+                            tint = Color.Gray
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -192,36 +208,20 @@ fun OlseraDiscountDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Footer Actions
-                Row(
+                // Full-width SIMPAN Button
+                Button(
+                    onClick = {
+                        // Manual discount logic could be added here if needed
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.End
+                        .padding(horizontal = 24.dp)
+                        .height(48.dp)
                 ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = "BATAL",
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Button(
-                        onClick = {
-                            // Manual discount logic could be added here if needed
-                            onDismiss()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("SIMPAN", fontWeight = FontWeight.Bold)
-                    }
+                    Text("SIMPAN", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
