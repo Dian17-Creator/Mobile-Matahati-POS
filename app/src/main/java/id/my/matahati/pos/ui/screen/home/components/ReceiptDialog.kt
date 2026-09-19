@@ -31,6 +31,9 @@ fun ReceiptDialog(
     val trx = transactionData.transaction ?: return
     val details = transactionData.details ?: emptyList()
     
+    // Prioritize cashier name from transaction data if available
+    val finalCashierName = trx.posUser?.user?.name ?: cashierName
+    
     val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
         maximumFractionDigits = 0
     }
@@ -87,7 +90,7 @@ fun ReceiptDialog(
                         Column(modifier = Modifier.fillMaxWidth()) {
                             TextRow("No. Trx", trx.transactionNo)
                             TextRow("Waktu", formatDateTime(trx.transactionDate))
-                            TextRow("Kasir", cashierName)
+                            TextRow("Kasir", finalCashierName)
                             TextRow("Order", trx.orderType)
                             if (trx.customerName != null) {
                                 TextRow("Customer", trx.customerName)

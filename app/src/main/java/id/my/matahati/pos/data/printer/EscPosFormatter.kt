@@ -26,6 +26,9 @@ class EscPosFormatter(private val cols: Int = 42) {
         val trx = data.transaction ?: return byteArrayOf()
         val details = data.details ?: emptyList()
         
+        // Prioritize cashier name from transaction data
+        val finalCashierName = trx.posUser?.user?.name ?: cashierName
+        
         val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
             maximumFractionDigits = 0
         }
@@ -68,7 +71,7 @@ class EscPosFormatter(private val cols: Int = 42) {
         out.addAll(ALIGN_LEFT.toList())
         out.addAll(formatLabelValue("No. Trx", trx.transactionNo).toList())
         out.addAll(formatLabelValue("Waktu", formatDateTime(trx.transactionDate)).toList())
-        out.addAll(formatLabelValue("Kasir", cashierName).toList())
+        out.addAll(formatLabelValue("Kasir", finalCashierName).toList())
         out.addAll(formatLabelValue("Order", trx.orderType).toList())
         if (trx.customerName != null) {
             out.addAll(formatLabelValue("Customer", trx.customerName).toList())
