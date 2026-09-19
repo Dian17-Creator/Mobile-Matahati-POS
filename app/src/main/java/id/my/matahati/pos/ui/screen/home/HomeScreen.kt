@@ -99,6 +99,7 @@ fun HomeScreen(
     var selectedHistoryTransaction by remember { mutableStateOf<id.my.matahati.pos.model.TransactionModel?>(null) }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
+    var selectedVoucher by remember { mutableStateOf<id.my.matahati.pos.model.Voucher?>(null) }
     
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
@@ -233,8 +234,26 @@ fun HomeScreen(
     }
 
     // Cart Total Calculation
-    val cartTotalAmount by remember {
+    val cartSubtotal by remember {
         derivedStateOf { cartItems.sumOf { it.totalPrice } }
+    }
+
+    val discountAmount by remember {
+        derivedStateOf {
+            selectedVoucher?.let { voucher ->
+                if (cartSubtotal >= voucher.minSpend) {
+                    if (voucher.discountPercent > 0.0) {
+                        cartSubtotal * (voucher.discountPercent / 100.0)
+                    } else {
+                        voucher.discountAmount
+                    }
+                } else 0.0
+            } ?: 0.0
+        }
+    }
+
+    val cartGrandTotal by remember {
+        derivedStateOf { (cartSubtotal - discountAmount).coerceAtLeast(0.0) }
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -400,7 +419,7 @@ fun HomeScreen(
                                                             cartItems = cartItems,
                                                             orderType = orderType,
                                                             selectedCustomer = selectedCustomer,
-                                                            discount = 0.0,
+                                                            discount = discountAmount,
                                                             tax = 0.0,
                                                             nidOutlet = nidOutlet,
                                                             onSuccess = {
@@ -408,6 +427,7 @@ fun HomeScreen(
                                                                 orderType = ""
                                                                 viewModel.selectedTable = ""
                                                                 selectedCustomer = null
+                                                                selectedVoucher = null
                                                             }
                                                         )
                                                     }
@@ -436,6 +456,8 @@ fun HomeScreen(
                                                 cashierName = userName,
                                                 servedByName = viewModel.selectedServedBy?.name ?: userName,
                                                 onServedByClick = { viewModel.showServedByDialog = true },
+                                                discountAmount = discountAmount,
+                                                grandTotal = cartGrandTotal,
                                                 modifier = Modifier
                                                     .weight(0.40f)
                                                     .fillMaxHeight()
@@ -675,7 +697,7 @@ fun HomeScreen(
                                                         contentAlignment = Alignment.Center
                                                     ) {
                                                         Text(
-                                                            text = "Rp ${formatRawCurrency(cartTotalAmount)}",
+                                                            text = "Rp ${formatRawCurrency(cartGrandTotal)}",
                                                             fontSize = 18.sp,
                                                             fontWeight = FontWeight.ExtraBold,
                                                             color = Color.White
@@ -903,7 +925,11 @@ fun HomeScreen(
     if (showDiscountDialog) {
         OlseraDiscountDialog(
             vouchers = viewModel.vouchers,
-            onDismiss = { showDiscountDialog = false }
+            cartSubtotal = cartSubtotal,
+            onDismiss = { showDiscountDialog = false },
+            onVoucherSelected = { voucher ->
+                selectedVoucher = voucher
+            }
         )
     }
     // =============================================================
@@ -948,7 +974,7 @@ fun HomeScreen(
 
     if (viewModel.showPaymentScreen) {
         PaymentScreen(
-            grandTotal = cartTotalAmount,
+            grandTotal = cartGrandTotal,
             paymentMethods = viewModel.paymentMethods,
             isSubmitting = viewModel.isSubmitting,
             errorMessage = viewModel.transactionError,
@@ -963,9 +989,10 @@ fun HomeScreen(
                     orderType = orderType,
                     selectedCustomer = selectedCustomer,
                     selectedPayment = method,
-                    discount = 0.0,
+                    discount = discountAmount,
                     tax = 0.0,
                     paidAmount = amount,
+                    nidVoucher = selectedVoucher?.id?.toIntOrNull(),
                     nidOutlet = nidOutlet
                 )
             },
@@ -974,6 +1001,7 @@ fun HomeScreen(
                 orderType = ""
                 viewModel.selectedTable = ""
                 selectedCustomer = null
+                selectedVoucher = null
                 viewModel.showPaymentScreen = false
             }
         )

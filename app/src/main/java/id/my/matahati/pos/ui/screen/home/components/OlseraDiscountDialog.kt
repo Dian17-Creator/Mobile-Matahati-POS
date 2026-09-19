@@ -1,24 +1,16 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,15 +26,22 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import id.my.matahati.pos.model.Voucher
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun OlseraDiscountDialog(
     vouchers: List<Voucher>,
+    cartSubtotal: Double,
     onDismiss: () -> Unit,
     onVoucherSelected: (Voucher) -> Unit = {}
 ) {
     var manualDiscount by remember { mutableStateOf("") }
     var voucherCodeInput by remember { mutableStateOf("") }
+
+    val formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("id-ID")).apply {
+        maximumFractionDigits = 0
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -50,110 +49,178 @@ fun OlseraDiscountDialog(
     ) {
         Surface(
             modifier = Modifier
-                .width(420.dp)
-                .clip(RoundedCornerShape(8.dp)),
+                .width(480.dp)
+                .clip(RoundedCornerShape(12.dp)),
             color = Color.White
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 24.dp)
             ) {
                 // Title
                 Text(
-                    text = "Diskon",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.DarkGray,
-                    modifier = Modifier.padding(horizontal = 20.dp)
+                    text = "Terapkan Diskon",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // Manual Discount Input
                 OutlinedTextField(
                     value = manualDiscount,
                     onValueChange = { manualDiscount = it },
-                    placeholder = { Text("[Masukkan Jumlah/Persen Diskon]") },
+                    label = { Text("Diskon Manual (Rp atau %)") },
+                    placeholder = { Text("Contoh: 10000 atau 10%") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = 24.dp),
                     shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color(0xFF0288D1),
-                        unfocusedIndicatorColor = Color.LightGray
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF1565C0),
+                        unfocusedBorderColor = Color.LightGray
                     )
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp), color = Color.LightGray.copy(alpha = 0.5f))
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Voucher Tersedia",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
-
-                // Voucher Code Input
-                OutlinedTextField(
-                    value = voucherCodeInput,
-                    onValueChange = { voucherCodeInput = it },
-                    placeholder = { Text("[Masukkan Kode Voucher]") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color(0xFF0288D1),
-                        unfocusedIndicatorColor = Color.LightGray
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Voucher List
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(300.dp)
+                        .heightIn(max = 350.dp),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(vouchers) { voucher ->
-                        Column(
+                        val isEligible = cartSubtotal >= voucher.minSpend
+                        val isOutOfStock = voucher.remainingQuota <= 0
+
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isEligible && !isOutOfStock) Color(0xFFF8FAFC) else Color(0xFFF1F5F9).copy(alpha = 0.5f),
+                            border = BorderStroke(1.dp, if (isEligible && !isOutOfStock) Color(0xFFE2E8F0) else Color.Transparent),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { 
+                                .clickable(enabled = isEligible && !isOutOfStock) { 
                                     onVoucherSelected(voucher)
                                     onDismiss()
                                 }
-                                .padding(horizontal = 20.dp, vertical = 12.dp)
                         ) {
-                            Text(
-                                text = "${voucher.description} (${voucher.code})",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Black
-                            )
-                            Text(
-                                text = "Disc. ${voucher.discountDisplay}",
-                                fontSize = 13.sp,
-                                color = Color.Gray
-                            )
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ConfirmationNumber,
+                                    contentDescription = null,
+                                    tint = if (isEligible) Color(0xFF1565C0) else Color.Gray,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                
+                                Spacer(modifier = Modifier.width(16.dp))
+                                
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = voucher.code,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (isEligible) Color.Black else Color.Gray
+                                    )
+                                    Text(
+                                        text = voucher.description,
+                                        fontSize = 12.sp,
+                                        color = Color.DarkGray,
+                                        maxLines = 1
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "Potongan: ${voucher.discountDisplay}",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isEligible) Color(0xFF2E7D32) else Color.Gray
+                                        )
+                                    }
+                                    
+                                    Text(
+                                        text = "Min. Belanja: ${formatter.format(voucher.minSpend)}",
+                                        fontSize = 11.sp,
+                                        color = if (isEligible) Color.DarkGray else Color(0xFFD32F2F)
+                                    )
+                                }
+
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = "Sisa: ${voucher.remainingQuota}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isOutOfStock) Color.Red else Color.DarkGray
+                                    )
+                                    if (!isEligible) {
+                                        Icon(
+                                            imageVector = Icons.Default.Info,
+                                            contentDescription = "Syarat tidak terpenuhi",
+                                            tint = Color(0xFFD32F2F),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Footer Actions
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
                         Text(
                             text = "BATAL",
-                            color = Color(0xFF0288D1),
+                            color = Color.Gray,
                             fontWeight = FontWeight.Bold
                         )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        onClick = {
+                            // Manual discount logic could be added here if needed
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("SIMPAN", fontWeight = FontWeight.Bold)
                     }
                 }
             }
