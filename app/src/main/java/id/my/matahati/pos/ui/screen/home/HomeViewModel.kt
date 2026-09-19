@@ -288,7 +288,7 @@ class HomeViewModel : ViewModel() {
                 if (catResponse.isSuccessful && catResponse.body()?.success == true) {
                     val dtos = catResponse.body()?.data ?: emptyList()
                     val fetchedCategories = mutableListOf<Category>(
-                        Category(id = "all", name = "Semua Kategori", iconEmoji = "🏷️")
+                        Category(id = "all", name = "Semua Kategori")
                     )
                     fetchedCategories.addAll(dtos.map { it.toCategory() })
                     categories.clear()
@@ -622,6 +622,12 @@ class HomeViewModel : ViewModel() {
 
     fun openKitchenPrintDialogFromHistory(context: android.content.Context, transaction: TransactionModel) {
         val items = transaction.details?.map { detail ->
+            // Try to find the original product to get the correct station name
+            val originalProduct = products.find { it.id == detail.productId }
+            val station = originalProduct?.stationName ?: if (detail.productName.lowercase().contains("tea") || 
+                                     detail.productName.lowercase().contains("kopi") || 
+                                     detail.productName.lowercase().contains("ice")) "BAR" else "DAPUR"
+
             id.my.matahati.pos.model.CartItem(
                 product = Product(
                     id = detail.productId,
@@ -629,9 +635,7 @@ class HomeViewModel : ViewModel() {
                     price = detail.price.toDoubleOrNull() ?: 0.0,
                     categoryId = "1",
                     stock = 0,
-                    stationName = if (detail.productName.lowercase().contains("tea") || 
-                                     detail.productName.lowercase().contains("kopi") || 
-                                     detail.productName.lowercase().contains("ice")) "BAR" else "DAPUR"
+                    stationName = station
                 ),
                 quantity = detail.quantity,
                 note = detail.note ?: "",

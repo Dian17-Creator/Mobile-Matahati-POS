@@ -50,7 +50,6 @@ fun SimulatedReceiptDialog(
                 Box(
                     modifier = Modifier
                         .weight(1f, fill = false)
-                        .heightIn(max = 400.dp)
                 ) {
                     val scrollState = rememberScrollState()
                     Column(
