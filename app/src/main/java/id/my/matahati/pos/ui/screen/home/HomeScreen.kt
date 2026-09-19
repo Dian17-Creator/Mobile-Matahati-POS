@@ -953,7 +953,7 @@ fun HomeScreen(
             isSubmitting = viewModel.isSubmitting,
             errorMessage = viewModel.transactionError,
             viewModel = viewModel,
-            cashierName = userName,
+            cashierName = viewModel.selectedServedBy?.name ?: userName,
             context = context,
             onBack = { viewModel.showPaymentScreen = false },
             onPay = { method, amount ->
