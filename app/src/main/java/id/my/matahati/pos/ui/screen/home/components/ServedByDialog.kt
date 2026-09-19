@@ -84,7 +84,7 @@ fun ServedByDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f)
+                            .heightIn(max = 400.dp)
                     ) {
                         items(users) { user ->
                             val isSelected = selectedUser?.id == user.id
@@ -118,19 +118,6 @@ fun ServedByDialog(
                             }
                         }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp)
-                ) {
-                    Text("BATAL", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
