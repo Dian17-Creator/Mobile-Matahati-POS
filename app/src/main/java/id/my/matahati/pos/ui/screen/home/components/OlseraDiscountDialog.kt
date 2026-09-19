@@ -34,10 +34,12 @@ import java.util.Locale
 fun OlseraDiscountDialog(
     vouchers: List<Voucher>,
     cartSubtotal: Double,
+    initialManualDiscount: String = "",
     onDismiss: () -> Unit,
-    onVoucherSelected: (Voucher) -> Unit = {}
+    onVoucherSelected: (Voucher) -> Unit = {},
+    onManualDiscountApplied: (String) -> Unit = {}
 ) {
-    var manualDiscount by remember { mutableStateOf("") }
+    var manualDiscount by remember { mutableStateOf(initialManualDiscount) }
     var voucherCodeInput by remember { mutableStateOf("") }
 
     val formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("id-ID")).apply {
@@ -211,7 +213,7 @@ fun OlseraDiscountDialog(
                 // Full-width SIMPAN Button
                 Button(
                     onClick = {
-                        // Manual discount logic could be added here if needed
+                        onManualDiscountApplied(manualDiscount)
                         onDismiss()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),

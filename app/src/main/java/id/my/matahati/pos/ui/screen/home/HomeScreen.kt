@@ -100,6 +100,7 @@ fun HomeScreen(
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
     var selectedVoucher by remember { mutableStateOf<id.my.matahati.pos.model.Voucher?>(null) }
+    var manualDiscountInput by remember { mutableStateOf("") }
     
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
@@ -428,6 +429,7 @@ fun HomeScreen(
                                                                 viewModel.selectedTable = ""
                                                                 selectedCustomer = null
                                                                 selectedVoucher = null
+                                                                manualDiscountInput = ""
                                                             }
                                                         )
                                                     }
@@ -1002,6 +1004,7 @@ fun HomeScreen(
                 viewModel.selectedTable = ""
                 selectedCustomer = null
                 selectedVoucher = null
+                manualDiscountInput = ""
                 viewModel.showPaymentScreen = false
             }
         )
@@ -1035,6 +1038,8 @@ fun HomeScreen(
                 orderType = ""
                 selectedCustomer = null
                 viewModel.selectedTable = ""
+                selectedVoucher = null
+                manualDiscountInput = ""
             },
             containerColor = Color.White,
             modifier = Modifier.width(480.dp).wrapContentHeight(),
@@ -1048,6 +1053,8 @@ fun HomeScreen(
                         orderType = ""
                         selectedCustomer = null
                         viewModel.selectedTable = ""
+                        selectedVoucher = null
+                        manualDiscountInput = ""
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
                     shape = RoundedCornerShape(8.dp),
