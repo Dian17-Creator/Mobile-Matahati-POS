@@ -1,0 +1,4 @@
+- [x] Update `Product.kt` to use category-based station logic
+- [x] Update `HomeViewModel.kt` to fix history station logic
+- [x] Fix height truncation in `ReceiptDialog.kt`
+- [x] Fix height truncation in `SimulatedReceiptDialog.kt`

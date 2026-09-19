@@ -85,7 +85,7 @@ fun OlseraProductCard(
 ) {
     Card(
         shape = RoundedCornerShape(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0D47A1)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = modifier
             .fillMaxWidth()
@@ -99,7 +99,7 @@ fun OlseraProductCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1.25f)
-                    .background(Color(0xFFE8ECEF)),
+                    .background(Color(0xFFFDFDFD)),
                 contentAlignment = Alignment.Center
             ) {
                 if (!product.imageUrl.isNullOrBlank()) {
@@ -126,7 +126,7 @@ fun OlseraProductCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFE3F2FD))
+                    .background(Color(0xFFFFFFFF))
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 Text(

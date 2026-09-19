@@ -35,7 +35,11 @@ data class ProductDto(
             iconEmoji = "🍽️",
             imageUrl = cphotos,
             isAvailable = cstatus?.lowercase() != "inactive",
-            stationName = if (cname.lowercase().contains("tea") || cname.lowercase().contains("kopi") || cname.lowercase().contains("ice")) "BAR" else "DAPUR"
+            stationName = when (nidCategory) {
+                2 -> "BAR"
+                1, 3 -> "DAPUR"
+                else -> "DAPUR"
+            }
         )
     }
 }

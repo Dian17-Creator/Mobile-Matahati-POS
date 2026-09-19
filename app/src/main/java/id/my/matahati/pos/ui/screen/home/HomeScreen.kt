@@ -448,13 +448,13 @@ fun HomeScreen(
                                                 modifier = Modifier
                                                     .weight(0.60f)
                                                     .fillMaxHeight()
-                                                    .background(Color.White)
+                                                    .background(Color(0xFF1565C0)),
                                             ) {
                                                 when (selectedRightTab) {
                                                     "Produk" -> {
                                                         // Top sub-bar for Search and Category Filter
                                                         Surface(
-                                                            color = Color(0xFF1E88E5),
+                                                            color = Color(0xFF1565C0),
                                                             modifier = Modifier.fillMaxWidth()
                                                         ) {
                                                             Row(
@@ -548,7 +548,7 @@ fun HomeScreen(
                                                                     ) {
                                                                         categories.forEach { category ->
                                                                             DropdownMenuItem(
-                                                                                text = { Text("${category.iconEmoji} ${category.name}") },
+                                                                                text = { Text(category.name) },
                                                                                 onClick = {
                                                                                     selectedCategoryId = category.id
                                                                                     isCategoryDropdownExpanded = false

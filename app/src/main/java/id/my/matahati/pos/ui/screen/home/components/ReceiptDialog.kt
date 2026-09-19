@@ -77,7 +77,7 @@ fun ReceiptDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Scrollable Content Area
-                Box(modifier = Modifier.weight(1f, fill = false).heightIn(max = 450.dp)) {
+                Box(modifier = Modifier.weight(1f, fill = false)) {
                     val scrollState = rememberScrollState()
                     Column(
                         modifier = Modifier

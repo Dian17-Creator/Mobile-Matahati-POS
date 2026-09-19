@@ -13,11 +13,11 @@ object DummyData {
     )
 
     val categories = listOf(
-        Category(id = "all", name = "Semua Kategori", iconEmoji = "🍽️"),
-        Category(id = "food", name = "Makanan", iconEmoji = "🍲"),
-        Category(id = "drink", name = "Minuman", iconEmoji = "☕"),
-        Category(id = "snack", name = "Camilan", iconEmoji = "🍿"),
-        Category(id = "package", name = "Paket Hemat", iconEmoji = "🍱")
+        Category(id = "all", name = "Semua Kategori"),
+        Category(id = "food", name = "Makanan"),
+        Category(id = "drink", name = "Minuman"),
+        Category(id = "snack", name = "Camilan"),
+        Category(id = "package", name = "Paket Hemat")
     )
 
     val products = listOf(
