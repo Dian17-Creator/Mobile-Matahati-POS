@@ -83,9 +83,12 @@ fun OlseraCartPanel(
     modifier: Modifier = Modifier,
     cashierName: String = "april",
     servedByName: String = cashierName,
-    onServedByClick: () -> Unit = {}
+    onServedByClick: () -> Unit = {},
+    discountAmount: Double = 0.0,
+    grandTotal: Double = 0.0
 ) {
-    val totalAmount = cartItems.sumOf { it.totalPrice }
+    val subtotal = cartItems.sumOf { it.totalPrice }
+    val totalAmount = if (grandTotal > 0) grandTotal else (subtotal - discountAmount).coerceAtLeast(0.0)
     val totalItemsCount = cartItems.sumOf { it.quantity }
     var showMore by remember { mutableStateOf(false) }
 
@@ -291,8 +294,37 @@ fun OlseraCartPanel(
                         }
                     }
 
-                    item {
+                    if (discountAmount > 0) {
+                        item {
+                            Surface(
+                                color = Color(0xFFFFF9C4), // Light yellow for discount
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Diskon Voucher",
+                                        fontSize = 12.sp,
+                                        color = Color.Black,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "-${formatRawCurrency(discountAmount)}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFD32F2F)
+                                    )
+                                }
+                            }
+                        }
+                    }
 
+                    item {
                         Surface(
                             color = Color.White,
                             modifier = Modifier.fillMaxWidth()

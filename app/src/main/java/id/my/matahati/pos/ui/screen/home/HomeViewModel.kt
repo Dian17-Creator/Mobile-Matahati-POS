@@ -314,13 +314,7 @@ class HomeViewModel : ViewModel() {
                 }
 
                 // Fetch Vouchers
-                val vouchResponse = RetrofitClient.apiService.getVouchers()
-                if (vouchResponse.isSuccessful && vouchResponse.body()?.success == true) {
-                    val dtos = vouchResponse.body()?.data ?: emptyList()
-                    val fetchedVouchers = dtos.map { it.toVoucher() }
-                    vouchers.clear()
-                    vouchers.addAll(fetchedVouchers)
-                }
+                fetchVouchers()
 
                 // Fetch Payment Methods
                 val payResponse = RetrofitClient.apiService.getPaymentMethods()
@@ -373,6 +367,22 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    fun fetchVouchers() {
+        viewModelScope.launch {
+            try {
+                val vouchResponse = RetrofitClient.apiService.getVouchers()
+                if (vouchResponse.isSuccessful && vouchResponse.body()?.success == true) {
+                    val dtos = vouchResponse.body()?.data ?: emptyList()
+                    val fetchedVouchers = dtos.map { it.toVoucher() }
+                    vouchers.clear()
+                    vouchers.addAll(fetchedVouchers)
+                }
+            } catch (e: Exception) {
+                Log.e("Vouchers", "Gagal memuat voucher", e)
+            }
+        }
+    }
+
     fun submitTransaction(
         context: android.content.Context,
         cartItems: List<id.my.matahati.pos.model.CartItem>,
@@ -382,6 +392,7 @@ class HomeViewModel : ViewModel() {
         discount: Double,
         tax: Double,
         paidAmount: Double,
+        nidVoucher: Int? = null,
         nidOutlet: String?
     ) {
         executeTransaction(
@@ -393,6 +404,7 @@ class HomeViewModel : ViewModel() {
             discount = discount,
             tax = tax,
             paidAmount = paidAmount,
+            nidVoucher = nidVoucher,
             nidOutlet = nidOutlet,
             status = null,
             cancelNote = null
@@ -456,6 +468,7 @@ class HomeViewModel : ViewModel() {
         discount: Double,
         tax: Double,
         paidAmount: Double,
+        nidVoucher: Int? = null,
         nidOutlet: String?,
         status: String?,
         cancelNote: String?,
@@ -503,7 +516,7 @@ class HomeViewModel : ViewModel() {
             nidOutlet = parsedOutlet,
             nidUser = selectedServedBy?.id,
             nidPayment = selectedPayment?.id,
-            nidVoucher = null,
+            nidVoucher = nidVoucher,
             customerName = selectedCustomer?.name,
             orderType = orderType.ifBlank { "TAKE_AWAY" },
             visitorCount = 1,
@@ -533,6 +546,7 @@ class HomeViewModel : ViewModel() {
                         } else {
                             lastTransaction = body.data
                             pendingShowReceipt = true
+                            fetchVouchers() // Refresh voucher quota after success
                             if (context != null) {
                                 openKitchenPrintDialog(context, cartItems)
                             }
