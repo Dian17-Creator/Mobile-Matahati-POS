@@ -980,9 +980,6 @@ fun HomeScreen(
             paymentMethods = viewModel.paymentMethods,
             isSubmitting = viewModel.isSubmitting,
             errorMessage = viewModel.transactionError,
-            viewModel = viewModel,
-            cashierName = viewModel.selectedServedBy?.name ?: userName,
-            context = context,
             onBack = { viewModel.showPaymentScreen = false },
             onPay = { method, amount ->
                 viewModel.submitTransaction(
@@ -997,15 +994,6 @@ fun HomeScreen(
                     nidVoucher = selectedVoucher?.id?.toIntOrNull(),
                     nidOutlet = nidOutlet
                 )
-            },
-            onFinishPayment = {
-                cartItems.clear()
-                orderType = ""
-                viewModel.selectedTable = ""
-                selectedCustomer = null
-                selectedVoucher = null
-                manualDiscountInput = ""
-                viewModel.showPaymentScreen = false
             }
         )
     }
@@ -1126,6 +1114,70 @@ fun HomeScreen(
                 viewModel.showHeldOrdersDialog = false
             },
             onDismiss = { viewModel.showHeldOrdersDialog = false }
+        )
+    }
+
+    if (viewModel.showKitchenPrintDialog) {
+        KitchenPrintSelectionDialog(
+            changesCount = viewModel.printChangesCount,
+            availableStations = viewModel.availableStations,
+            selectedStations = viewModel.selectedStations,
+            savedPrinters = viewModel.savedPrinters,
+            onToggleStation = { viewModel.toggleStationSelection(it) },
+            onConfirmPrint = { type ->
+                viewModel.onConfirmKitchenPrint(
+                    type = type,
+                    onUpdateActiveCart = { updatedItems ->
+                        // Perbarui status sentQuantity di keranjang lokal
+                        updatedItems.forEach { updated ->
+                            val idx = cartItems.indexOfFirst { it.product.id == updated.product.id }
+                            if (idx >= 0) {
+                                cartItems[idx] = updated
+                            }
+                        }
+                    }
+                )
+            },
+            onDismiss = { viewModel.closeKitchenPrintDialog() }
+        )
+    }
+
+    if (viewModel.showSimulatedReceipt) {
+        SimulatedReceiptDialog(
+            tickets = viewModel.receiptTickets,
+            isPrinting = viewModel.isPrinting,
+            onPrint = {
+                viewModel.printKitchenTickets(context, viewModel.receiptTickets)
+            },
+            onDismiss = { viewModel.closeSimulatedReceipt() }
+        )
+    }
+
+    if (viewModel.showReceiptDialog && viewModel.lastTransaction != null) {
+        ReceiptDialog(
+            transactionData = viewModel.lastTransaction!!,
+            cashierName = userName,
+            isPrinting = viewModel.isPrinting,
+            onPrint = {
+                if (viewModel.selectedPrinterAddress == null) {
+                    viewModel.openPrinterSelection(printerManager)
+                } else {
+                    viewModel.printReceipt(context, viewModel.lastTransaction!!, userName)
+                }
+            },
+            onDismiss = {
+                viewModel.closeReceiptDialog()
+                // Jika ini adalah akhir dari transaksi yang baru saja disubmit
+                if (currentScreen == "pos") {
+                    cartItems.clear()
+                    orderType = ""
+                    viewModel.selectedTable = ""
+                    selectedCustomer = null
+                    selectedVoucher = null
+                    manualDiscountInput = ""
+                    viewModel.showPaymentScreen = false
+                }
+            }
         )
     }
 
