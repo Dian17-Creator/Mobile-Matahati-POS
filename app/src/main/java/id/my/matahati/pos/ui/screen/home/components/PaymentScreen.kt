@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.my.matahati.pos.model.PaymentMethod
-import id.my.matahati.pos.ui.screen.home.HomeViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -29,12 +28,8 @@ fun PaymentScreen(
     paymentMethods: List<PaymentMethod>,
     isSubmitting: Boolean,
     errorMessage: String?,
-    viewModel: HomeViewModel,
-    cashierName: String,
-    context: android.content.Context,
     onBack: () -> Unit,
     onPay: (PaymentMethod, Double) -> Unit,
-    onFinishPayment: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val methods = paymentMethods.filter { it.id != "all" }.toMutableList()
@@ -358,52 +353,5 @@ fun PaymentScreen(
                 }
             }
         }
-    }
-
-    if (viewModel.showKitchenPrintDialog) {
-        KitchenPrintSelectionDialog(
-            changesCount = viewModel.printChangesCount,
-            availableStations = viewModel.availableStations,
-            selectedStations = viewModel.selectedStations,
-            savedPrinters = viewModel.savedPrinters,
-            onToggleStation = { viewModel.toggleStationSelection(it) },
-            onConfirmPrint = { type ->
-                viewModel.onConfirmKitchenPrint(
-                    type = type,
-                    onUpdateActiveCart = { _ -> }
-                )
-            },
-            onDismiss = { viewModel.closeKitchenPrintDialog() }
-        )
-    }
-
-    if (viewModel.showSimulatedReceipt) {
-        SimulatedReceiptDialog(
-            tickets = viewModel.receiptTickets,
-            isPrinting = viewModel.isPrinting,
-            onPrint = {
-                viewModel.printKitchenTickets(context, viewModel.receiptTickets)
-            },
-            onDismiss = { viewModel.closeSimulatedReceipt() }
-        )
-    }
-
-    if (viewModel.showReceiptDialog && viewModel.lastTransaction != null) {
-        ReceiptDialog(
-            transactionData = viewModel.lastTransaction!!,
-            cashierName = cashierName,
-            isPrinting = viewModel.isPrinting,
-            onPrint = {
-                if (viewModel.selectedPrinterAddress == null) {
-                    viewModel.openPrinterSelection(id.my.matahati.pos.data.printer.BluetoothPrinterManager(context))
-                } else {
-                    viewModel.printReceipt(context, viewModel.lastTransaction!!, cashierName)
-                }
-            },
-            onDismiss = {
-                viewModel.closeReceiptDialog()
-                onFinishPayment()
-            }
-        )
     }
 }
