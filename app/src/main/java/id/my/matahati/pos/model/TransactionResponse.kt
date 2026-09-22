@@ -23,6 +23,7 @@ data class TransactionModel(
     @SerializedName("nid") val id: String,
     @SerializedName("cnotransaction") val transactionNo: String,
     @SerializedName("dtransaction") val transactionDate: String,
+    @SerializedName("nid_payment") val nidPayment: String? = null,
     @SerializedName("cname_customer") val customerName: String?,
     @SerializedName("cordertype") val orderType: String,
     @SerializedName("ctable") val tableName: String?,
@@ -37,7 +38,8 @@ data class TransactionModel(
     @SerializedName("nitem") val itemCount: Int,
     @SerializedName("ccancel_note") val cancelNote: String? = null,
     @SerializedName("details") val details: List<TransactionDetailModel>? = null,
-    @SerializedName("pos_user") val posUser: PosUserModel? = null
+    @SerializedName("pos_user") val posUser: PosUserModel? = null,
+    @SerializedName("payment") val payment: PaymentMethodDto? = null
 )
 
 data class PosUserModel(

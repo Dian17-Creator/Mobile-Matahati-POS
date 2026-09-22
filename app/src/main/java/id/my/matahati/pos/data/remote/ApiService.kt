@@ -48,7 +48,8 @@ interface ApiService {
         @retrofit2.http.Query("start_date") startDate: String? = null,
         @retrofit2.http.Query("end_date") endDate: String? = null,
         @retrofit2.http.Query("search") search: String? = null,
-        @retrofit2.http.Query("nid_outlet") outletId: String? = null
+        @retrofit2.http.Query("nid_outlet") outletId: String? = null,
+        @retrofit2.http.Query("nid_payment") paymentId: String? = null
     ): Response<id.my.matahati.pos.model.TransactionHistoryResponse>
 
     @DELETE("api/pos/transactions/{id}")

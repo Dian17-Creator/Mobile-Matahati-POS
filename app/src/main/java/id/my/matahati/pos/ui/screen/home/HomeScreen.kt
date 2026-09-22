@@ -178,13 +178,23 @@ fun HomeScreen(
         viewModel.loadServedByUsers(outletId)
     }
 
-    LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate) {
+    LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType) {
         if (currentScreen == "transaksi") {
+            val selectedPaymentMethod = viewModel.paymentMethods.find { 
+                it.name.equals(selectedPaymentType, ignoreCase = true) 
+            }
+            val paymentId = if (selectedPaymentType == "Semua Tipe Pembayaran" || selectedPaymentType.equals("all", ignoreCase = true)) {
+                null
+            } else {
+                selectedPaymentMethod?.id
+            }
+
             viewModel.fetchTransactionHistory(
                 startDate = selectedStartDate,
                 endDate = selectedEndDate,
                 search = transaksiSearchQuery.ifBlank { null },
-                nidOutlet = nidOutlet
+                nidOutlet = nidOutlet,
+                nidPayment = paymentId
             )
         }
     }
@@ -249,6 +259,22 @@ fun HomeScreen(
                 val matchesCategory = (selectedCategoryId == "all") || (product.categoryId == selectedCategoryId)
                 val matchesSearch = product.name.contains(searchQuery, ignoreCase = true)
                 matchesCategory && matchesSearch
+            }
+        }
+    }
+
+    // Filtered Transactions Calculation
+    val filteredTransactions by remember {
+        derivedStateOf {
+            if (selectedPaymentType == "Semua Tipe Pembayaran" || selectedPaymentType.equals("all", ignoreCase = true) || selectedPaymentType.isBlank()) {
+                viewModel.transactionHistory
+            } else {
+                val matchingMethod = viewModel.paymentMethods.find { it.name.equals(selectedPaymentType, ignoreCase = true) }
+                viewModel.transactionHistory.filter { trx ->
+                    val matchesId = matchingMethod != null && trx.nidPayment == matchingMethod.id
+                    val matchesName = trx.payment?.cname?.equals(selectedPaymentType, ignoreCase = true) == true
+                    matchesId || matchesName
+                }
             }
         }
     }
@@ -370,7 +396,7 @@ fun HomeScreen(
                         when (targetScreen) {
                             "transaksi" -> {
                                 TransactionHistoryList(
-                                    transactions = viewModel.transactionHistory,
+                                    transactions = filteredTransactions,
                                     isLoading = viewModel.isHistoryLoading,
                                     onTransactionClick = { 
                                         selectedHistoryTransaction = it
