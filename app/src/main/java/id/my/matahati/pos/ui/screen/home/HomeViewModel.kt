@@ -79,12 +79,12 @@ class HomeViewModel : ViewModel() {
     var showServedByDialog by mutableStateOf(false)
 
     fun loadServedByUsers(outletId: Int?) {
+        servedByUsers.clear()
         viewModelScope.launch {
             try {
                 val validOutlet = if (outletId != null && outletId > 0) outletId else 1
                 val response = RetrofitClient.apiService.getPosUsers(validOutlet)
                 if (response.isSuccessful && response.body()?.success == true) {
-                    servedByUsers.clear()
                     servedByUsers.addAll(response.body()?.data ?: emptyList())
                     if (selectedServedBy == null && servedByUsers.isNotEmpty()) {
                         selectedServedBy = servedByUsers.firstOrNull()
@@ -97,13 +97,13 @@ class HomeViewModel : ViewModel() {
     }
 
     fun fetchHeldOrders(nidOutlet: String?) {
+        heldOrders.clear()
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.apiService.getTransactions(outletId = nidOutlet)
                 if (response.isSuccessful && response.body()?.success == true) {
                     val allTrx = response.body()?.data ?: emptyList()
                     val drafts = allTrx.filter { it.status.uppercase() == "DRAFT" }
-                    heldOrders.clear()
                     heldOrders.addAll(drafts)
                 }
             } catch (e: Exception) {
@@ -134,7 +134,7 @@ class HomeViewModel : ViewModel() {
         private set
 
     init {
-        fetchData()
+        // Data loading is handled by LaunchedEffect(nidOutlet) in HomeScreen with proper outletId
     }
 
     fun loadPrinterSettings(context: android.content.Context) {
@@ -278,7 +278,8 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun fetchData() {
+    fun fetchData(nidOutlet: String? = null) {
+        products.clear()
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
@@ -295,12 +296,11 @@ class HomeViewModel : ViewModel() {
                     categories.addAll(fetchedCategories)
                 }
 
-                // Fetch Products
-                val prodResponse = RetrofitClient.apiService.getProducts()
+                // Fetch Products per Outlet
+                val prodResponse = RetrofitClient.apiService.getProducts(outletId = nidOutlet)
                 if (prodResponse.isSuccessful && prodResponse.body()?.success == true) {
                     val dtos = prodResponse.body()?.data ?: emptyList()
                     val fetchedProducts = dtos.map { it.toProduct() }
-                    products.clear()
                     products.addAll(fetchedProducts)
                 }
 
@@ -742,6 +742,7 @@ class HomeViewModel : ViewModel() {
         nidOutlet: String? = null,
         nidPayment: String? = null
     ) {
+        transactionHistory.clear()
         viewModelScope.launch {
             isHistoryLoading = true
             try {
@@ -754,7 +755,6 @@ class HomeViewModel : ViewModel() {
                 )
                 if (response.isSuccessful && response.body()?.success == true) {
                     val data = response.body()?.data ?: emptyList()
-                    transactionHistory.clear()
                     transactionHistory.addAll(data)
                 } else {
                     Log.e("TransactionHistory", "Gagal: ${response.message()}")

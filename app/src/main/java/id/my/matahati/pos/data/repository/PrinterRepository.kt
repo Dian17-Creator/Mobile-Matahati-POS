@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken
 import id.my.matahati.pos.model.LocalPrinter
 
 class PrinterRepository(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("pos_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences("printer_prefs", Context.MODE_PRIVATE)
     private val gson = Gson()
     private val PRINTERS_KEY = "saved_printers"
 

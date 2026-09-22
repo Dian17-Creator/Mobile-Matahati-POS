@@ -58,7 +58,14 @@ class MainActivity : ComponentActivity() {
                         roleCashier = roleCashier,
                         roleCaptain = roleCaptain,
                         onLogout = {
-                            sharedPrefs.edit().clear().apply()
+                            sharedPrefs.edit()
+                                .remove("auth_token")
+                                .remove("user_name")
+                                .remove("nid_outlet")
+                                .remove("role_owner")
+                                .remove("role_cashier")
+                                .remove("role_captain")
+                                .apply()
                             token = null
                         }
                     )

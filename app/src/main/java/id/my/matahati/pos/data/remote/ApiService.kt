@@ -23,7 +23,9 @@ interface ApiService {
     suspend fun getCategories(): Response<CategoryResponse>
 
     @GET("api/products")
-    suspend fun getProducts(): Response<ProductResponse>
+    suspend fun getProducts(
+        @retrofit2.http.Query("nid_outlet") outletId: String? = null
+    ): Response<ProductResponse>
 
     @GET("api/customers")
     suspend fun getCustomers(): Response<CustomerResponse>
@@ -35,7 +37,9 @@ interface ApiService {
     suspend fun getPaymentMethods(): Response<PaymentMethodResponse>
 
     @GET("api/pos-users")
-    suspend fun getPosUsers(@retrofit2.http.Query("outlet_id") outletId: Int): Response<id.my.matahati.pos.model.PosUserResponse>
+    suspend fun getPosUsers(
+        @retrofit2.http.Query("nid_outlet") outletId: Int? = null
+    ): Response<id.my.matahati.pos.model.PosUserResponse>
 
     @GET("api/pos/order-types")
     suspend fun getOrderTypes(): Response<OrderTypeResponse>
