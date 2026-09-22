@@ -416,23 +416,23 @@ fun PrinterCard(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Printer Icon Container
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = SettingsBlue.copy(alpha = 0.1f),
-                modifier = Modifier.size(44.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = if (printer.type == PrinterType.BLUETOOTH) Icons.Default.BluetoothConnected else Icons.Default.Print,
-                        contentDescription = null,
-                        tint = SettingsBlue,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
+//            // Printer Icon Container
+//            Surface(
+//                shape = RoundedCornerShape(10.dp),
+//                color = SettingsBlue.copy(alpha = 0.1f),
+//                modifier = Modifier.size(44.dp)
+//            ) {
+//                Box(contentAlignment = Alignment.Center) {
+//                    Icon(
+//                        imageVector = if (printer.type == PrinterType.BLUETOOTH) Icons.Default.BluetoothConnected else Icons.Default.Print,
+//                        contentDescription = null,
+//                        tint = SettingsBlue,
+//                        modifier = Modifier.size(22.dp)
+//                    )
+//                }
+//            }
+//
+//            Spacer(modifier = Modifier.width(16.dp))
 
             // Printer Info
             Column(
