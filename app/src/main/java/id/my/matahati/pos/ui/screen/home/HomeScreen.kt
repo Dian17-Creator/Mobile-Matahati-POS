@@ -241,7 +241,7 @@ fun HomeScreen(
 
     val discountAmount by remember {
         derivedStateOf {
-            selectedVoucher?.let { voucher ->
+            val voucherDiscount = selectedVoucher?.let { voucher ->
                 if (cartSubtotal >= voucher.minSpend) {
                     if (voucher.discountPercent > 0.0) {
                         cartSubtotal * (voucher.discountPercent / 100.0)
@@ -250,6 +250,9 @@ fun HomeScreen(
                     }
                 } else 0.0
             } ?: 0.0
+
+            val manualDiscount = parseManualDiscount(manualDiscountInput, cartSubtotal)
+            voucherDiscount + manualDiscount
         }
     }
 
@@ -928,9 +931,13 @@ fun HomeScreen(
         OlseraDiscountDialog(
             vouchers = viewModel.vouchers,
             cartSubtotal = cartSubtotal,
+            initialManualDiscount = manualDiscountInput,
             onDismiss = { showDiscountDialog = false },
             onVoucherSelected = { voucher ->
                 selectedVoucher = voucher
+            },
+            onManualDiscountApplied = { input ->
+                manualDiscountInput = input
             }
         )
     }
@@ -1109,6 +1116,13 @@ fun HomeScreen(
                 viewModel.selectedTable = heldOrder.tableName ?: ""
                 orderType = heldOrder.orderType ?: ""
                 selectedCustomer = viewModel.customers.find { it.name == heldOrder.customerName }
+                val draftDiscount = heldOrder.discount.toDoubleOrNull() ?: 0.0
+                if (draftDiscount > 0) {
+                    manualDiscountInput = draftDiscount.toLong().toString()
+                } else {
+                    manualDiscountInput = ""
+                }
+                selectedVoucher = null
                 viewModel.removeHeldOrderLocal(heldOrder.id)
                 viewModel.deleteHeldOrder(context, heldOrder.id, nidOutlet)
                 viewModel.showHeldOrdersDialog = false
@@ -1191,6 +1205,20 @@ fun HomeScreen(
         ) {
             CircularProgressIndicator(color = Color.White)
         }
+    }
+}
+
+private fun parseManualDiscount(input: String, subtotal: Double): Double {
+    if (input.isBlank()) return 0.0
+    return try {
+        if (input.endsWith("%")) {
+            val percent = input.removeSuffix("%").trim().toDoubleOrNull() ?: 0.0
+            subtotal * (percent / 100.0)
+        } else {
+            input.trim().toDoubleOrNull() ?: 0.0
+        }
+    } catch (e: Exception) {
+        0.0
     }
 }
 
