@@ -170,12 +170,13 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadOrderTypes()
         viewModel.loadPrinterSettings(context)
-        viewModel.fetchHeldOrders(nidOutlet)
     }
 
     LaunchedEffect(nidOutlet) {
         val outletId = nidOutlet?.toIntOrNull() ?: 1
+        viewModel.fetchData(nidOutlet)
         viewModel.loadServedByUsers(outletId)
+        viewModel.fetchHeldOrders(nidOutlet)
     }
 
     LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType) {
