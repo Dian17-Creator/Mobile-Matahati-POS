@@ -739,7 +739,8 @@ class HomeViewModel : ViewModel() {
         startDate: String? = null,
         endDate: String? = null,
         search: String? = null,
-        nidOutlet: String? = null
+        nidOutlet: String? = null,
+        nidPayment: String? = null
     ) {
         viewModelScope.launch {
             isHistoryLoading = true
@@ -748,7 +749,8 @@ class HomeViewModel : ViewModel() {
                     startDate = startDate,
                     endDate = endDate,
                     search = search,
-                    outletId = nidOutlet
+                    outletId = nidOutlet,
+                    paymentId = nidPayment
                 )
                 if (response.isSuccessful && response.body()?.success == true) {
                     val data = response.body()?.data ?: emptyList()
