@@ -308,7 +308,7 @@ fun OlseraCartPanel(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Diskon Voucher",
+                                        text = "Diskon",
                                         fontSize = 12.sp,
                                         color = Color.Black,
                                         fontWeight = FontWeight.Bold
