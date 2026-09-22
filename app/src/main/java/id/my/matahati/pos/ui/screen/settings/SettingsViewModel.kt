@@ -21,16 +21,31 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val repository = PrinterRepository(application)
     private val connectionManager = PrinterConnectionManager(application)
     private val formatter = EscPosFormatter()
+    private val prefs = application.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
 
     var printers = mutableStateListOf<LocalPrinter>()
 
     var showAddDialog by mutableStateOf(false)
     var editingPrinter by mutableStateOf<LocalPrinter?>(null)
+    var printerToDelete by mutableStateOf<LocalPrinter?>(null)
     var isTestingConnection by mutableStateOf(false)
     var testResultMessage by mutableStateOf<String?>(null)
 
+    var isConfirmOrderEnabled by mutableStateOf(true)
+        private set
+
     init {
         loadPrinters()
+        loadPaymentSettings()
+    }
+
+    fun loadPaymentSettings() {
+        isConfirmOrderEnabled = prefs.getBoolean("confirm_order_before_payment", true)
+    }
+
+    fun updateConfirmOrderEnabled(enabled: Boolean) {
+        isConfirmOrderEnabled = enabled
+        prefs.edit().putBoolean("confirm_order_before_payment", enabled).apply()
     }
 
     fun loadPrinters() {
