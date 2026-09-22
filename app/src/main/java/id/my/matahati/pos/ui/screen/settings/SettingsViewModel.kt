@@ -27,6 +27,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     var showAddDialog by mutableStateOf(false)
     var editingPrinter by mutableStateOf<LocalPrinter?>(null)
+    var printerToDelete by mutableStateOf<LocalPrinter?>(null)
     var isTestingConnection by mutableStateOf(false)
     var testResultMessage by mutableStateOf<String?>(null)
 

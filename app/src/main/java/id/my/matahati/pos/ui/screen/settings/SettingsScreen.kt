@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.model.LocalPrinter
 import id.my.matahati.pos.model.PrinterRole
@@ -189,7 +190,7 @@ fun SettingsScreen(
                                     viewModel.editingPrinter = printer
                                     viewModel.showAddDialog = true
                                 },
-                                onDelete = { viewModel.deletePrinter(printer.id) }
+                                onDelete = { viewModel.printerToDelete = printer }
                             )
                         }
                     }
@@ -281,6 +282,74 @@ fun SettingsScreen(
                                 uncheckedTrackColor = Color.LightGray
                             )
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    if (viewModel.printerToDelete != null) {
+        val printer = viewModel.printerToDelete!!
+        Dialog(onDismissRequest = { viewModel.printerToDelete = null }) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color.White,
+                modifier = Modifier
+                    .widthIn(max = 480.dp)
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
+                    Text(
+                        text = "Konfirmasi Hapus",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF212121)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Apakah Anda yakin ingin menghapus printer ${printer.name}?",
+                        fontSize = 15.sp,
+                        color = Color.DarkGray
+                    )
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = { viewModel.printerToDelete = null },
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.DarkGray)
+                        ) {
+                            Text("BATAL", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+
+                        Button(
+                            onClick = {
+                                viewModel.deletePrinter(printer.id)
+                                viewModel.printerToDelete = null
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                        ) {
+                            Text("HAPUS", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
                     }
                 }
             }
