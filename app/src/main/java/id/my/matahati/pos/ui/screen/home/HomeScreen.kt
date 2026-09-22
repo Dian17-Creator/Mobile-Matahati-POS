@@ -83,7 +83,6 @@ fun HomeScreen(
     var showDateFilterDialog by remember { mutableStateOf(false) }
     var showPaymentTypeDialog by remember { mutableStateOf(false) }
     var showTableInputDialog by remember { mutableStateOf(false) }
-    var showPaymentInputDialog by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
     var validationWarningMessage by remember { mutableStateOf<String?>(null) }
     
@@ -144,6 +143,26 @@ fun HomeScreen(
                 viewModel.openPrinterSelection(printerManager)
             } else {
                 viewModel.printReceipt(context, data, userName)
+            }
+        }
+    }
+
+    val triggerCheckout: () -> Unit = {
+        if (cartItems.isNotEmpty()) {
+            if (orderType.isBlank()) {
+                validationWarningMessage = "Silahkan pilih tipe pesanan"
+            } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
+                validationWarningMessage = "Silahkan isi nomor meja"
+            } else if (selectedCustomer == null) {
+                validationWarningMessage = "Silahkan pilih customer"
+            } else {
+                val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+                val isConfirmEnabled = prefs.getBoolean("confirm_order_before_payment", true)
+                if (isConfirmEnabled) {
+                    viewModel.showCashierConfirmDialog = true
+                } else {
+                    viewModel.showPaymentScreen = true
+                }
             }
         }
     }
@@ -440,19 +459,7 @@ fun HomeScreen(
                                                 onSendToKitchenClick = {
                                                     viewModel.openKitchenPrintDialog(context, cartItems)
                                                 },
-                                                onCheckoutClick = {
-                                                    if (cartItems.isNotEmpty()) {
-                                                        if (orderType.isBlank()) {
-                                                            validationWarningMessage = "Silahkan pilih tipe pesanan"
-                                                        } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
-                                                            validationWarningMessage = "Silahkan isi nomor meja"
-                                                        } else if (selectedCustomer == null) {
-                                                            validationWarningMessage = "Silahkan pilih customer"
-                                                        } else {
-                                                            viewModel.showCashierConfirmDialog = true
-                                                        }
-                                                    }
-                                                },
+                                                onCheckoutClick = triggerCheckout,
                                                 selectedCustomerName = selectedCustomer?.name ?: "",
                                                 onCustomerSelected = { customer ->
                                                     selectedCustomer = customer
@@ -681,19 +688,7 @@ fun HomeScreen(
                                                     color = OlseraGreenPay,
                                                     shape = RoundedCornerShape(0.dp),
                                                     modifier = Modifier.fillMaxWidth(),
-                                                    onClick = {
-                                                        if (cartItems.isNotEmpty()) {
-                                                            if (orderType.isBlank()) {
-                                                                validationWarningMessage = "Silahkan pilih tipe pesanan"
-                                                            } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
-                                                                validationWarningMessage = "Silahkan isi nomor meja"
-                                                            } else if (selectedCustomer == null) {
-                                                                validationWarningMessage = "Silahkan pilih customer"
-                                                            } else {
-                                                                showPaymentInputDialog = true
-                                                            }
-                                                        }
-                                                    }
+                                                    onClick = triggerCheckout
                                                 ) {
                                                     Box(
                                                         modifier = Modifier
