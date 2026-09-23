@@ -24,6 +24,7 @@ import java.util.Locale
 fun ReceiptDialog(
     transactionData: TransactionData,
     cashierName: String,
+    savedOutletName: String? = null,
     onPrint: () -> Unit = {},
     isPrinting: Boolean = false,
     onDismiss: () -> Unit
@@ -70,8 +71,9 @@ fun ReceiptDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header (Fixed)
+                val outletHeader = (trx.outlet?.name ?: savedOutletName ?: "OUTLET MH").uppercase()
                 Text(
-                    text = "OUTLET MH TA",
+                    text = outletHeader,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     fontFamily = FontFamily.Monospace,

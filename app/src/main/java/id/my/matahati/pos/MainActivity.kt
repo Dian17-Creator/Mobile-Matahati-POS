@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
                                 .putString("auth_token", newToken)
                                 .putString("user_name", user.name)
                                 .putString("nid_outlet", user.nidOutlet)
+                                .putString("outlet_name", user.outletName)
                                 .putBoolean("role_owner", user.roleOwner)
                                 .putBoolean("role_cashier", user.roleCashier)
                                 .putBoolean("role_captain", user.roleCaptain)
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
                     
                     val userName = sharedPrefs.getString("user_name", "Kasir") ?: "Kasir"
                     val nidOutlet = sharedPrefs.getString("nid_outlet", null)
+                    val savedOutletName = sharedPrefs.getString("outlet_name", null)
                     val roleOwner = sharedPrefs.getBoolean("role_owner", false)
                     val roleCashier = sharedPrefs.getBoolean("role_cashier", false)
                     val roleCaptain = sharedPrefs.getBoolean("role_captain", false)
@@ -54,6 +56,7 @@ class MainActivity : ComponentActivity() {
                     HomeScreen(
                         userName = userName,
                         nidOutlet = nidOutlet,
+                        outletName = savedOutletName,
                         roleOwner = roleOwner,
                         roleCashier = roleCashier,
                         roleCaptain = roleCaptain,
@@ -62,6 +65,7 @@ class MainActivity : ComponentActivity() {
                                 .remove("auth_token")
                                 .remove("user_name")
                                 .remove("nid_outlet")
+                                .remove("outlet_name")
                                 .remove("role_owner")
                                 .remove("role_cashier")
                                 .remove("role_captain")

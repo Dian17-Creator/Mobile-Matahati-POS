@@ -22,7 +22,11 @@ class EscPosFormatter(private val cols: Int = 42) {
     private val SIZE_NORMAL = byteArrayOf(GS, 0x21, 0x00)
     private val SIZE_DOUBLE = byteArrayOf(GS, 0x21, 0x11) // Double width & height
 
-    fun formatReceipt(data: TransactionData, cashierName: String): ByteArray {
+    fun formatReceipt(
+        data: TransactionData,
+        cashierName: String,
+        savedOutletName: String? = null
+    ): ByteArray {
         val trx = data.transaction ?: return byteArrayOf()
         val details = data.details ?: emptyList()
         
@@ -60,9 +64,10 @@ class EscPosFormatter(private val cols: Int = 42) {
         out.addAll(ALIGN_CENTER.toList())
         
         // 2. Header Outlet (Bold & Double Size)
+        val outletName = (trx.outlet?.name ?: savedOutletName ?: "OUTLET MH").uppercase()
         out.addAll(BOLD_ON.toList())
         out.addAll(SIZE_DOUBLE.toList())
-        out.addAll("OUTLET MH TA\n".toByteArray().toList())
+        out.addAll("$outletName\n".toByteArray().toList())
         out.addAll(SIZE_NORMAL.toList())
         out.addAll(BOLD_OFF.toList())
         out.addAll("\n".toByteArray().toList())
