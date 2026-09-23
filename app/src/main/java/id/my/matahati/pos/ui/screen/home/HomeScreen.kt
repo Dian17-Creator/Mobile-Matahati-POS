@@ -48,6 +48,7 @@ import java.util.*
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
+    userId: String? = null,
     userName: String = "Kasir",
     nidOutlet: String? = null,
     outletName: String? = null,
@@ -173,10 +174,10 @@ fun HomeScreen(
         viewModel.loadPrinterSettings(context)
     }
 
-    LaunchedEffect(nidOutlet) {
+    LaunchedEffect(nidOutlet, userId, userName) {
         val outletId = nidOutlet?.toIntOrNull() ?: 1
         viewModel.fetchData(nidOutlet)
-        viewModel.loadServedByUsers(outletId)
+        viewModel.loadServedByUsers(outletId, currentUserId = userId, currentUserName = userName)
         viewModel.fetchHeldOrders(nidOutlet)
     }
 

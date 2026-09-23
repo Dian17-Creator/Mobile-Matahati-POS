@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity() {
                         onLoginSuccess = { newToken, user ->
                             sharedPrefs.edit()
                                 .putString("auth_token", newToken)
+                                .putString("user_id", user.id)
                                 .putString("user_name", user.name)
                                 .putString("nid_outlet", user.nidOutlet)
                                 .putString("outlet_name", user.outletName)
@@ -46,6 +47,7 @@ class MainActivity : ComponentActivity() {
                 } else {
                     id.my.matahati.pos.data.remote.RetrofitClient.authToken = token
                     
+                    val userId = sharedPrefs.getString("user_id", null)
                     val userName = sharedPrefs.getString("user_name", "Kasir") ?: "Kasir"
                     val nidOutlet = sharedPrefs.getString("nid_outlet", null)
                     val savedOutletName = sharedPrefs.getString("outlet_name", null)
@@ -54,6 +56,7 @@ class MainActivity : ComponentActivity() {
                     val roleCaptain = sharedPrefs.getBoolean("role_captain", false)
 
                     HomeScreen(
+                        userId = userId,
                         userName = userName,
                         nidOutlet = nidOutlet,
                         outletName = savedOutletName,
@@ -63,6 +66,7 @@ class MainActivity : ComponentActivity() {
                         onLogout = {
                             sharedPrefs.edit()
                                 .remove("auth_token")
+                                .remove("user_id")
                                 .remove("user_name")
                                 .remove("nid_outlet")
                                 .remove("outlet_name")

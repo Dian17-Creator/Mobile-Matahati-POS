@@ -78,7 +78,11 @@ class HomeViewModel : ViewModel() {
     var selectedServedBy by mutableStateOf<id.my.matahati.pos.model.PosUser?>(null)
     var showServedByDialog by mutableStateOf(false)
 
-    fun loadServedByUsers(outletId: Int?) {
+    fun loadServedByUsers(
+        outletId: Int?,
+        currentUserId: String? = null,
+        currentUserName: String? = null
+    ) {
         servedByUsers.clear()
         viewModelScope.launch {
             try {
@@ -86,9 +90,14 @@ class HomeViewModel : ViewModel() {
                 val response = RetrofitClient.apiService.getPosUsers(validOutlet)
                 if (response.isSuccessful && response.body()?.success == true) {
                     servedByUsers.addAll(response.body()?.data ?: emptyList())
-                    if (selectedServedBy == null && servedByUsers.isNotEmpty()) {
-                        selectedServedBy = servedByUsers.firstOrNull()
+                    
+                    // Prioritize matching current logged-in user
+                    val matchedUser = servedByUsers.find { posUser ->
+                        (currentUserId != null && posUser.nidUser.toString() == currentUserId) ||
+                        (currentUserName != null && posUser.name.equals(currentUserName, ignoreCase = true))
                     }
+                    
+                    selectedServedBy = matchedUser ?: servedByUsers.firstOrNull()
                 }
             } catch (e: Exception) {
                 Log.e("ServedBy", "Gagal mengambil daftar dilayani oleh", e)
