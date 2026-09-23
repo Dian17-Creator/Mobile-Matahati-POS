@@ -634,30 +634,17 @@ fun HomeScreen(
                                                         )
                                                     }
                                                     "Barcode" -> {
-                                                        Box(
-                                                            modifier = Modifier.fillMaxSize(),
-                                                            contentAlignment = Alignment.Center
-                                                        ) {
-                                                            Text(
-                                                                text = "Halaman Barcode",
-                                                                fontSize = 20.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                color = Color.DarkGray
-                                                            )
-                                                        }
+                                                        BarcodeTabContent(
+                                                            products = allProducts,
+                                                            onAddToCart = onAddToCart,
+                                                            modifier = Modifier.fillMaxSize()
+                                                        )
                                                     }
                                                     "Custom" -> {
-                                                        Box(
-                                                            modifier = Modifier.fillMaxSize(),
-                                                            contentAlignment = Alignment.Center
-                                                        ) {
-                                                            Text(
-                                                                text = "Halaman Custom",
-                                                                fontSize = 20.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                color = Color.DarkGray
-                                                            )
-                                                        }
+                                                        CustomDepositTabContent(
+                                                            onAddToCart = onAddToCart,
+                                                            modifier = Modifier.fillMaxSize()
+                                                        )
                                                     }
                                                 }
                                             }
@@ -685,30 +672,17 @@ fun HomeScreen(
                                                         )
                                                     }
                                                     "Barcode" -> {
-                                                        Box(
-                                                            modifier = Modifier.weight(1f).fillMaxWidth(),
-                                                            contentAlignment = Alignment.Center
-                                                        ) {
-                                                            Text(
-                                                                text = "Halaman Barcode",
-                                                                fontSize = 20.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                color = Color.DarkGray
-                                                            )
-                                                        }
+                                                        BarcodeTabContent(
+                                                            products = allProducts,
+                                                            onAddToCart = onAddToCart,
+                                                            modifier = Modifier.weight(1f).fillMaxWidth()
+                                                        )
                                                     }
                                                     "Custom" -> {
-                                                        Box(
-                                                            modifier = Modifier.weight(1f).fillMaxWidth(),
-                                                            contentAlignment = Alignment.Center
-                                                        ) {
-                                                            Text(
-                                                                text = "Halaman Custom",
-                                                                fontSize = 20.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                color = Color.DarkGray
-                                                            )
-                                                        }
+                                                        CustomDepositTabContent(
+                                                            onAddToCart = onAddToCart,
+                                                            modifier = Modifier.weight(1f).fillMaxWidth()
+                                                        )
                                                     }
                                                 }
 

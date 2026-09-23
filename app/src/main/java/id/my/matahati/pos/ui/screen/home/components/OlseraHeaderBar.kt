@@ -167,7 +167,7 @@ fun OlseraHeaderBar(
                     modifier = Modifier.weight(1f)
                 )
                 RightHeaderTabItem(
-                    label = "Custom",
+                    label = "Custom/\nDeposit",
                     isSelected = selectedRightTab == "Custom",
                     onClick = { onRightTabSelected("Custom") },
                     modifier = Modifier.weight(1f)
