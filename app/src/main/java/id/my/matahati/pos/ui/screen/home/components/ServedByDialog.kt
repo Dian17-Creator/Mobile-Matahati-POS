@@ -96,22 +96,40 @@ fun ServedByDialog(
                                     .fillMaxWidth()
                                     .clickable { onUserSelected(user) }
                             ) {
-                                Column(
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp)
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = user.name,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 15.sp,
-                                        color = if (isSelected) Color(0xFF1565C0) else Color.Black
-                                    )
-                                    if (user.username.isNotBlank()) {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = user.username,
-                                            fontSize = 12.sp,
-                                            color = Color.Gray
+                                            text = user.name,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = if (isSelected) Color(0xFF1565C0) else Color.Black
+                                        )
+                                        if (user.username.isNotBlank()) {
+                                            Text(
+                                                text = user.username,
+                                                fontSize = 12.sp,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                    }
+
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (isSelected) Color(0xFF1565C0).copy(alpha = 0.12f) else Color(0xFFEEEEEE),
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = user.displayRole,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (isSelected) Color(0xFF1565C0) else Color.DarkGray,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                         )
                                     }
                                 }
