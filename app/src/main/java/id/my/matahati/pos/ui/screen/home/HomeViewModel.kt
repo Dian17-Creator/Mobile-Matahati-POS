@@ -169,7 +169,8 @@ class HomeViewModel : ViewModel() {
     fun printReceipt(
         context: android.content.Context,
         data: TransactionData,
-        cashierName: String
+        cashierName: String,
+        savedOutletName: String? = null
     ) {
         val repo = id.my.matahati.pos.data.repository.PrinterRepository(context)
         val printers = repo.getPrinters()
@@ -186,7 +187,7 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             val connectionManager = id.my.matahati.pos.data.printer.PrinterConnectionManager(context)
             val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
-            val receiptBytes = formatter.formatReceipt(data, cashierName)
+            val receiptBytes = formatter.formatReceipt(data, cashierName, savedOutletName)
             
             val result = connectionManager.printData(receiptPrinter, receiptBytes)
             if (result.isFailure) {

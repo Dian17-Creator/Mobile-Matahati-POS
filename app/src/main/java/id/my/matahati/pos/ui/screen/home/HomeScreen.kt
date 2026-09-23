@@ -50,6 +50,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     userName: String = "Kasir",
     nidOutlet: String? = null,
+    outletName: String? = null,
     roleOwner: Boolean = false,
     roleCashier: Boolean = true,
     roleCaptain: Boolean = false,
@@ -142,7 +143,7 @@ fun HomeScreen(
             if (viewModel.selectedPrinterAddress == null) {
                 viewModel.openPrinterSelection(printerManager)
             } else {
-                viewModel.printReceipt(context, data, userName)
+                viewModel.printReceipt(context, data, userName, outletName)
             }
         }
     }
@@ -1193,12 +1194,13 @@ fun HomeScreen(
         ReceiptDialog(
             transactionData = viewModel.lastTransaction!!,
             cashierName = userName,
+            savedOutletName = outletName,
             isPrinting = viewModel.isPrinting,
             onPrint = {
                 if (viewModel.selectedPrinterAddress == null) {
                     viewModel.openPrinterSelection(printerManager)
                 } else {
-                    viewModel.printReceipt(context, viewModel.lastTransaction!!, userName)
+                    viewModel.printReceipt(context, viewModel.lastTransaction!!, userName, outletName)
                 }
             },
             onDismiss = {

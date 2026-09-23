@@ -27,6 +27,8 @@ data class UserDto(
     val email: String,
     @SerializedName("nid_outlet")
     val nidOutlet: String?,
+    @SerializedName("outlet_name")
+    val outletName: String? = null,
     @SerializedName("role_owner")
     val roleOwner: Boolean,
     @SerializedName("role_cashier")
