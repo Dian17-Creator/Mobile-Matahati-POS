@@ -122,12 +122,15 @@ fun ReceiptDialog(
                                     )
                                 }
                                 if (!item.note.isNullOrBlank()) {
-                                    Text(
-                                        text = "Note: ${item.note}",
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 11.sp,
-                                        color = Color.DarkGray
-                                    )
+                                    val (cleanNote, _) = id.my.matahati.pos.model.CartItem.parseNoteAndSentQty(item.note)
+                                    if (cleanNote.isNotBlank()) {
+                                        Text(
+                                            text = "Note: $cleanNote",
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 11.sp,
+                                            color = Color.DarkGray
+                                        )
+                                    }
                                 }
                             }
                         }

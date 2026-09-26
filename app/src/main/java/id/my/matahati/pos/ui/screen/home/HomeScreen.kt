@@ -56,7 +56,8 @@ fun HomeScreen(
     roleCashier: Boolean = true,
     roleCaptain: Boolean = false,
     onLogout: () -> Unit = {},
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = viewModel(),
+    shiftViewModel: id.my.matahati.pos.ui.screen.shift.ShiftViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val printerManager = remember { BluetoothPrinterManager(context) }
@@ -151,7 +152,9 @@ fun HomeScreen(
 
     val triggerCheckout: () -> Unit = {
         if (cartItems.isNotEmpty()) {
-            if (orderType.isBlank()) {
+            if (shiftViewModel.currentShift == null) {
+                validationWarningMessage = "Kasir belum memulai shift. Silakan buka shift terlebih dahulu di menu Shift."
+            } else if (orderType.isBlank()) {
                 validationWarningMessage = "Silahkan pilih tipe pesanan"
             } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
                 validationWarningMessage = "Silahkan isi nomor meja"
@@ -179,6 +182,7 @@ fun HomeScreen(
         viewModel.fetchData(nidOutlet)
         viewModel.loadServedByUsers(outletId, currentUserId = userId, currentUserName = userName)
         viewModel.fetchHeldOrders(nidOutlet)
+        shiftViewModel.checkCurrentShift(nidOutlet)
     }
 
     LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType) {
@@ -328,6 +332,10 @@ fun HomeScreen(
                         currentScreen = "transaksi"
                         coroutineScope.launch { drawerState.close() }
                     },
+                    onNavigateToShift = {
+                        currentScreen = "shift"
+                        coroutineScope.launch { drawerState.close() }
+                    },
                     onNavigateToPengaturan = {
                         currentScreen = "pengaturan"
                         coroutineScope.launch { drawerState.close() }
@@ -422,6 +430,18 @@ fun HomeScreen(
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
+                            }
+                            "shift" -> {
+                                id.my.matahati.pos.ui.screen.shift.ShiftScreen(
+                                    shiftViewModel = shiftViewModel,
+                                    nidOutlet = nidOutlet,
+                                    onMenuClick = {
+                                        coroutineScope.launch {
+                                            if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
                             }
                             "pengaturan" -> {
                                 id.my.matahati.pos.ui.screen.settings.SettingsScreen(
@@ -1072,6 +1092,30 @@ fun HomeScreen(
         )
     }
 
+    if (viewModel.showShiftNotStartedDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showShiftNotStartedDialog = false },
+            title = { Text("Shift Belum Dimulai", fontWeight = FontWeight.Bold) },
+            text = { Text("Kasir belum memulai shift. Silakan buka shift terlebih dahulu untuk dapat melakukan transaksi.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.showShiftNotStartedDialog = false
+                        currentScreen = "shift"
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                ) {
+                    Text("Buka Shift", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.showShiftNotStartedDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
+
     if (validationWarningMessage != null) {
         AlertDialog(
             onDismissRequest = { validationWarningMessage = null },
@@ -1103,11 +1147,13 @@ fun HomeScreen(
                         categoryId = "1",
                         stock = 99
                     )
+                    val (cleanNote, sentQty) = CartItem.parseNoteAndSentQty(detail.note)
                     cartItems.add(
                         CartItem(
                             product = product,
                             quantity = detail.quantity,
-                            note = detail.note ?: ""
+                            note = cleanNote,
+                            sentQuantity = sentQty
                         )
                     )
                 }

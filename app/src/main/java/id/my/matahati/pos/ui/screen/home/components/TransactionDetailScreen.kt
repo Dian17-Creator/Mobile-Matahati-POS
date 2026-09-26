@@ -176,12 +176,15 @@ fun TransactionDetailScreen(
                             )
                         }
                         if (!item.note.isNullOrBlank()) {
-                            Text(
-                                text = "Note: ${item.note}",
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
-                            )
+                            val (cleanNote, _) = id.my.matahati.pos.model.CartItem.parseNoteAndSentQty(item.note)
+                            if (cleanNote.isNotBlank()) {
+                                Text(
+                                    text = "Note: $cleanNote",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
+                                )
+                            }
                         }
                         HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
                     }

@@ -18,4 +18,26 @@ data class CartItem(
             formatter.maximumFractionDigits = 0
             return formatter.format(totalPrice)
         }
+
+    fun encodeNoteWithSentQty(): String? {
+        val cleanNote = note.replace(Regex("\\[SENT:\\d+\\]"), "").trim()
+        if (sentQuantity <= 0) {
+            return cleanNote.ifBlank { null }
+        }
+        return if (cleanNote.isBlank()) {
+            "[SENT:$sentQuantity]"
+        } else {
+            "$cleanNote [SENT:$sentQuantity]"
+        }
+    }
+
+    companion object {
+        fun parseNoteAndSentQty(rawNote: String?): Pair<String, Int> {
+            if (rawNote.isNullOrBlank()) return Pair("", 0)
+            val match = Regex("\\[SENT:(\\d+)\\]").find(rawNote)
+            val sentQty = match?.groupValues?.get(1)?.toIntOrNull() ?: 0
+            val cleanNote = rawNote.replace(Regex("\\[SENT:\\d+\\]"), "").trim()
+            return Pair(cleanNote, sentQty)
+        }
+    }
 }
