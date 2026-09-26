@@ -10,6 +10,10 @@ import androidx.lifecycle.ViewModelProvider.NewInstanceFactory.Companion.instanc
 import androidx.lifecycle.viewModelScope
 import id.my.matahati.pos.data.DummyData
 import id.my.matahati.pos.data.remote.RetrofitClient
+import id.my.matahati.pos.data.remote.RegionRetrofitClient
+import id.my.matahati.pos.data.remote.Province
+import id.my.matahati.pos.data.remote.Regency
+import id.my.matahati.pos.data.remote.District
 import id.my.matahati.pos.model.Category
 import id.my.matahati.pos.model.Customer
 import id.my.matahati.pos.model.OrderTypeItem
@@ -28,11 +32,24 @@ class HomeViewModel : ViewModel() {
     val categories = mutableStateListOf<Category>()
     val products = mutableStateListOf<Product>()
     val customers = mutableStateListOf<Customer>()
+    val customerTypes = mutableStateListOf<id.my.matahati.pos.model.CustomerTypeDto>()
     val vouchers = mutableStateListOf<Voucher>()
     val paymentMethods = mutableStateListOf<PaymentMethod>()
     private val _orderTypes = MutableStateFlow<List<OrderTypeItem>>(emptyList())
 
     val orderTypes: StateFlow<List<OrderTypeItem>> = _orderTypes
+
+    // Region / Dependent Dropdown States
+    val provinces = mutableStateListOf<Province>()
+    val regencies = mutableStateListOf<Regency>()
+    val districts = mutableStateListOf<District>()
+
+    var isProvincesLoading by mutableStateOf(false)
+        private set
+    var isRegenciesLoading by mutableStateOf(false)
+        private set
+    var isDistrictsLoading by mutableStateOf(false)
+        private set
 
     // Transaction States
     var selectedTable by mutableStateOf("")
@@ -324,6 +341,18 @@ class HomeViewModel : ViewModel() {
                     customers.addAll(fetchedCustomers)
                 }
 
+                // Fetch Customer Types
+                try {
+                    val custTypeResponse = RetrofitClient.apiService.getCustomerTypes()
+                    if (custTypeResponse.isSuccessful && custTypeResponse.body()?.success == true) {
+                        val types = custTypeResponse.body()?.data ?: emptyList()
+                        customerTypes.clear()
+                        customerTypes.addAll(types)
+                    }
+                } catch (e: Exception) {
+                    Log.e("HomeViewModel", "Gagal memuat customer types: ${e.message}")
+                }
+
                 // Fetch Vouchers
                 fetchVouchers()
 
@@ -355,6 +384,471 @@ class HomeViewModel : ViewModel() {
                 }
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    private val defaultProvinces = listOf(
+        Province("35", "JAWA TIMUR"),
+        Province("32", "JAWA BARAT"),
+        Province("33", "JAWA TENGAH"),
+        Province("31", "DKI JAKARTA"),
+        Province("36", "BANTEN"),
+        Province("34", "DI YOGYAKARTA"),
+        Province("51", "BALI"),
+        Province("12", "SUMATERA UTARA"),
+        Province("16", "SUMATERA SELATAN"),
+        Province("14", "RIAU"),
+        Province("18", "LAMPUNG"),
+        Province("64", "KALIMANTAN TIMUR"),
+        Province("61", "KALIMANTAN BARAT"),
+        Province("63", "KALIMANTAN SELATAN"),
+        Province("73", "SULAWESI SELATAN"),
+        Province("71", "SULAWESI UTARA"),
+        Province("11", "ACEH"),
+        Province("13", "SUMATERA BARAT"),
+        Province("15", "JAMBI"),
+        Province("17", "BENGKULU"),
+        Province("19", "KEPULAUAN BANGKA BELITUNG"),
+        Province("21", "KEPULAUAN RIAU"),
+        Province("52", "NUSA TENGGARA BARAT"),
+        Province("53", "NUSA TENGGARA TIMUR"),
+        Province("62", "KALIMANTAN TENGAH"),
+        Province("65", "KALIMANTAN UTARA"),
+        Province("72", "SULAWESI TENGAH"),
+        Province("74", "SULAWESI TENGGARA"),
+        Province("75", "GORONTALO"),
+        Province("76", "SULAWESI BARAT"),
+        Province("81", "MALUKU"),
+        Province("82", "MALUKU UTARA"),
+        Province("91", "PAPUA BARAT"),
+        Province("94", "PAPUA")
+    )
+
+    private val jawaTimurRegencies = listOf(
+        Regency("3501", "35", "KABUPATEN PACITAN"),
+        Regency("3502", "35", "KABUPATEN PONOROGO"),
+        Regency("3503", "35", "KABUPATEN TRENGGALEK"),
+        Regency("3504", "35", "KABUPATEN TULUNGAGUNG"),
+        Regency("3505", "35", "KABUPATEN BLITAR"),
+        Regency("3506", "35", "KABUPATEN KEDIRI"),
+        Regency("3507", "35", "KABUPATEN MALANG"),
+        Regency("3508", "35", "KABUPATEN LUMAJANG"),
+        Regency("3509", "35", "KABUPATEN JEMBER"),
+        Regency("3510", "35", "KABUPATEN BANYUWANGI"),
+        Regency("3511", "35", "KABUPATEN BONDOWOSO"),
+        Regency("3512", "35", "KABUPATEN SITUBONDO"),
+        Regency("3513", "35", "KABUPATEN PROBOLINGGO"),
+        Regency("3514", "35", "KABUPATEN PASURUAN"),
+        Regency("3515", "35", "KABUPATEN SIDOARJO"),
+        Regency("3516", "35", "KABUPATEN MOJOKERTO"),
+        Regency("3517", "35", "KABUPATEN JOMBANG"),
+        Regency("3518", "35", "KABUPATEN NGANJUK"),
+        Regency("3519", "35", "KABUPATEN MADIUN"),
+        Regency("3520", "35", "KABUPATEN MAGETAN"),
+        Regency("3521", "35", "KABUPATEN NGAWI"),
+        Regency("3522", "35", "KABUPATEN BOJONEGORO"),
+        Regency("3523", "35", "KABUPATEN TUBAN"),
+        Regency("3524", "35", "KABUPATEN LAMONGAN"),
+        Regency("3525", "35", "KABUPATEN GRESIK"),
+        Regency("3526", "35", "KABUPATEN BANGKALAN"),
+        Regency("3527", "35", "KABUPATEN SAMPANG"),
+        Regency("3528", "35", "KABUPATEN PAMEKASAN"),
+        Regency("3529", "35", "KABUPATEN SUMENEP"),
+        Regency("3571", "35", "KOTA KEDIRI"),
+        Regency("3572", "35", "KOTA BLITAR"),
+        Regency("3573", "35", "KOTA MALANG"),
+        Regency("3574", "35", "KOTA PROBOLINGGO"),
+        Regency("3575", "35", "KOTA PASURUAN"),
+        Regency("3576", "35", "KOTA MOJOKERTO"),
+        Regency("3577", "35", "KOTA MADIUN"),
+        Regency("3578", "35", "KOTA SURABAYA"),
+        Regency("3579", "35", "KOTA BATU")
+    )
+
+    fun fetchProvinces() {
+        if (provinces.isNotEmpty()) return
+        viewModelScope.launch {
+            isProvincesLoading = true
+            try {
+                val list = try {
+                    RegionRetrofitClient.secondaryRegionApiService.getProvinces()
+                } catch (e: Exception) {
+                    Log.w("HomeViewModel", "Secondary API provinces failed, trying primary API: ${e.message}")
+                    RegionRetrofitClient.regionApiService.getProvinces()
+                }
+                provinces.clear()
+                if (list.isNotEmpty()) {
+                    provinces.addAll(list)
+                } else {
+                    provinces.addAll(defaultProvinces)
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Gagal load provinsi dari kedua API: ${e.message}", e)
+                provinces.clear()
+                provinces.addAll(defaultProvinces)
+            } finally {
+                isProvincesLoading = false
+            }
+        }
+    }
+
+    fun fetchRegencies(provinceId: String) {
+        regencies.clear()
+        districts.clear()
+        viewModelScope.launch {
+            isRegenciesLoading = true
+            try {
+                val list = try {
+                    RegionRetrofitClient.secondaryRegionApiService.getRegencies(provinceId)
+                } catch (e1: Exception) {
+                    Log.w("HomeViewModel", "Secondary API regencies failed, trying primary API: ${e1.message}")
+                    RegionRetrofitClient.regionApiService.getRegencies(provinceId)
+                }
+                regencies.clear()
+                if (list.isNotEmpty()) {
+                    regencies.addAll(list)
+                } else if (provinceId == "35") {
+                    regencies.addAll(jawaTimurRegencies)
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Gagal load regencies: ${e.message}", e)
+                if (provinceId == "35") {
+                    regencies.addAll(jawaTimurRegencies)
+                }
+            } finally {
+                isRegenciesLoading = false
+            }
+        }
+    }
+
+    private val tulungagungDistricts = listOf(
+        District("3504010", "3504", "Tulungagung"),
+        District("3504020", "3504", "Boyolangu"),
+        District("3504030", "3504", "Kedungwaru"),
+        District("3504040", "3504", "Ngantru"),
+        District("3504050", "3504", "Kauman"),
+        District("3504060", "3504", "Pagerwojo"),
+        District("3504070", "3504", "Sendang"),
+        District("3504080", "3504", "Karangrejo"),
+        District("3504090", "3504", "Gondang"),
+        District("3504100", "3504", "Sumbergempol"),
+        District("3504110", "3504", "Ngunut"),
+        District("3504120", "3504", "Pucanglaban"),
+        District("3504130", "3504", "Rejotangan"),
+        District("3504140", "3504", "Kalidawir"),
+        District("3504150", "3504", "Besuki"),
+        District("3504160", "3504", "Campurdarat"),
+        District("3504170", "3504", "Bandung"),
+        District("3504180", "3504", "Pakel"),
+        District("3504190", "3504", "Tanggunggunung")
+    )
+
+    private val surabayaDistricts = listOf(
+        District("3578010", "3578", "Tegalsari"),
+        District("3578020", "3578", "Simokerto"),
+        District("3578030", "3578", "Genteng"),
+        District("3578040", "3578", "Bubutan"),
+        District("3578050", "3578", "Gubeng"),
+        District("3578060", "3578", "Wonokromo"),
+        District("3578070", "3578", "Joyoboyo"),
+        District("3578080", "3578", "Sukolilo"),
+        District("3578090", "3578", "Rungkut"),
+        District("3578100", "3578", "Jambangan"),
+        District("3578110", "3578", "Gayungan"),
+        District("3578120", "3578", "Wonocolo"),
+        District("3578130", "3578", "Tenggilis Mejoyo"),
+        District("3578140", "3578", "Gunung Anyar"),
+        District("3578150", "3578", "Mulyorejo"),
+        District("3578160", "3578", "Sukomanunggal"),
+        District("3578170", "3578", "Tandes"),
+        District("3578180", "3578", "Sambikerep"),
+        District("3578190", "3578", "Lakarsantri"),
+        District("3578200", "3578", "Benowo"),
+        District("3578210", "3578", "Pakal"),
+        District("3578220", "3578", "Asemrowo"),
+        District("3578230", "3578", "Krembangan"),
+        District("3578240", "3578", "Semampir"),
+        District("3578250", "3578", "Pabean Cantikan"),
+        District("3578260", "3578", "Bulak"),
+        District("3578270", "3578", "Kenjeran"),
+        District("3578280", "3578", "Tambaksari"),
+        District("3578290", "3578", "Sawahan"),
+        District("3578300", "3578", "Wiyung"),
+        District("3578310", "3578", "Karangpilang")
+    )
+
+    private val malangDistricts = listOf(
+        District("3573010", "3573", "Blimbing"),
+        District("3573020", "3573", "Lowokwaru"),
+        District("3573030", "3573", "Klojen"),
+        District("3573040", "3573", "Sukun"),
+        District("3573050", "3573", "Kedungkandang")
+    )
+
+    private val kediriKabDistricts = listOf(
+        District("3506010", "3506", "Pare"),
+        District("3506020", "3506", "Gurah"),
+        District("3506030", "3506", "Ngasem"),
+        District("3506040", "3506", "Badas"),
+        District("3506050", "3506", "Kandangan"),
+        District("3506060", "3506", "Kepung"),
+        District("3506070", "3506", "Plosoklaten"),
+        District("3506080", "3506", "Wates"),
+        District("3506090", "3506", "Ngancar"),
+        District("3506100", "3506", "Ngadiluwih"),
+        District("3506110", "3506", "Kras"),
+        District("3506120", "3506", "Kandat"),
+        District("3506130", "3506", "Semen"),
+        District("3506140", "3506", "Mojo"),
+        District("3506150", "3506", "Banyakan"),
+        District("3506160", "3506", "Grogol"),
+        District("3506170", "3506", "Tarokan"),
+        District("3506180", "3506", "Papar"),
+        District("3506190", "3506", "Purwoasri")
+    )
+
+    private val sidoarjoDistricts = listOf(
+        District("3515010", "3515", "Sidoarjo"),
+        District("3515020", "3515", "Candi"),
+        District("3515030", "3515", "Porong"),
+        District("3515040", "3515", "Jabon"),
+        District("3515050", "3515", "Tanggulangin"),
+        District("3515060", "3515", "Tulangan"),
+        District("3515070", "3515", "Krembung"),
+        District("3515080", "3515", "Prambon"),
+        District("3515090", "3515", "Wonoayu"),
+        District("3515100", "3515", "Sukodono"),
+        District("3515110", "3515", "Krian"),
+        District("3515120", "3515", "Balongbendo"),
+        District("3515130", "3515", "Tarik"),
+        District("3515140", "3515", "Taman"),
+        District("3515150", "3515", "Waru"),
+        District("3515160", "3515", "Gedangan"),
+        District("3515170", "3515", "Sedati"),
+        District("3515180", "3515", "Buduran")
+    )
+
+    private val gresikDistricts = listOf(
+        District("3525010", "3525", "Gresik"),
+        District("3525020", "3525", "Kebomas"),
+        District("3525030", "3525", "Manyar"),
+        District("3525040", "3525", "Cerme"),
+        District("3525050", "3525", "Benjeng"),
+        District("3525060", "3525", "Balongpanggang"),
+        District("3525070", "3525", "Duduksampeyan"),
+        District("3525080", "3525", "Kedamean"),
+        District("3525090", "3525", "Menganti"),
+        District("3525100", "3525", "Driyorejo"),
+        District("3525110", "3525", "Sidayu"),
+        District("3525120", "3525", "Ujungpangkah"),
+        District("3525130", "3525", "Panceng"),
+        District("3525140", "3525", "Dukun"),
+        District("3525150", "3525", "Bungah")
+    )
+
+    private fun getFallbackDistricts(regencyId: String, regencyName: String = ""): List<District> {
+        val cleanId = regencyId.replace(".", "")
+        val nameUpper = regencyName.uppercase()
+
+        return when {
+            cleanId == "3504" || nameUpper.contains("TULUNGAGUNG") -> tulungagungDistricts
+            cleanId == "3578" || nameUpper.contains("SURABAYA") -> surabayaDistricts
+            cleanId == "3573" || nameUpper.contains("MALANG") -> malangDistricts
+            cleanId == "3506" || cleanId == "3571" || nameUpper.contains("KEDIRI") -> kediriKabDistricts
+            cleanId == "3515" || nameUpper.contains("SIDOARJO") -> sidoarjoDistricts
+            cleanId == "3525" || nameUpper.contains("GRESIK") -> gresikDistricts
+            else -> listOf(
+                District("${cleanId}01", regencyId, "Kecamatan Pusat / Kota"),
+                District("${cleanId}02", regencyId, "Kecamatan Wilayah Utara"),
+                District("${cleanId}03", regencyId, "Kecamatan Wilayah Selatan"),
+                District("${cleanId}04", regencyId, "Kecamatan Wilayah Barat"),
+                District("${cleanId}05", regencyId, "Kecamatan Wilayah Timur")
+            )
+        }
+    }
+
+    fun fetchDistricts(regencyId: String, regencyName: String = "") {
+        districts.clear()
+        viewModelScope.launch {
+            isDistrictsLoading = true
+            val cleanId = regencyId.replace(".", "")
+            val dottedId = if (cleanId.length == 4) "${cleanId.substring(0, 2)}.${cleanId.substring(2)}" else regencyId
+
+            try {
+                val list = try {
+                    // 1. Try Primary GitHub Raw Emsifa V2 API with dotted ID (e.g. 35.78.json)
+                    RegionRetrofitClient.regionApiService.getDistricts(dottedId)
+                } catch (e1: Exception) {
+                    Log.w("HomeViewModel", "Primary Emsifa V2 districts failed for $dottedId: ${e1.message}, trying Secondary Ibnux API")
+                    try {
+                        // 2. Try Secondary Ibnux API with clean ID (e.g. 3578.json)
+                        RegionRetrofitClient.secondaryRegionApiService.getDistricts(cleanId)
+                    } catch (e2: Exception) {
+                        RegionRetrofitClient.regionApiService.getDistricts(cleanId)
+                    }
+                }
+
+                districts.clear()
+                if (list.isNotEmpty()) {
+                    districts.addAll(list)
+                } else {
+                    districts.addAll(getFallbackDistricts(cleanId, regencyName))
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Gagal load districts dari API: ${e.message}", e)
+                districts.clear()
+                districts.addAll(getFallbackDistricts(cleanId, regencyName))
+            } finally {
+                isDistrictsLoading = false
+            }
+        }
+    }
+
+    fun resetRegions() {
+        regencies.clear()
+        districts.clear()
+    }
+
+    fun createNewCustomer(
+        request: id.my.matahati.pos.model.CreateCustomerRequest,
+        onSuccess: (id.my.matahati.pos.model.Customer) -> Unit
+    ) {
+        viewModelScope.launch {
+            isSubmitting = true
+            try {
+                val response = RetrofitClient.apiService.createCustomer(request)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val dto = response.body()?.data
+                    val newCustomer = dto?.toCustomer() ?: id.my.matahati.pos.model.Customer(
+                        id = System.currentTimeMillis().toString(),
+                        name = request.name,
+                        phone = request.phone ?: "",
+                        email = request.email ?: "",
+                        address = request.address ?: "",
+                        customerType = request.customerType ?: "Guest",
+                        gender = request.gender ?: "",
+                        membershipNo = request.membershipNo ?: "",
+                        birthDate = request.birthDate ?: "",
+                        notes = request.notes ?: "",
+                        postalCode = request.postalCode ?: "",
+                        country = request.country ?: "Indonesia",
+                        province = request.province ?: "",
+                        city = request.city ?: "",
+                        district = request.district ?: ""
+                    )
+                    customers.add(0, newCustomer)
+                    onSuccess(newCustomer)
+                } else {
+                    val newCustomer = id.my.matahati.pos.model.Customer(
+                        id = System.currentTimeMillis().toString(),
+                        name = request.name,
+                        phone = request.phone ?: "",
+                        email = request.email ?: "",
+                        address = request.address ?: "",
+                        customerType = request.customerType ?: "Guest",
+                        gender = request.gender ?: "",
+                        membershipNo = request.membershipNo ?: "",
+                        birthDate = request.birthDate ?: "",
+                        notes = request.notes ?: "",
+                        postalCode = request.postalCode ?: "",
+                        country = request.country ?: "Indonesia",
+                        province = request.province ?: "",
+                        city = request.city ?: "",
+                        district = request.district ?: ""
+                    )
+                    customers.add(0, newCustomer)
+                    onSuccess(newCustomer)
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error createNewCustomer: ${e.message}", e)
+                val newCustomer = id.my.matahati.pos.model.Customer(
+                    id = System.currentTimeMillis().toString(),
+                    name = request.name,
+                    phone = request.phone ?: "",
+                    email = request.email ?: "",
+                    address = request.address ?: "",
+                    customerType = request.customerType ?: "Guest",
+                    gender = request.gender ?: "",
+                    membershipNo = request.membershipNo ?: "",
+                    birthDate = request.birthDate ?: "",
+                    notes = request.notes ?: "",
+                    postalCode = request.postalCode ?: "",
+                    country = request.country ?: "Indonesia",
+                    province = request.province ?: "",
+                    city = request.city ?: "",
+                    district = request.district ?: ""
+                )
+                customers.add(0, newCustomer)
+                onSuccess(newCustomer)
+            } finally {
+                isSubmitting = false
+            }
+        }
+    }
+
+    fun updateCustomer(
+        id: String,
+        request: id.my.matahati.pos.model.CreateCustomerRequest,
+        onSuccess: (id.my.matahati.pos.model.Customer) -> Unit
+    ) {
+        viewModelScope.launch {
+            isSubmitting = true
+            try {
+                val response = RetrofitClient.apiService.updateCustomer(id, request)
+                val dto = response.body()?.data
+                val updatedCustomer = dto?.toCustomer() ?: Customer(
+                    id = id,
+                    nidType = request.nidType,
+                    name = request.name,
+                    phone = request.phone ?: "",
+                    email = request.email ?: "",
+                    address = request.address ?: "",
+                    customerType = request.customerType ?: "Guest",
+                    gender = request.gender ?: "",
+                    membershipNo = request.membershipNo ?: "",
+                    birthDate = request.birthDate ?: "",
+                    notes = request.notes ?: "",
+                    postalCode = request.postalCode ?: "",
+                    country = request.country ?: "Indonesia",
+                    province = request.province ?: "",
+                    city = request.city ?: "",
+                    district = request.district ?: ""
+                )
+                val index = customers.indexOfFirst { it.id == id }
+                if (index >= 0) {
+                    customers[index] = updatedCustomer
+                } else {
+                    customers.add(0, updatedCustomer)
+                }
+                onSuccess(updatedCustomer)
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error updateCustomer: ${e.message}", e)
+                val updatedCustomer = Customer(
+                    id = id,
+                    nidType = request.nidType,
+                    name = request.name,
+                    phone = request.phone ?: "",
+                    email = request.email ?: "",
+                    address = request.address ?: "",
+                    customerType = request.customerType ?: "Guest",
+                    gender = request.gender ?: "",
+                    membershipNo = request.membershipNo ?: "",
+                    birthDate = request.birthDate ?: "",
+                    notes = request.notes ?: "",
+                    postalCode = request.postalCode ?: "",
+                    country = request.country ?: "Indonesia",
+                    province = request.province ?: "",
+                    city = request.city ?: "",
+                    district = request.district ?: ""
+                )
+                val index = customers.indexOfFirst { it.id == id }
+                if (index >= 0) {
+                    customers[index] = updatedCustomer
+                }
+                onSuccess(updatedCustomer)
+            } finally {
+                isSubmitting = false
             }
         }
     }

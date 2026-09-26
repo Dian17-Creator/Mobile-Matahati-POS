@@ -78,6 +78,7 @@ fun OlseraCartPanel(
     onSendToKitchenClick: () -> Unit = {},
     selectedCustomerName: String,
     onCustomerSelected: (Customer) -> Unit,
+    onOpenCustomerPanel: () -> Unit = {},
     selectedTable: String = "",
     onHoldCart: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -91,8 +92,6 @@ fun OlseraCartPanel(
     val totalAmount = if (grandTotal > 0) grandTotal else (subtotal - discountAmount).coerceAtLeast(0.0)
     val totalItemsCount = cartItems.sumOf { it.quantity }
     var showMore by remember { mutableStateOf(false) }
-
-    var showCustomerDialog by remember { mutableStateOf(false) }
 
     Surface(
         color = Color.White,
@@ -120,7 +119,7 @@ fun OlseraCartPanel(
                 ) {
                     // Left: Customer Icon Button
                     IconButton(
-                        onClick = { showCustomerDialog = true },
+                        onClick = onOpenCustomerPanel,
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
@@ -449,47 +448,6 @@ fun OlseraCartPanel(
                 }
             }
         }
-    }
-
-    // Customer Selection Dialog
-    if (showCustomerDialog) {
-        AlertDialog(
-            onDismissRequest = { showCustomerDialog = false },
-            title = { Text("Pilih Pelanggan", fontWeight = FontWeight.Bold) },
-            text = {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth().height(300.dp)
-                ) {
-                    items(customers) { customer ->
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFFF1F5F9),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onCustomerSelected(customer)
-                                    showCustomerDialog = false
-                                }
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp)
-                            ) {
-                                Text(text = customer.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.DarkGray)
-                                if (customer.phone.isNotBlank()) {
-                                    Text(text = customer.phone, fontSize = 12.sp, color = Color.Gray)
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showCustomerDialog = false }) {
-                    Text("Tutup")
-                }
-            }
-        )
     }
 }
 

@@ -101,6 +101,10 @@ fun HomeScreen(
     var selectedHistoryTransaction by remember { mutableStateOf<id.my.matahati.pos.model.TransactionModel?>(null) }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
+    var showCustomerPanel by remember { mutableStateOf(false) }
+    var showAddCustomerPanel by remember { mutableStateOf(false) }
+    var customerToEdit by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
+    var showEditCustomerPanel by remember { mutableStateOf(false) }
     var selectedVoucher by remember { mutableStateOf<id.my.matahati.pos.model.Voucher?>(null) }
     var manualDiscountInput by remember { mutableStateOf("") }
     
@@ -513,6 +517,9 @@ fun HomeScreen(
                                                 selectedCustomerName = selectedCustomer?.name ?: "",
                                                 onCustomerSelected = { customer ->
                                                     selectedCustomer = customer
+                                                },
+                                                onOpenCustomerPanel = {
+                                                    showCustomerPanel = true
                                                 },
                                                 selectedTable = viewModel.selectedTable,
                                                 cashierName = userName,
@@ -1250,6 +1257,193 @@ fun HomeScreen(
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = Color.White)
+        }
+    }
+
+    // =============================================================
+    // CUSTOMER SELECTION SIDE PANEL (Right Side Overlay with Smooth Animation)
+    // =============================================================
+    AnimatedVisibility(
+        visible = showCustomerPanel,
+        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300)),
+        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.50f))
+                .clickable { showCustomerPanel = false }
+        ) {
+            AnimatedVisibility(
+                visible = showCustomerPanel,
+                enter = slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                ),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable(enabled = false) {}
+            ) {
+                CustomerSelectionPanel(
+                    customers = viewModel.customers,
+                    onCustomerSelected = { customer ->
+                        selectedCustomer = customer
+                    },
+                    onClose = { showCustomerPanel = false },
+                    onOpenAddCustomerPanel = {
+                        showAddCustomerPanel = true
+                    },
+                    onEditCustomer = { customer ->
+                        customerToEdit = customer
+                        showEditCustomerPanel = true
+                    }
+                )
+            }
+        }
+    }
+
+    // =============================================================
+    // ADD CUSTOMER SIDE PANEL (Right Side Overlay with Slide Animation)
+    // =============================================================
+    AnimatedVisibility(
+        visible = showAddCustomerPanel,
+        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300)),
+        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.50f))
+                .clickable { showAddCustomerPanel = false }
+        ) {
+            AnimatedVisibility(
+                visible = showAddCustomerPanel,
+                enter = slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                ),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable(enabled = false) {}
+            ) {
+                AddCustomerPanel(
+                    customerTypes = viewModel.customerTypes,
+                    provinces = viewModel.provinces,
+                    regencies = viewModel.regencies,
+                    districts = viewModel.districts,
+                    isProvincesLoading = viewModel.isProvincesLoading,
+                    isRegenciesLoading = viewModel.isRegenciesLoading,
+                    isDistrictsLoading = viewModel.isDistrictsLoading,
+                    onLoadProvinces = { viewModel.fetchProvinces() },
+                    onSelectProvince = { prov -> viewModel.fetchRegencies(prov.id) },
+                    onSelectRegency = { reg -> viewModel.fetchDistricts(reg.id, reg.name) },
+                    onClose = {
+                        viewModel.resetRegions()
+                        showAddCustomerPanel = false
+                    },
+                    onSubmit = { req ->
+                        viewModel.createNewCustomer(req) { newCustomer ->
+                            selectedCustomer = newCustomer
+                            viewModel.resetRegions()
+                            showAddCustomerPanel = false
+                            showCustomerPanel = false
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    // =============================================================
+    // EDIT CUSTOMER SIDE PANEL (Right Side Overlay with Slide Animation)
+    // =============================================================
+    AnimatedVisibility(
+        visible = showEditCustomerPanel && customerToEdit != null,
+        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300)),
+        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.50f))
+                .clickable {
+                    viewModel.resetRegions()
+                    showEditCustomerPanel = false
+                    customerToEdit = null
+                }
+        ) {
+            AnimatedVisibility(
+                visible = showEditCustomerPanel && customerToEdit != null,
+                enter = slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                ),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable(enabled = false) {}
+            ) {
+                AddCustomerPanel(
+                    customerToEdit = customerToEdit,
+                    customerTypes = viewModel.customerTypes,
+                    provinces = viewModel.provinces,
+                    regencies = viewModel.regencies,
+                    districts = viewModel.districts,
+                    isProvincesLoading = viewModel.isProvincesLoading,
+                    isRegenciesLoading = viewModel.isRegenciesLoading,
+                    isDistrictsLoading = viewModel.isDistrictsLoading,
+                    onLoadProvinces = { viewModel.fetchProvinces() },
+                    onSelectProvince = { prov -> viewModel.fetchRegencies(prov.id) },
+                    onSelectRegency = { reg -> viewModel.fetchDistricts(reg.id, reg.name) },
+                    onClose = {
+                        viewModel.resetRegions()
+                        showEditCustomerPanel = false
+                        customerToEdit = null
+                    },
+                    onSubmit = { req ->
+                        customerToEdit?.let { target ->
+                            viewModel.updateCustomer(target.id, req) { updatedCustomer ->
+                                if (selectedCustomer?.id == updatedCustomer.id) {
+                                    selectedCustomer = updatedCustomer
+                                }
+                                viewModel.resetRegions()
+                                showEditCustomerPanel = false
+                                customerToEdit = null
+                                showCustomerPanel = false
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 }
