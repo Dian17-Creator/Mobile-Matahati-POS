@@ -36,6 +36,18 @@ interface ApiService {
     @GET("api/customers")
     suspend fun getCustomers(): Response<CustomerResponse>
 
+    @GET("api/customer-types")
+    suspend fun getCustomerTypes(): Response<id.my.matahati.pos.model.CustomerTypeResponse>
+
+    @POST("api/customers")
+    suspend fun createCustomer(@Body request: id.my.matahati.pos.model.CreateCustomerRequest): Response<id.my.matahati.pos.model.SingleCustomerResponse>
+
+    @retrofit2.http.PUT("api/customers/{id}")
+    suspend fun updateCustomer(
+        @Path("id") id: String,
+        @Body request: id.my.matahati.pos.model.CreateCustomerRequest
+    ): Response<id.my.matahati.pos.model.SingleCustomerResponse>
+
     @GET("api/vouchers")
     suspend fun getVouchers(): Response<VoucherResponse>
 
