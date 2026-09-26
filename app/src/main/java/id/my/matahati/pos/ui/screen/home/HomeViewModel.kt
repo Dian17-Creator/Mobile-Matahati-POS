@@ -41,6 +41,7 @@ class HomeViewModel : ViewModel() {
     var transactionSuccessMessage by mutableStateOf<String?>(null)
     var lastTransaction by mutableStateOf<TransactionData?>(null)
     var showReceiptDialog by mutableStateOf(false)
+    var showShiftNotStartedDialog by mutableStateOf(false)
 
     // Kitchen Print States
     var showKitchenPrintDialog by mutableStateOf(false)
@@ -515,7 +516,7 @@ class HomeViewModel : ViewModel() {
             TransactionDetailRequest(
                 productId = it.product.id,
                 quantity = it.quantity,
-                note = it.note.ifBlank { null }
+                note = it.encodeNoteWithSentQty()
             )
         }
 
@@ -588,6 +589,9 @@ class HomeViewModel : ViewModel() {
                                     parsedError = errorList.joinToString("\n")
                                 }
                             }
+                            if (parsedError.contains("belum memulai shift", ignoreCase = true) || response.code() == 422 && parsedError.contains("shift", ignoreCase = true)) {
+                                showShiftNotStartedDialog = true
+                            }
                             parsedError
                         } catch (e: Exception) {
                             "Error: ${response.code()}\nRaw: $errorBody"
@@ -652,6 +656,8 @@ class HomeViewModel : ViewModel() {
                                      detail.productName.lowercase().contains("kopi") || 
                                      detail.productName.lowercase().contains("ice")) "BAR" else "DAPUR"
 
+            val (cleanNote, sentQty) = id.my.matahati.pos.model.CartItem.parseNoteAndSentQty(detail.note)
+
             id.my.matahati.pos.model.CartItem(
                 product = Product(
                     id = detail.productId,
@@ -662,8 +668,8 @@ class HomeViewModel : ViewModel() {
                     stationName = station
                 ),
                 quantity = detail.quantity,
-                note = detail.note ?: "",
-                sentQuantity = 0 // History is always "new" to the printer
+                note = cleanNote,
+                sentQuantity = sentQty
             )
         } ?: emptyList()
         

@@ -102,9 +102,12 @@ class EscPosFormatter(private val cols: Int = 42) {
             out.addAll(drawTwoColumns(qtyLine, subtotalLine).toByteArray().toList())
             
             if (!item.note.isNullOrBlank()) {
-                val wrappedNote = wrapText("Note: ${item.note}", cols - 2)
-                wrappedNote.forEach { line ->
-                    out.addAll("  $line\n".toByteArray().toList())
+                val (cleanNote, _) = CartItem.parseNoteAndSentQty(item.note)
+                if (cleanNote.isNotBlank()) {
+                    val wrappedNote = wrapText("Note: $cleanNote", cols - 2)
+                    wrappedNote.forEach { line ->
+                        out.addAll("  $line\n".toByteArray().toList())
+                    }
                 }
             }
         }
