@@ -1,6 +1,5 @@
 package id.my.matahati.pos.ui.screen.shift
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,8 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import id.my.matahati.pos.model.CashMovement
-import id.my.matahati.pos.model.Shift
+import id.my.matahati.pos.model.ShiftResponse
 import id.my.matahati.pos.ui.screen.home.components.OlseraDateFilterDialog
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -46,6 +44,7 @@ private val OlseraGreenButton = Color(0xFF4CAF50)
 fun ShiftScreen(
     shiftViewModel: ShiftViewModel,
     nidOutlet: String?,
+    userName: String? = null,
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -160,13 +159,14 @@ fun ShiftScreen(
                         StartShiftContent(
                             isSubmitting = shiftViewModel.isSubmitting,
                             onStartShift = { amount ->
-                                shiftViewModel.startShift(nidOutlet, amount)
+                                shiftViewModel.openShift(nidOutlet, amount)
                             }
                         )
                     } else {
                         // ACTIVE SHIFT: Show Split 2-Column Dashboard (POS Tablet View)
                         ActiveShiftContent(
                             shift = currentShift,
+                            userName = userName,
                             onCashMovementClick = { showCashMovementDialog = true },
                             onCloseShiftClick = { showCloseShiftDialog = true }
                         )
@@ -260,7 +260,7 @@ fun ShiftScreen(
                                     ShiftHistoryCard(
                                         shift = shift,
                                         onClick = {
-                                            shift.id?.let { shiftViewModel.fetchShiftDetail(it) }
+                                            shiftViewModel.selectShiftDetail(shift)
                                         }
                                     )
                                 }
@@ -277,13 +277,16 @@ fun ShiftScreen(
         CashMovementDialog(
             isSubmitting = shiftViewModel.isSubmitting,
             onDismiss = { showCashMovementDialog = false },
-            onSubmit = { type, amount, desc ->
-                currentShift.id?.let { shiftId ->
-                    shiftViewModel.addCashMovement(
-                        shiftId = shiftId,
-                        type = type,
+            onSubmit = { type, amount ->
+                if (type == "CASH_IN") {
+                    shiftViewModel.cashIn(
                         amount = amount,
-                        description = desc,
+                        outletId = nidOutlet,
+                        onSuccess = { showCashMovementDialog = false }
+                    )
+                } else {
+                    shiftViewModel.cashOut(
+                        amount = amount,
                         outletId = nidOutlet,
                         onSuccess = { showCashMovementDialog = false }
                     )
@@ -294,19 +297,18 @@ fun ShiftScreen(
 
     // Dialog Tutup Shift
     if (showCloseShiftDialog && currentShift != null) {
+        val expectedCashVal = currentShift.expectedCash
+            ?: (currentShift.openingCash + (currentShift.cashSales ?: 0.0) + currentShift.cashIn - currentShift.cashOut)
         CloseShiftDialog(
-            expectedCash = currentShift.expectedCash?.toDoubleOrNull() ?: 0.0,
+            expectedCash = expectedCashVal,
             isSubmitting = shiftViewModel.isSubmitting,
             onDismiss = { showCloseShiftDialog = false },
             onSubmit = { actualCash ->
-                currentShift.id?.let { shiftId ->
-                    shiftViewModel.closeShift(
-                        shiftId = shiftId,
-                        actualCashAmount = actualCash,
-                        outletId = nidOutlet,
-                        onSuccess = { showCloseShiftDialog = false }
-                    )
-                }
+                shiftViewModel.closeShift(
+                    actualCashAmount = actualCash,
+                    outletId = nidOutlet,
+                    onSuccess = { showCloseShiftDialog = false }
+                )
             }
         )
     }
@@ -317,7 +319,7 @@ fun ShiftScreen(
             onDismiss = { showDateFilterDialog = false },
             onDateSelected = { result ->
                 selectedDateText = result.displayLabel
-                shiftViewModel.fetchShiftHistory(nidOutlet, page = 1)
+                shiftViewModel.fetchShiftHistory(nidOutlet, date = result.startDate)
             }
         )
     }
@@ -376,7 +378,6 @@ private fun StartShiftContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Cash Register Icon / Graphic
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color(0xFFF5F5F5),
@@ -394,7 +395,6 @@ private fun StartShiftContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Text Label "Kas Awal di Laci"
             Text(
                 text = "Kas Awal di Laci",
                 fontSize = 13.sp,
@@ -405,7 +405,6 @@ private fun StartShiftContent(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Single line input for opening cash
             OutlinedTextField(
                 value = rawInput,
                 onValueChange = { input ->
@@ -424,7 +423,6 @@ private fun StartShiftContent(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Green Button "✔ Mulai Shift"
             Button(
                 onClick = {
                     val amount = rawInput.toDoubleOrNull() ?: 0.0
@@ -470,25 +468,27 @@ private fun StartShiftContent(
 
 @Composable
 private fun ActiveShiftContent(
-    shift: Shift,
+    shift: ShiftResponse,
+    userName: String? = null,
     onCashMovementClick: () -> Unit,
     onCloseShiftClick: () -> Unit
 ) {
-    val openingCashVal = shift.openingCash?.toDoubleOrNull() ?: 0.0
-    val cashSalesVal = shift.cashSales?.toDoubleOrNull() ?: 0.0
-    val cashInVal = shift.cashIn?.toDoubleOrNull() ?: 0.0
-    val cashOutVal = shift.cashOut?.toDoubleOrNull() ?: 0.0
-    val cashRefundVal = shift.cashRefund?.toDoubleOrNull() ?: 0.0
-    val cashCanceledVal = shift.cashCanceled?.toDoubleOrNull() ?: 0.0
+    val openingCashVal = shift.openingCash
+    val totalSalesVal = shift.totalSales
+    val cashSalesVal = shift.cashSales ?: 0.0
+    val cashInVal = shift.cashIn
+    val cashOutVal = shift.cashOut
+    val cashRefundVal = shift.refundCash
+    val cashCanceledVal = shift.cancellationCash
     val netCashMovement = cashInVal - cashOutVal
 
-    val expectedCashVal = shift.expectedCash?.toDoubleOrNull()
+    // Backend sends expected_cash automatically
+    val expectedCashVal = shift.expectedCash
         ?: (openingCashVal + cashSalesVal + netCashMovement - cashRefundVal - cashCanceledVal)
 
-    val totalKasVal = if (expectedCashVal > 0) expectedCashVal else (openingCashVal + cashSalesVal + netCashMovement)
-
-    val cashierName = shift.user?.name ?: "wella"
+    val cashierName = shift.user?.name ?: userName ?: "dian23"
     val formattedOpenedAt = formatShiftDate(shift.openedAt)
+    val isOpen = shift.status.uppercase() == "OPEN"
 
     Row(modifier = Modifier.fillMaxSize()) {
         // Left Column: Rincian Shift & Tombol Shift Berakhir
@@ -521,7 +521,7 @@ private fun ActiveShiftContent(
 
                 ShiftInfoRow(
                     label = "Kas",
-                    value = formatNumberDisplay(totalKasVal),
+                    value = formatNumberDisplay(expectedCashVal),
                     isBold = true,
                     verticalPadding = 18.dp
                 )
@@ -536,12 +536,20 @@ private fun ActiveShiftContent(
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
-                    label = "Kas Penjualan",
-                    value = formatNumberDisplay(cashSalesVal),
+                    label = "Total Penjualan",
+                    value = formatNumberDisplay(totalSalesVal),
                     startPadding = 32.dp,
                     verticalPadding = 18.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+//                ShiftInfoRow(
+//                    label = "Penjualan Tunai",
+//                    value = formatNumberDisplay(cashSalesVal),
+//                    startPadding = 32.dp,
+//                    verticalPadding = 18.dp
+//                )
+//                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
                     label = "Kas Pengembalian",
@@ -579,6 +587,7 @@ private fun ActiveShiftContent(
             // Button "Shift Berakhir" at the bottom of the left column
             Button(
                 onClick = onCloseShiftClick,
+                enabled = isOpen,
                 colors = ButtonDefaults.buttonColors(containerColor = OlseraGreenButton),
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
@@ -595,7 +604,7 @@ private fun ActiveShiftContent(
             }
         }
 
-        // Vertical divider separating left and right column
+        // Vertical divider
         Box(
             modifier = Modifier
                 .fillMaxHeight()
@@ -611,6 +620,9 @@ private fun ActiveShiftContent(
                 .background(Color(0xFFF9FAFB))
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
+                val hasMovements = cashInVal > 0 || cashOutVal > 0
+                val totalMovementsCount = (if (cashInVal > 0) 1 else 0) + (if (cashOutVal > 0) 1 else 0)
+
                 // Header row
                 Row(
                     modifier = Modifier
@@ -626,7 +638,7 @@ private fun ActiveShiftContent(
                         color = Color(0xFF333333)
                     )
                     Text(
-                        text = "${shift.cashMovements?.size ?: 0}",
+                        text = "$totalMovementsCount",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF333333)
@@ -635,8 +647,7 @@ private fun ActiveShiftContent(
 
                 HorizontalDivider(color = Color(0xFFE0E0E0))
 
-                val movements = shift.cashMovements ?: emptyList()
-                if (movements.isEmpty()) {
+                if (!hasMovements) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -662,22 +673,26 @@ private fun ActiveShiftContent(
                         }
                     }
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(12.dp),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(movements) { mov ->
-                            CashMovementCard(mov)
+                        if (cashInVal > 0) {
+                            SummaryCashMovementCard(type = "Kas Masuk", amount = cashInVal, isCashIn = true)
+                        }
+                        if (cashOutVal > 0) {
+                            SummaryCashMovementCard(type = "Kas Keluar", amount = cashOutVal, isCashIn = false)
                         }
                     }
                 }
             }
 
-            // Floating Action Button (+) at bottom right
+            // Floating Action Button (+)
             FloatingActionButton(
                 onClick = onCashMovementClick,
-                containerColor = Color(0xFF1976D2),
+                containerColor = if (isOpen) Color(0xFF1976D2) else Color.Gray,
                 contentColor = Color.White,
                 shape = CircleShape,
                 modifier = Modifier
@@ -689,6 +704,41 @@ private fun ActiveShiftContent(
                     contentDescription = "Tambah Kas Masuk/Keluar"
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SummaryCashMovementCard(
+    type: String,
+    amount: Double,
+    isCashIn: Boolean
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = type,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isCashIn) Color(0xFF2E7D32) else Color(0xFFC62828)
+            )
+            Text(
+                text = "${if (isCashIn) "+" else "-"} ${formatNumberDisplay(amount)}",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isCashIn) Color(0xFF2E7D32) else Color(0xFFC62828)
+            )
         }
     }
 }
@@ -726,51 +776,6 @@ private fun ShiftInfoRow(
 }
 
 @Composable
-private fun CashMovementCard(movement: CashMovement) {
-    val amountVal = movement.amount?.toDoubleOrNull() ?: 0.0
-    val isCashIn = movement.type == "CASH_IN"
-
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (isCashIn) "Kas Masuk" else "Kas Keluar",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isCashIn) Color(0xFF2E7D32) else Color(0xFFC62828)
-                )
-                if (!movement.description.isNullOrBlank()) {
-                    Text(
-                        text = movement.description,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            Text(
-                text = "${if (isCashIn) "+" else "-"} ${formatNumberDisplay(amountVal)}",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isCashIn) Color(0xFF2E7D32) else Color(0xFFC62828)
-            )
-        }
-    }
-}
-
-@Composable
 private fun ShiftDetailRow(
     label: String,
     value: String,
@@ -801,12 +806,12 @@ private fun ShiftDetailRow(
 
 @Composable
 private fun ShiftHistoryCard(
-    shift: Shift,
+    shift: ShiftResponse,
     onClick: () -> Unit
 ) {
-    val openingCash = shift.openingCash?.toDoubleOrNull() ?: 0.0
-    val actualCash = shift.actualCash?.toDoubleOrNull() ?: 0.0
-    val difference = shift.difference?.toDoubleOrNull() ?: 0.0
+    val openingCash = shift.openingCash
+    val actualCash = shift.actualCash ?: 0.0
+    val difference = shift.difference ?: 0.0
 
     Card(
         shape = RoundedCornerShape(10.dp),
@@ -823,7 +828,7 @@ private fun ShiftHistoryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Shift #${shift.shiftNo ?: "-"}",
+                    text = "Shift #${shift.shiftNo}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = OlseraBlueHeader
@@ -834,7 +839,7 @@ private fun ShiftHistoryCard(
                     color = Color(0xFFECEFF1)
                 ) {
                     Text(
-                        text = shift.status ?: "CLOSED",
+                        text = shift.status,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF455A64),
@@ -846,14 +851,14 @@ private fun ShiftHistoryCard(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "Buka: ${shift.openedAt ?: "-"}",
+                text = "Buka: ${formatShiftDate(shift.openedAt)}",
                 fontSize = 12.sp,
                 color = Color.Gray
             )
 
             if (!shift.closedAt.isNullOrBlank()) {
                 Text(
-                    text = "Tutup: ${shift.closedAt}",
+                    text = "Tutup: ${formatShiftDate(shift.closedAt)}",
                     fontSize = 12.sp,
                     color = Color.Gray
                 )
@@ -895,15 +900,14 @@ private fun ShiftHistoryCard(
 private fun CashMovementDialog(
     isSubmitting: Boolean,
     onDismiss: () -> Unit,
-    onSubmit: (type: String, amount: Double, desc: String) -> Unit
+    onSubmit: (type: String, amount: Double) -> Unit
 ) {
     var selectedType by remember { mutableStateOf("CASH_IN") }
     var amountInput by remember { mutableStateOf("") }
-    var descInput by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Catat Cash In / Cash Out", fontWeight = FontWeight.Bold) },
+        title = { Text("Catat Kas Masuk / Kas Keluar", fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -916,7 +920,7 @@ private fun CashMovementDialog(
                     FilterChip(
                         selected = selectedType == "CASH_IN",
                         onClick = { selectedType = "CASH_IN" },
-                        label = { Text("Cash In (+)") },
+                        label = { Text("Kas Masuk (+)") },
                         leadingIcon = {
                             Icon(Icons.Default.AddCircleOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                         },
@@ -930,7 +934,7 @@ private fun CashMovementDialog(
                     FilterChip(
                         selected = selectedType == "CASH_OUT",
                         onClick = { selectedType = "CASH_OUT" },
-                        label = { Text("Cash Out (-)") },
+                        label = { Text("Kas Keluar (-)") },
                         leadingIcon = {
                             Icon(Icons.Default.RemoveCircleOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                         },
@@ -950,23 +954,15 @@ private fun CashMovementDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                OutlinedTextField(
-                    value = descInput,
-                    onValueChange = { descInput = it },
-                    label = { Text("Deskripsi / Keterangan") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     val amount = amountInput.toDoubleOrNull() ?: 0.0
-                    onSubmit(selectedType, amount, descInput)
+                    onSubmit(selectedType, amount)
                 },
-                enabled = !isSubmitting,
+                enabled = !isSubmitting && amountInput.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = OlseraBlueHeader)
             ) {
                 Text("Simpan", color = Color.White, fontWeight = FontWeight.Bold)
@@ -1011,7 +1007,7 @@ private fun CloseShiftDialog(
                 OutlinedTextField(
                     value = actualCashInput,
                     onValueChange = { input -> actualCashInput = input.filter { it.isDigit() } },
-                    label = { Text("Kas Fisik di Laci (Rp)") },
+                    label = { Text("Nominal Kas Fisik Aktual (Rp)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
@@ -1024,7 +1020,7 @@ private fun CloseShiftDialog(
                     val actual = actualCashInput.toDoubleOrNull() ?: 0.0
                     onSubmit(actual)
                 },
-                enabled = !isSubmitting,
+                enabled = !isSubmitting && actualCashInput.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
             ) {
                 Text("Tutup Shift", color = Color.White, fontWeight = FontWeight.Bold)
@@ -1040,21 +1036,22 @@ private fun CloseShiftDialog(
 
 @Composable
 private fun ShiftDetailDialog(
-    shift: Shift,
+    shift: ShiftResponse,
     onDismiss: () -> Unit
 ) {
-    val openingCash = shift.openingCash?.toDoubleOrNull() ?: 0.0
-    val cashSales = shift.cashSales?.toDoubleOrNull() ?: 0.0
-    val cashIn = shift.cashIn?.toDoubleOrNull() ?: 0.0
-    val cashOut = shift.cashOut?.toDoubleOrNull() ?: 0.0
-    val expectedCash = shift.expectedCash?.toDoubleOrNull() ?: 0.0
-    val actualCash = shift.actualCash?.toDoubleOrNull() ?: 0.0
-    val difference = shift.difference?.toDoubleOrNull() ?: 0.0
+    val openingCash = shift.openingCash
+    val totalSales = shift.totalSales
+    val cashSales = shift.cashSales ?: 0.0
+    val cashIn = shift.cashIn
+    val cashOut = shift.cashOut
+    val expectedCash = shift.expectedCash ?: (openingCash + cashSales + cashIn - cashOut)
+    val actualCash = shift.actualCash ?: 0.0
+    val difference = shift.difference ?: 0.0
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Detail Shift #${shift.shiftNo ?: "-"}", fontWeight = FontWeight.Bold, color = OlseraBlueHeader)
+            Text("Detail Shift #${shift.shiftNo}", fontWeight = FontWeight.Bold, color = OlseraBlueHeader)
         },
         text = {
             Column(
@@ -1064,9 +1061,10 @@ private fun ShiftDetailDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ShiftDetailRow(label = "Kas Awal", value = formatCurrency(openingCash))
+                ShiftDetailRow(label = "Total Penjualan", value = formatCurrency(totalSales))
                 ShiftDetailRow(label = "Penjualan Tunai", value = formatCurrency(cashSales))
-                ShiftDetailRow(label = "Cash In", value = formatCurrency(cashIn))
-                ShiftDetailRow(label = "Cash Out", value = formatCurrency(cashOut))
+                ShiftDetailRow(label = "Kas Masuk", value = formatCurrency(cashIn))
+                ShiftDetailRow(label = "Kas Keluar", value = formatCurrency(cashOut))
                 ShiftDetailRow(label = "Ekspektasi Kas", value = formatCurrency(expectedCash))
                 ShiftDetailRow(label = "Kas Fisik (Aktual)", value = formatCurrency(actualCash), isBold = true)
                 ShiftDetailRow(
@@ -1075,32 +1073,6 @@ private fun ShiftDetailDialog(
                     isBold = true,
                     valueColor = if (difference < 0) Color.Red else Color(0xFF2E7D32)
                 )
-
-                if (!shift.cashMovements.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Riwayat Cash Movement:", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    shift.cashMovements.forEach { mov ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "${mov.type} - ${mov.description ?: ""}",
-                                fontSize = 12.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
-                            val amountVal = mov.amount?.toDoubleOrNull() ?: 0.0
-                            Text(
-                                text = formatCurrency(amountVal),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (mov.type == "CASH_IN") Color(0xFF2E7D32) else Color(0xFFC62828)
-                            )
-                        }
-                    }
-                }
             }
         },
         confirmButton = {
@@ -1112,7 +1084,7 @@ private fun ShiftDetailDialog(
 }
 
 private fun formatShiftDate(dateStr: String?): String {
-    if (dateStr.isNullOrBlank()) return "Kam, 24 Sep 2026 07:34"
+    if (dateStr.isNullOrBlank()) return "-"
     return try {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val date = inputFormat.parse(dateStr)

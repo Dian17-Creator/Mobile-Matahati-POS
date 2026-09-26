@@ -2,80 +2,57 @@ package id.my.matahati.pos.model
 
 import com.google.gson.annotations.SerializedName
 
-data class Shift(
-    @SerializedName("nid") val id: String? = null,
-    @SerializedName("cshift_no") val shiftNo: String? = null,
-    @SerializedName("nid_outlet") val nidOutlet: String? = null,
-    @SerializedName("nid_user") val nidUser: String? = null,
-    @SerializedName("nopening_cash") val openingCash: String? = null,
-    @SerializedName("cash_sales") val cashSales: String? = null,
-    @SerializedName("cash_in") val cashIn: String? = null,
-    @SerializedName("cash_out") val cashOut: String? = null,
-    @SerializedName("cash_refund") val cashRefund: String? = null,
-    @SerializedName("cash_canceled") val cashCanceled: String? = null,
-    @SerializedName("expected_cash") val expectedCash: String? = null,
-    @SerializedName("nactual_cash") val actualCash: String? = null,
-    @SerializedName("ndifference") val difference: String? = null,
-    @SerializedName("cstatus") val status: String? = null,
-    @SerializedName("dopened_at") val openedAt: String? = null,
-    @SerializedName("dclosed_at") val closedAt: String? = null,
-    @SerializedName("user") val user: UserInternalModel? = null,
-    @SerializedName("cash_movements") val cashMovements: List<CashMovement>? = null
-)
-
-data class CashMovement(
-    @SerializedName("nid") val id: String? = null,
-    @SerializedName("nid_shift") val nidShift: String? = null,
-    @SerializedName("ctype") val type: String? = null, // "CASH_IN" or "CASH_OUT"
-    @SerializedName("namount") val amount: String? = null,
-    @SerializedName("cdescription") val description: String? = null,
-    @SerializedName("dcreated_at") val createdAt: String? = null
-)
-
-data class CurrentShiftResponse(
+data class BaseResponse<T>(
     @SerializedName("success") val success: Boolean,
     @SerializedName("message") val message: String? = null,
-    @SerializedName("data") val data: Shift? = null
+    @SerializedName("data") val data: T? = null
 )
 
-data class ShiftDetailResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String? = null,
-    @SerializedName("data") val data: Shift? = null
-)
-
-data class ShiftHistoryResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String? = null,
-    @SerializedName("data") val data: ShiftPaginationData? = null
-)
-
-data class ShiftPaginationData(
-    @SerializedName("current_page") val currentPage: Int = 1,
-    @SerializedName("last_page") val lastPage: Int = 1,
-    @SerializedName("total") val total: Int = 0,
-    @SerializedName("per_page") val perPage: Int = 15,
-    @SerializedName("data") val data: List<Shift> = emptyList()
-)
-
-data class CashMovementResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String? = null,
-    @SerializedName("data") val data: CashMovement? = null
-)
-
-data class StartShiftRequest(
-    @SerializedName("nid_outlet") val nidOutlet: Int,
+data class OpenShiftRequest(
+    @SerializedName("nid_outlet") val outletId: Int,
     @SerializedName("nopening_cash") val openingCash: Double
-)
-
-data class CashMovementRequest(
-    @SerializedName("nid_shift") val nidShift: String,
-    @SerializedName("ctype") val type: String, // "CASH_IN" or "CASH_OUT"
-    @SerializedName("namount") val amount: Double,
-    @SerializedName("cdescription") val description: String
 )
 
 data class CloseShiftRequest(
     @SerializedName("nactual_cash") val actualCash: Double
 )
+
+data class CashMovementRequest(
+    @SerializedName("amount") val amount: Double
+)
+
+data class ShiftResponse(
+    @SerializedName("nid") val nid: Int,
+    @SerializedName("cshift_no") val shiftNo: String,
+    @SerializedName("nid_outlet") val outletId: Int,
+    @SerializedName("nid_user") val userId: Int,
+    
+    // Waktu buka & tutup
+    @SerializedName("dopened_at") val openedAt: String,
+    @SerializedName("dclosed_at") val closedAt: String? = null,
+    
+    // Komponen Uang
+    @SerializedName("nopening_cash") val openingCash: Double,
+    
+    // PENTING: nsales_cash adalah TOTAL GROSS SALES (Semua Metode Pembayaran termasuk QRIS/Debit)
+    @SerializedName("nsales_cash") val totalSales: Double, 
+    
+    // PENTING: cash_sales adalah HANYA CASH (hanya ada saat shift OPEN / dari endpoint current)
+    @SerializedName("cash_sales") val cashSales: Double? = null, 
+    
+    @SerializedName("nrefund_cash") val refundCash: Double = 0.0,
+    @SerializedName("ncancellation_cash") val cancellationCash: Double = 0.0,
+    @SerializedName("ncash_in") val cashIn: Double = 0.0,
+    @SerializedName("ncash_out") val cashOut: Double = 0.0,
+    
+    // Kalkulasi akhir (Saat shift OPEN, backend mengirim expected_cash secara runtime)
+    @SerializedName("nexpected_cash") val expectedCash: Double? = null,
+    @SerializedName("nactual_cash") val actualCash: Double? = null,
+    @SerializedName("ndifference") val difference: Double? = null,
+    
+    @SerializedName("cstatus") val status: String,
+
+    @SerializedName("user") val user: UserInternalModel? = null
+)
+
+typealias Shift = ShiftResponse
