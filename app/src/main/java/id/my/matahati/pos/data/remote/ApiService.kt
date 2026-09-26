@@ -8,13 +8,11 @@ import id.my.matahati.pos.model.OrderTypeResponse
 import id.my.matahati.pos.model.PaymentMethodResponse
 import id.my.matahati.pos.model.ProductResponse
 import id.my.matahati.pos.model.VoucherResponse
-import id.my.matahati.pos.model.CurrentShiftResponse
-import id.my.matahati.pos.model.ShiftDetailResponse
-import id.my.matahati.pos.model.ShiftHistoryResponse
-import id.my.matahati.pos.model.CashMovementResponse
-import id.my.matahati.pos.model.StartShiftRequest
+import id.my.matahati.pos.model.BaseResponse
 import id.my.matahati.pos.model.CashMovementRequest
 import id.my.matahati.pos.model.CloseShiftRequest
+import id.my.matahati.pos.model.OpenShiftRequest
+import id.my.matahati.pos.model.ShiftResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -70,33 +68,33 @@ interface ApiService {
     // Shift Endpoints
     @GET("api/shifts/current")
     suspend fun getCurrentShift(
-        @Query("nid_outlet") outletId: String?
-    ): Response<CurrentShiftResponse>
+        @Query("nid_outlet") outletId: Int
+    ): Response<BaseResponse<ShiftResponse>>
 
-    @POST("api/shifts/start")
-    suspend fun startShift(
-        @Body request: StartShiftRequest
-    ): Response<CurrentShiftResponse>
+    @POST("api/shifts/open")
+    suspend fun openShift(
+        @Body request: OpenShiftRequest
+    ): Response<BaseResponse<ShiftResponse>>
 
-    @POST("api/shifts/cash-movement")
-    suspend fun addCashMovement(
-        @Body request: CashMovementRequest
-    ): Response<CashMovementResponse>
-
-    @POST("api/shifts/{id_shift}/close")
+    @POST("api/shifts/close")
     suspend fun closeShift(
-        @Path("id_shift") shiftId: String,
         @Body request: CloseShiftRequest
-    ): Response<CurrentShiftResponse>
+    ): Response<BaseResponse<ShiftResponse>>
+
+    @POST("api/shifts/cash-in")
+    suspend fun cashIn(
+        @Body request: CashMovementRequest
+    ): Response<BaseResponse<ShiftResponse>>
+
+    @POST("api/shifts/cash-out")
+    suspend fun cashOut(
+        @Body request: CashMovementRequest
+    ): Response<BaseResponse<ShiftResponse>>
 
     @GET("api/shifts/history")
     suspend fun getShiftHistory(
-        @Query("nid_outlet") outletId: String?,
-        @Query("page") page: Int = 1
-    ): Response<ShiftHistoryResponse>
-
-    @GET("api/shifts/{id_shift}")
-    suspend fun getShiftDetail(
-        @Path("id_shift") shiftId: String
-    ): Response<ShiftDetailResponse>
+        @Query("nid_outlet") outletId: Int?,
+        @Query("date") date: String? = null,
+        @Query("per_page") perPage: Int = 15
+    ): Response<BaseResponse<List<ShiftResponse>>>
 }

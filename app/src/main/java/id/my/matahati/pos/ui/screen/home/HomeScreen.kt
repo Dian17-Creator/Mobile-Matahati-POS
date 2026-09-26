@@ -435,6 +435,7 @@ fun HomeScreen(
                                 id.my.matahati.pos.ui.screen.shift.ShiftScreen(
                                     shiftViewModel = shiftViewModel,
                                     nidOutlet = nidOutlet,
+                                    userName = userName,
                                     onMenuClick = {
                                         coroutineScope.launch {
                                             if (drawerState.isClosed) drawerState.open() else drawerState.close()
