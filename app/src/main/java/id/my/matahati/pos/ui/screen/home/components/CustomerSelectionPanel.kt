@@ -173,9 +173,8 @@ fun CustomerSelectionPanel(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(vertical = 8.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(vertical = 4.dp),
+                contentPadding = PaddingValues(vertical = 4.dp)
             ) {
                 items(filteredCustomers, key = { it.id }) { customer ->
                     CustomerItemRow(
@@ -211,7 +210,7 @@ private fun CustomerItemRow(
     onClick: () -> Unit,
     onEdit: (() -> Unit)? = null
 ) {
-    val initialLetter = customer.name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "A"
+    val initialLetter = customer.name.trim().firstOrNull()?.lowercaseChar()?.toString() ?: "a"
 
     val avatarBgColor = remember(customer.name) {
         val colors = listOf(
@@ -222,10 +221,7 @@ private fun CustomerItemRow(
         colors[index]
     }
 
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = Color.White,
-        shadowElevation = 0.5.dp,
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
@@ -233,29 +229,30 @@ private fun CustomerItemRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(vertical = 10.dp, horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Circle Avatar
+            // Circle Avatar (lowercase initial)
             Surface(
                 shape = CircleShape,
-                color = avatarBgColor,
-                modifier = Modifier.size(42.dp)
+                color = avatarBgColor.copy(alpha = 0.85f),
+                modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = initialLetter,
                         color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
-            // Details
+            // Details Column: Nama, No Telp, Tipe Pelanggan
             Column(modifier = Modifier.weight(1f)) {
+                // Line 1: Nama
                 Text(
                     text = customer.name,
                     fontWeight = FontWeight.Bold,
@@ -265,28 +262,31 @@ private fun CustomerItemRow(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                if (customer.phone.isNotBlank()) {
-                    Text(
-                        text = "P. ${customer.phone}",
-                        fontSize = 12.sp,
-                        color = Color(0xFF666666)
-                    )
-                }
+                Spacer(modifier = Modifier.height(2.dp))
 
-                val subInfo = if (customer.address.isNotBlank()) customer.address
-                else if (customer.email.isNotBlank()) customer.email
-                else "Guest"
-
+                // Line 2: No Telp
                 Text(
-                    text = subInfo,
-                    fontSize = 11.sp,
+                    text = if (customer.phone.isNotBlank()) "P. ${customer.phone}" else "P. -",
+                    fontSize = 12.sp,
+                    color = Color(0xFF666666),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Line 3: Tipe Pelanggan
+                val typeText = customer.customerType.ifEmpty { "Guest" }
+                Text(
+                    text = typeText,
+                    fontSize = 12.sp,
                     color = Color(0xFF888888),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            // Action Button (Edit - 3 Dots)
+            // Action Button (3-dots Edit)
             IconButton(
                 onClick = {
                     if (onEdit != null) {
@@ -313,6 +313,15 @@ private fun CustomerItemRow(
                 }
             }
         }
+
+        // Horizontal Divider Line
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 66.dp),
+            color = Color(0xFFEEEEEE),
+            thickness = 1.dp
+        )
     }
 }
 
