@@ -76,6 +76,7 @@ fun OlseraCartPanel(
     onClearCart: () -> Unit,
     onCheckoutClick: () -> Unit,
     onSendToKitchenClick: () -> Unit = {},
+    onCheckPrintClick: () -> Unit = {},
     selectedCustomerName: String,
     onCustomerSelected: (Customer) -> Unit,
     onOpenCustomerPanel: () -> Unit = {},
@@ -411,7 +412,7 @@ fun OlseraCartPanel(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            QuickActionButton(icon = Icons.Default.Print, label = "Cetak Periksa", onClick = {})
+                            QuickActionButton(icon = Icons.Default.Print, label = "Cetak Periksa", onClick = onCheckPrintClick)
                             QuickActionButton(icon = Icons.Default.Redeem, label = "Tebus Point", onClick = {})
                             QuickActionButton(icon = Icons.Default.Share, label = "Share Pesanan", onClick = {})
                             QuickActionButton(icon = Icons.Default.GroupAdd, label = "Referral Pelanggan", onClick = {})

@@ -67,8 +67,9 @@ class HomeViewModel : ViewModel() {
     var showReceiptDialog by mutableStateOf(false)
     var showShiftNotStartedDialog by mutableStateOf(false)
 
-    // Kitchen Print States
+    // Kitchen & Check Print States
     var showKitchenPrintDialog by mutableStateOf(false)
+    var showCheckPrintDialog by mutableStateOf(false)
     var showSimulatedReceipt by mutableStateOf(false)
     var printChangesCount by mutableStateOf(0)
     var availableStations = mutableStateListOf<String>()
@@ -229,6 +230,61 @@ class HomeViewModel : ViewModel() {
             }
             isPrinting = false
         }
+    }
+
+    fun printCheckReceipt(
+        context: android.content.Context,
+        cartItems: List<id.my.matahati.pos.model.CartItem>,
+        orderType: String,
+        cashierName: String,
+        customerName: String? = null,
+        tableName: String? = null,
+        discountAmount: Double = 0.0,
+        taxAmount: Double = 0.0,
+        paxCount: Int = 1
+    ) {
+        val repo = id.my.matahati.pos.data.repository.PrinterRepository(context)
+        val printers = repo.getPrinters()
+        val receiptPrinter = printers.find { it.role == id.my.matahati.pos.model.PrinterRole.RECEIPT }
+
+        if (receiptPrinter == null) {
+            printerError = "Printer Struk Kasir (RECEIPT) belum dikonfigurasi di Pengaturan."
+            return
+        }
+
+        isPrinting = true
+        printerError = null
+
+        viewModelScope.launch {
+            val connectionManager = id.my.matahati.pos.data.printer.PrinterConnectionManager(context)
+            val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
+            val checkBytes = formatter.formatCheckPrint(
+                cartItems = cartItems,
+                orderType = orderType,
+                cashierName = cashierName,
+                customerName = customerName,
+                tableName = tableName,
+                discountAmount = discountAmount,
+                taxAmount = taxAmount,
+                paxCount = paxCount
+            )
+
+            val result = connectionManager.printData(receiptPrinter, checkBytes)
+            if (result.isFailure) {
+                printerError = "Gagal mencetak periksa: ${result.exceptionOrNull()?.message ?: "Cek koneksi printer"}"
+            } else {
+                closeCheckPrintDialog()
+            }
+            isPrinting = false
+        }
+    }
+
+    fun openCheckPrintDialog() {
+        showCheckPrintDialog = true
+    }
+
+    fun closeCheckPrintDialog() {
+        showCheckPrintDialog = false
     }
 
     fun testPrint(context: android.content.Context) {
