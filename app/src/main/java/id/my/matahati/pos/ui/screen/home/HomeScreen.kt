@@ -513,6 +513,13 @@ fun HomeScreen(
                                                 onSendToKitchenClick = {
                                                     viewModel.openKitchenPrintDialog(context, cartItems)
                                                 },
+                                                onCheckPrintClick = {
+                                                    if (cartItems.isEmpty()) {
+                                                        android.widget.Toast.makeText(context, "Keranjang belanja kosong", android.widget.Toast.LENGTH_SHORT).show()
+                                                    } else {
+                                                        viewModel.openCheckPrintDialog()
+                                                    }
+                                                },
                                                 onCheckoutClick = triggerCheckout,
                                                 selectedCustomerName = selectedCustomer?.name ?: "",
                                                 onCustomerSelected = { customer ->
@@ -1216,6 +1223,35 @@ fun HomeScreen(
                 viewModel.printKitchenTickets(context, viewModel.receiptTickets)
             },
             onDismiss = { viewModel.closeSimulatedReceipt() }
+        )
+    }
+
+    if (viewModel.showCheckPrintDialog) {
+        val activeServedByName = viewModel.selectedServedBy?.name ?: userName
+        CheckPrintPreviewDialog(
+            cartItems = cartItems,
+            orderType = orderType,
+            cashierName = activeServedByName,
+            customerName = selectedCustomer?.name,
+            tableName = viewModel.selectedTable.ifBlank { null },
+            discountAmount = discountAmount,
+            taxAmount = 0.0,
+            paxCount = 1,
+            isPrinting = viewModel.isPrinting,
+            onPrint = {
+                viewModel.printCheckReceipt(
+                    context = context,
+                    cartItems = cartItems,
+                    orderType = orderType,
+                    cashierName = activeServedByName,
+                    customerName = selectedCustomer?.name,
+                    tableName = viewModel.selectedTable.ifBlank { null },
+                    discountAmount = discountAmount,
+                    taxAmount = 0.0,
+                    paxCount = 1
+                )
+            },
+            onDismiss = { viewModel.closeCheckPrintDialog() }
         )
     }
 

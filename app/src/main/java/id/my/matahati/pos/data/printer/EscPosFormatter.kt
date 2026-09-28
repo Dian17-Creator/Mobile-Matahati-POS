@@ -148,6 +148,119 @@ class EscPosFormatter(private val cols: Int = 42) {
         return out.toByteArray()
     }
 
+    fun formatCheckPrint(
+        cartItems: List<CartItem>,
+        orderType: String,
+        cashierName: String,
+        customerName: String? = null,
+        tableName: String? = null,
+        discountAmount: Double = 0.0,
+        taxAmount: Double = 0.0,
+        paxCount: Int = 1
+    ): ByteArray {
+        val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
+            maximumFractionDigits = 0
+        }
+        fun formatNum(num: Double): String {
+            return formatter.format(num)
+        }
+
+        val now = SimpleDateFormat("dd MMM yyyy HH:mm", Locale("id", "ID")).format(java.util.Date())
+        val out = mutableListOf<Byte>()
+
+        // 1. Initialize & Center Alignment
+        out.addAll(INIT.toList())
+        out.addAll(FONT_B.toList())
+        out.addAll(ALIGN_CENTER.toList())
+
+        // 2. Title: BUKAN RESI PEMBAYARAN
+        out.addAll(BOLD_ON.toList())
+        out.addAll("BUKAN RESI PEMBAYARAN\n\n".toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+
+        // 3. Info Pemesanan
+        out.addAll(ALIGN_LEFT.toList())
+        out.addAll(drawTwoColumns("Waktu Pemesanan", "Dilayani Ole").toByteArray().toList())
+        val cashierText = cashierName.ifBlank { "kasir" }
+        out.addAll(drawTwoColumns(now, cashierText).toByteArray().toList())
+
+        val paxText = "$paxCount Tamu"
+        val infoText = buildString {
+            if (!tableName.isNullOrBlank()) append("Meja: $tableName  ")
+            if (!customerName.isNullOrBlank()) append("Cust: $customerName")
+        }.trim()
+
+        if (infoText.isNotBlank()) {
+            out.addAll(drawTwoColumns(infoText, paxText).toByteArray().toList())
+        } else {
+            out.addAll(drawTwoColumns("", paxText).toByteArray().toList())
+        }
+
+        // 4. Separator
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        // 5. Order Type
+        out.addAll(ALIGN_CENTER.toList())
+        out.addAll(BOLD_ON.toList())
+        val displayOrderType = if (orderType.isNotBlank()) orderType.uppercase() else "DINE-IN"
+        out.addAll("$displayOrderType\n".toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+        out.addAll(ALIGN_LEFT.toList())
+
+        // 6. Items
+        cartItems.forEach { item ->
+            // Item Name
+            val nameLines = wrapText(item.product.name, cols)
+            nameLines.forEach { line ->
+                out.addAll("$line\n".toByteArray().toList())
+            }
+
+            // Price x Qty -> Subtotal
+            val priceStr = formatNum(item.product.price)
+            val qtyLine = "    $priceStr x${item.quantity}"
+            val itemSubtotalStr = formatNum(item.totalPrice)
+            out.addAll(drawTwoColumns(qtyLine, itemSubtotalStr).toByteArray().toList())
+
+            // Note / Sub-items if any
+            if (!item.note.isNullOrBlank()) {
+                val (cleanNote, _) = CartItem.parseNoteAndSentQty(item.note)
+                if (cleanNote.isNotBlank()) {
+                    val wrappedNote = wrapText(cleanNote, cols - 2)
+                    wrappedNote.forEach { line ->
+                        out.addAll("  $line\n".toByteArray().toList())
+                    }
+                }
+            }
+        }
+
+        // 7. Separator
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        // 8. Totals
+        val subtotal = cartItems.sumOf { it.totalPrice }
+        out.addAll(drawTwoColumns("Subtotal", formatNum(subtotal)).toByteArray().toList())
+        if (discountAmount > 0) {
+            out.addAll(drawTwoColumns("Discount", "-${formatNum(discountAmount)}").toByteArray().toList())
+        }
+        if (taxAmount > 0) {
+            out.addAll(drawTwoColumns("Tax", formatNum(taxAmount)).toByteArray().toList())
+        }
+
+        val grandTotal = (subtotal - discountAmount + taxAmount).coerceAtLeast(0.0)
+        out.addAll(BOLD_ON.toList())
+        out.addAll(drawTwoColumns("Grand Total", "Rp ${formatNum(grandTotal)}").toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+
+        out.addAll("\n".toByteArray().toList())
+        val totalQty = cartItems.sumOf { it.quantity }
+        out.addAll("Jumlah Item: $totalQty\n".toByteArray().toList())
+
+        // 9. Paper Feed
+        out.addAll("\n\n\n\n\n".toByteArray().toList())
+
+        return out.toByteArray()
+    }
+
     fun formatKitchenTicket(tickets: Map<String, List<CartItem>>): ByteArray {
         val out = mutableListOf<Byte>()
 
