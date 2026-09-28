@@ -93,7 +93,7 @@ fun CheckPrintPreviewDialog(
                                 fontSize = 12.sp
                             )
                             Text(
-                                text = "Dilayani Ole",
+                                text = "Dilayani Oleh",
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 12.sp
                             )
@@ -292,37 +292,35 @@ fun CheckPrintPreviewDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Action Buttons at Bottom (Tutup & Cetak)
-                Row(
+                Button(
+                    onClick = onPrint,
+                    enabled = !isPrinting,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), // Green
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    shape = RoundedCornerShape(4.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        enabled = !isPrinting
-                    ) {
-                        Text("Tutup")
+                    if (isPrinting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("MENCETAK...", color = Color.White)
+                    } else {
+                        Text("CETAK KE PRINTER FISIK", color = Color.White, fontWeight = FontWeight.Bold)
                     }
+                }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(
-                        onClick = onPrint,
-                        enabled = !isPrinting,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
-                    ) {
-                        if (isPrinting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Mencetak...")
-                        } else {
-                            Text("Cetak")
-                        }
-                    }
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text("TUTUP", color = Color.White)
                 }
             }
         }

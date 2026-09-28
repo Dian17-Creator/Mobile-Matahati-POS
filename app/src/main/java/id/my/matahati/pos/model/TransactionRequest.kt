@@ -25,3 +25,11 @@ data class TransactionDetailRequest(
     @SerializedName("nqty") val quantity: Int,
     @SerializedName("cnote") val note: String?
 )
+
+data class VoidTransactionRequest(
+    @SerializedName("cvoid_note") val voidNote: String
+)
+
+data class RefundTransactionRequest(
+    @SerializedName("crefund_note") val refundNote: String
+)
