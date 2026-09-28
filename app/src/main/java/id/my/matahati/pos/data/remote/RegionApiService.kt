@@ -9,17 +9,6 @@ import retrofit2.http.Path
 import java.util.concurrent.TimeUnit
 
 interface RegionApiService {
-    @GET("provinces.json")
-    suspend fun getProvinces(): List<Province>
-
-    @GET("regencies/{province_id}.json")
-    suspend fun getRegencies(@Path("province_id") provinceId: String): List<Regency>
-
-    @GET("districts/{regency_id}.json")
-    suspend fun getDistricts(@Path("regency_id") regencyId: String): List<District>
-}
-
-interface SecondaryRegionApiService {
     @GET("provinsi.json")
     suspend fun getProvinces(): List<Province>
 
@@ -30,9 +19,29 @@ interface SecondaryRegionApiService {
     suspend fun getDistricts(@Path("regency_id") regencyId: String): List<District>
 }
 
+interface SecondaryRegionApiService {
+    @GET("provinces.json")
+    suspend fun getProvinces(): List<Province>
+
+    @GET("regencies/{province_id}.json")
+    suspend fun getRegencies(@Path("province_id") provinceId: String): List<Regency>
+
+    @GET("districts/{regency_id}.json")
+    suspend fun getDistricts(@Path("regency_id") regencyId: String): List<District>
+}
+
 object RegionRetrofitClient {
-    private const val PRIMARY_BASE_URL = "https://raw.githubusercontent.com/emsifa/api-wilayah-indonesia/main/api/"
-    private const val SECONDARY_BASE_URL = "https://ibnux.github.io/data-indonesia/"
+    private const val PRIMARY_BASE_URL = "https://ibnux.github.io/data-indonesia/"
+    private const val SECONDARY_BASE_URL = "https://raw.githubusercontent.com/emsifa/api-wilayah-indonesia/main/api/"
+
+    private val isDebug: Boolean by lazy {
+        try {
+            val clazz = Class.forName("id.my.matahati.pos.BuildConfig")
+            clazz.getField("DEBUG").getBoolean(null)
+        } catch (_: Exception) {
+            true
+        }
+    }
 
     private val headerInterceptor = okhttp3.Interceptor { chain ->
         val request = chain.request().newBuilder()
@@ -43,7 +52,11 @@ object RegionRetrofitClient {
     }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = if (isDebug) {
+            HttpLoggingInterceptor.Level.BODY
+        } else {
+            HttpLoggingInterceptor.Level.NONE
+        }
     }
 
     private val okHttpClient = OkHttpClient.Builder()
