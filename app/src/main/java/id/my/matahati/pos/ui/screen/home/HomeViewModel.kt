@@ -1549,4 +1549,66 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
+
+    var isVoidRefundLoading by mutableStateOf(false)
+        private set
+    var voidRefundError by mutableStateOf<String?>(null)
+
+    fun voidTransaction(
+        transactionId: String,
+        note: String,
+        nidOutlet: String? = null,
+        onSuccess: (id.my.matahati.pos.model.TransactionData?) -> Unit
+    ) {
+        viewModelScope.launch {
+            isVoidRefundLoading = true
+            voidRefundError = null
+            try {
+                val request = id.my.matahati.pos.model.VoidTransactionRequest(voidNote = note)
+                val response = RetrofitClient.apiService.voidTransaction(transactionId, request)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val updatedData = response.body()?.data
+                    fetchTransactionHistory(nidOutlet = nidOutlet)
+                    onSuccess(updatedData)
+                } else {
+                    val msg = response.body()?.message ?: "Gagal membatalkan transaksi: ${response.message()}"
+                    voidRefundError = msg
+                }
+            } catch (e: Exception) {
+                Log.e("VoidTransaction", "Error: ${e.message}", e)
+                voidRefundError = "Gagal membatalkan transaksi: ${e.message}"
+            } finally {
+                isVoidRefundLoading = false
+            }
+        }
+    }
+
+    fun refundTransaction(
+        transactionId: String,
+        note: String,
+        nidOutlet: String? = null,
+        onSuccess: (id.my.matahati.pos.model.TransactionData?) -> Unit
+    ) {
+        viewModelScope.launch {
+            isVoidRefundLoading = true
+            voidRefundError = null
+            try {
+                val request = id.my.matahati.pos.model.RefundTransactionRequest(refundNote = note)
+                val response = RetrofitClient.apiService.refundTransaction(transactionId, request)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val updatedData = response.body()?.data
+                    fetchTransactionHistory(nidOutlet = nidOutlet)
+                    onSuccess(updatedData)
+                } else {
+                    val msg = response.body()?.message ?: "Gagal merefund transaksi: ${response.message()}"
+                    voidRefundError = msg
+                }
+            } catch (e: Exception) {
+                Log.e("RefundTransaction", "Error: ${e.message}", e)
+                voidRefundError = "Gagal merefund transaksi: ${e.message}"
+            } finally {
+                isVoidRefundLoading = false
+            }
+        }
+    }
 }

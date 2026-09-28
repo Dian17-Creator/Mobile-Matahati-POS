@@ -28,6 +28,7 @@ fun TransactionDetailScreen(
     transaction: TransactionModel,
     onBack: () -> Unit,
     onSendToKitchen: () -> Unit = {},
+    onVoidRefundClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
@@ -38,7 +39,8 @@ fun TransactionDetailScreen(
         return formatter.format(str.toDoubleOrNull() ?: 0.0)
     }
 
-    val isCancelled = transaction.status == "CANCELLED"
+    val statusUpper = transaction.status.uppercase()
+    val isCancelled = statusUpper in listOf("CANCELLED", "CANCEL", "VOID", "VOIDED", "REFUND", "REFUNDED")
     val cashierName = transaction.posUser?.user?.name ?: "Unknown"
 
     Column(
@@ -348,6 +350,30 @@ fun TransactionDetailScreen(
                                 onSendToKitchen()
                             }
                         )
+
+                        val canVoidRefund = statusUpper !in listOf("VOID", "REFUND", "CANCELLED", "CANCEL", "VOIDED", "REFUNDED")
+
+                        if (canVoidRefund) {
+                            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.MoneyOff,
+                                            contentDescription = null,
+                                            tint = Color.Red,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text("Pengembalian / Batal", color = Color.Red, fontWeight = FontWeight.SemiBold)
+                                    }
+                                },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    onVoidRefundClick()
+                                }
+                            )
+                        }
                     }
                 }
             }

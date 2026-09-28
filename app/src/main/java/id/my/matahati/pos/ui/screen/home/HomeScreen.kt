@@ -99,6 +99,7 @@ fun HomeScreen(
     
     var transaksiSearchQuery by remember { mutableStateOf("") }
     var selectedHistoryTransaction by remember { mutableStateOf<id.my.matahati.pos.model.TransactionModel?>(null) }
+    var showVoidRefundDialog by remember { mutableStateOf(false) }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
     var showCustomerPanel by remember { mutableStateOf(false) }
@@ -430,6 +431,9 @@ fun HomeScreen(
                                         onBack = { currentScreen = "transaksi" },
                                         onSendToKitchen = {
                                             viewModel.openKitchenPrintDialogFromHistory(context, selectedHistoryTransaction!!)
+                                        },
+                                        onVoidRefundClick = {
+                                            showVoidRefundDialog = true
                                         },
                                         modifier = Modifier.fillMaxSize()
                                     )
@@ -1252,6 +1256,52 @@ fun HomeScreen(
                 )
             },
             onDismiss = { viewModel.closeCheckPrintDialog() }
+        )
+    }
+
+    if (showVoidRefundDialog && selectedHistoryTransaction != null) {
+        VoidRefundDialog(
+            isLoading = viewModel.isVoidRefundLoading,
+            errorMessage = viewModel.voidRefundError,
+            onSubmit = { actionType, reason ->
+                val targetTrx = selectedHistoryTransaction!!
+                val onSuccessHandler: (id.my.matahati.pos.model.TransactionData?) -> Unit = { updatedData ->
+                    showVoidRefundDialog = false
+                    val actionStatus = if (actionType == VoidRefundActionType.VOID) "VOID" else "REFUND"
+                    val updatedTrx = updatedData?.transaction ?: targetTrx.copy(
+                        status = actionStatus,
+                        cancelNote = reason
+                    )
+                    selectedHistoryTransaction = updatedTrx
+
+                    // Refresh Shift Data secara realtime (Kas Pembatalan / Kas Pengembalian ter-update)
+                    shiftViewModel.checkCurrentShift(nidOutlet)
+
+                    val actionLabel = if (actionType == VoidRefundActionType.VOID) "dibatalkan" else "di-refund"
+                    android.widget.Toast.makeText(context, "Transaksi berhasil $actionLabel", android.widget.Toast.LENGTH_SHORT).show()
+                }
+
+                if (actionType == VoidRefundActionType.VOID) {
+                    viewModel.voidTransaction(
+                        transactionId = targetTrx.id,
+                        note = reason,
+                        nidOutlet = nidOutlet,
+                        onSuccess = onSuccessHandler
+                    )
+                } else {
+                    viewModel.refundTransaction(
+                        transactionId = targetTrx.id,
+                        note = reason,
+                        nidOutlet = nidOutlet,
+                        onSuccess = onSuccessHandler
+                    )
+                }
+            },
+            onDismiss = {
+                if (!viewModel.isVoidRefundLoading) {
+                    showVoidRefundDialog = false
+                }
+            }
         )
     }
 

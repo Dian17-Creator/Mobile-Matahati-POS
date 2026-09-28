@@ -229,26 +229,26 @@ private fun CustomerItemRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 10.dp, horizontal = 12.dp),
+                .padding(vertical = 4.dp, horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Circle Avatar (lowercase initial)
             Surface(
                 shape = CircleShape,
                 color = avatarBgColor.copy(alpha = 0.85f),
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(38.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = initialLetter,
                         color = Color.White,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp
+                        fontSize = 15.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             // Details Column: Nama, No Telp, Tipe Pelanggan
             Column(modifier = Modifier.weight(1f)) {
@@ -256,30 +256,30 @@ private fun CustomerItemRow(
                 Text(
                     text = customer.name,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     color = Color(0xFF222222),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(1.dp))
 
                 // Line 2: No Telp
                 Text(
                     text = if (customer.phone.isNotBlank()) "P. ${customer.phone}" else "P. -",
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = Color(0xFF666666),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(1.dp))
 
                 // Line 3: Tipe Pelanggan
                 val typeText = customer.customerType.ifEmpty { "Guest" }
                 Text(
                     text = typeText,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = Color(0xFF888888),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -313,15 +313,6 @@ private fun CustomerItemRow(
                 }
             }
         }
-
-        // Horizontal Divider Line
-        HorizontalDivider(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 66.dp),
-            color = Color(0xFFEEEEEE),
-            thickness = 1.dp
-        )
     }
 }
 
