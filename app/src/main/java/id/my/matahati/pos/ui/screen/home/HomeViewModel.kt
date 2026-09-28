@@ -51,6 +51,13 @@ class HomeViewModel : ViewModel() {
     var isDistrictsLoading by mutableStateOf(false)
         private set
 
+    var regionError by mutableStateOf<String?>(null)
+        private set
+
+    private var provincesJob: kotlinx.coroutines.Job? = null
+    private var regenciesJob: kotlinx.coroutines.Job? = null
+    private var districtsJob: kotlinx.coroutines.Job? = null
+
     // Transaction States
     var selectedTable by mutableStateOf("")
     var isSubmitting by mutableStateOf(false)
@@ -468,14 +475,18 @@ class HomeViewModel : ViewModel() {
 
     fun fetchProvinces() {
         if (provinces.isNotEmpty()) return
-        viewModelScope.launch {
+        provincesJob?.cancel()
+        provincesJob = viewModelScope.launch {
             isProvincesLoading = true
+            regionError = null
             try {
+                Log.d("RegionFetch", "Fetching provinces from Primary Emsifa API...")
                 val list = try {
-                    RegionRetrofitClient.secondaryRegionApiService.getProvinces()
-                } catch (e: Exception) {
-                    Log.w("HomeViewModel", "Secondary API provinces failed, trying primary API: ${e.message}")
                     RegionRetrofitClient.regionApiService.getProvinces()
+                } catch (e1: Exception) {
+                    if (e1 is kotlinx.coroutines.CancellationException) throw e1
+                    Log.w("RegionFetch", "Primary Emsifa provinces failed: ${e1.message}, trying Secondary Ibnux API")
+                    RegionRetrofitClient.secondaryRegionApiService.getProvinces()
                 }
                 provinces.clear()
                 if (list.isNotEmpty()) {
@@ -484,7 +495,9 @@ class HomeViewModel : ViewModel() {
                     provinces.addAll(defaultProvinces)
                 }
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "Gagal load provinsi dari kedua API: ${e.message}", e)
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Log.e("RegionFetch", "Gagal load provinsi dari kedua API: ${e.message}", e)
+                regionError = "Gagal memuat daftar provinsi: ${e.localizedMessage}"
                 provinces.clear()
                 provinces.addAll(defaultProvinces)
             } finally {
@@ -493,28 +506,141 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    private val jawaTengahRegencies = listOf(
+        Regency("3374", "33", "KOTA SEMARANG"),
+        Regency("3322", "33", "KABUPATEN SEMARANG"),
+        Regency("3371", "33", "KOTA MAGELANG"),
+        Regency("3308", "33", "KABUPATEN MAGELANG"),
+        Regency("3372", "33", "KOTA SURAKARTA"),
+        Regency("3309", "33", "KABUPATEN BOYOLALI"),
+        Regency("3310", "33", "KABUPATEN KLATEN"),
+        Regency("3311", "33", "KABUPATEN SUKOHARJO"),
+        Regency("3312", "33", "KABUPATEN WONOGIRI"),
+        Regency("3313", "33", "KABUPATEN KARANGANYAR"),
+        Regency("3314", "33", "KABUPATEN SRAGEN"),
+        Regency("3315", "33", "KABUPATEN GROBOGAN"),
+        Regency("3316", "33", "KABUPATEN BLORA"),
+        Regency("3317", "33", "KABUPATEN REMBANG"),
+        Regency("3318", "33", "KABUPATEN PATI"),
+        Regency("3319", "33", "KABUPATEN KUDUS"),
+        Regency("3320", "33", "KABUPATEN JEPARA"),
+        Regency("3321", "33", "KABUPATEN DEMAK"),
+        Regency("3323", "33", "KABUPATEN TEMANGGUNG"),
+        Regency("3324", "33", "KABUPATEN KENDAL"),
+        Regency("3325", "33", "KABUPATEN BATANG"),
+        Regency("3326", "33", "KABUPATEN PEKALONGAN"),
+        Regency("3375", "33", "KOTA PEKALONGAN"),
+        Regency("3327", "33", "KABUPATEN PEMALANG"),
+        Regency("3328", "33", "KABUPATEN TEGAL"),
+        Regency("3376", "33", "KOTA TEGAL"),
+        Regency("3329", "33", "KABUPATEN BREBES"),
+        Regency("3302", "33", "KABUPATEN BANYUMAS"),
+        Regency("3303", "33", "KABUPATEN PURBALINGGA"),
+        Regency("3304", "33", "KABUPATEN BANJARNEGARA"),
+        Regency("3305", "33", "KABUPATEN KEBUMEN"),
+        Regency("3306", "33", "KABUPATEN PURWOREJO"),
+        Regency("3373", "33", "KOTA SALATIGA")
+    )
+
+    private val jawaBaratRegencies = listOf(
+        Regency("3273", "32", "KOTA BANDUNG"),
+        Regency("3204", "32", "KABUPATEN BANDUNG"),
+        Regency("3217", "32", "KABUPATEN BANDUNG BARAT"),
+        Regency("3277", "32", "KOTA CIMAHI"),
+        Regency("3271", "32", "KOTA BOGOR"),
+        Regency("3201", "32", "KABUPATEN BOGOR"),
+        Regency("3276", "32", "KOTA DEPOK"),
+        Regency("3275", "32", "KOTA BEKASI"),
+        Regency("3216", "32", "KABUPATEN BEKASI"),
+        Regency("3215", "32", "KABUPATEN KARAWANG"),
+        Regency("3214", "32", "KABUPATEN PURWAKARTA"),
+        Regency("3213", "32", "KABUPATEN SUBANG"),
+        Regency("3202", "32", "KABUPATEN SUKABUMI"),
+        Regency("3272", "32", "KOTA SUKABUMI"),
+        Regency("3203", "32", "KABUPATEN CIANJUR"),
+        Regency("3205", "32", "KABUPATEN GARUT"),
+        Regency("3206", "32", "KABUPATEN TASIKMALAYA"),
+        Regency("3278", "32", "KOTA TASIKMALAYA"),
+        Regency("3207", "32", "KABUPATEN CIAMIS"),
+        Regency("3279", "32", "KOTA BANJAR"),
+        Regency("3218", "32", "KABUPATEN PANGANDARAN"),
+        Regency("3208", "32", "KABUPATEN KUNINGAN"),
+        Regency("3209", "32", "KABUPATEN CIREBON"),
+        Regency("3274", "32", "KOTA CIREBON"),
+        Regency("3210", "32", "KABUPATEN MAJALENGKA"),
+        Regency("3212", "32", "KABUPATEN INDRAMAYU"),
+        Regency("3211", "32", "KABUPATEN SUMEDANG")
+    )
+
+    private val dkiJakartaRegencies = listOf(
+        Regency("3174", "31", "KOTA JAKARTA SELATAN"),
+        Regency("3172", "31", "KOTA JAKARTA TIMUR"),
+        Regency("3173", "31", "KOTA JAKARTA PUSAT"),
+        Regency("3175", "31", "KOTA JAKARTA BARAT"),
+        Regency("3171", "31", "KOTA JAKARTA UTARA"),
+        Regency("3101", "31", "KABUPATEN KEPULAUAN SERIBU")
+    )
+
+    private val jogjaRegencies = listOf(
+        Regency("3471", "34", "KOTA YOGYAKARTA"),
+        Regency("3404", "34", "KABUPATEN SLEMAN"),
+        Regency("3402", "34", "KABUPATEN BANTUL"),
+        Regency("3403", "34", "KABUPATEN GUNUNGKIDUL"),
+        Regency("3401", "34", "KABUPATEN KULON PROGO")
+    )
+
+    private fun getFallbackRegencies(provinceId: String): List<Regency> {
+        val cleanId = provinceId.replace(".", "")
+        return when (cleanId) {
+            "35" -> jawaTimurRegencies
+            "33" -> jawaTengahRegencies
+            "32" -> jawaBaratRegencies
+            "31" -> dkiJakartaRegencies
+            "34" -> jogjaRegencies
+            else -> listOf(
+                Regency("${cleanId}01", cleanId, "KOTA UTAMA"),
+                Regency("${cleanId}02", cleanId, "KABUPATEN PUSAT")
+            )
+        }
+    }
+
     fun fetchRegencies(provinceId: String) {
+        regenciesJob?.cancel()
+        districtsJob?.cancel()
         regencies.clear()
         districts.clear()
-        viewModelScope.launch {
+        if (provinceId.isBlank()) return
+
+        regenciesJob = viewModelScope.launch {
             isRegenciesLoading = true
+            regionError = null
+            val cleanId = provinceId.replace(".", "")
+            val dottedId = cleanId
+
             try {
+                Log.d("RegionFetch", "Fetching regencies for provinceId=$provinceId (clean=$cleanId)...")
                 val list = try {
-                    RegionRetrofitClient.secondaryRegionApiService.getRegencies(provinceId)
+                    RegionRetrofitClient.regionApiService.getRegencies(cleanId)
                 } catch (e1: Exception) {
-                    Log.w("HomeViewModel", "Secondary API regencies failed, trying primary API: ${e1.message}")
-                    RegionRetrofitClient.regionApiService.getRegencies(provinceId)
+                    if (e1 is kotlinx.coroutines.CancellationException) throw e1
+                    Log.w("RegionFetch", "Primary API regencies failed for $cleanId: ${e1.message}, trying secondary API")
+                    RegionRetrofitClient.secondaryRegionApiService.getRegencies(dottedId)
                 }
+
                 regencies.clear()
                 if (list.isNotEmpty()) {
                     regencies.addAll(list)
-                } else if (provinceId == "35") {
-                    regencies.addAll(jawaTimurRegencies)
+                } else {
+                    regencies.addAll(getFallbackRegencies(cleanId))
                 }
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "Gagal load regencies: ${e.message}", e)
-                if (provinceId == "35") {
-                    regencies.addAll(jawaTimurRegencies)
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Log.e("RegionFetch", "Gagal load regencies for provinceId=$provinceId: ${e.message}", e)
+                val fallback = getFallbackRegencies(cleanId)
+                regencies.clear()
+                regencies.addAll(fallback)
+                if (fallback.isEmpty()) {
+                    regionError = "Gagal memuat kota/kabupaten. Silakan periksa koneksi internet."
                 }
             } finally {
                 isRegenciesLoading = false
@@ -647,12 +773,86 @@ class HomeViewModel : ViewModel() {
         District("3525150", "3525", "Bungah")
     )
 
+    private val trenggalekDistricts = listOf(
+        District("3503010", "3503", "Trenggalek"),
+        District("3503020", "3503", "Pogalan"),
+        District("3503030", "3503", "Durenan"),
+        District("3503040", "3503", "Gondang"),
+        District("3503050", "3503", "Tugu"),
+        District("3503060", "3503", "Karangan"),
+        District("3503070", "3503", "Pule"),
+        District("3503080", "3503", "Suruh"),
+        District("3503090", "3503", "Kampak"),
+        District("3503100", "3503", "Dongko"),
+        District("3503110", "3503", "Watulimo"),
+        District("3503120", "3503", "Munjungan"),
+        District("3503130", "3503", "Panggul"),
+        District("3503140", "3503", "Bendungan")
+    )
+
+    private val blitarDistricts = listOf(
+        District("3505010", "3505", "Kanigoro"),
+        District("3505020", "3505", "Garum"),
+        District("3505030", "3505", "Talun"),
+        District("3505040", "3505", "Gandusari"),
+        District("3505050", "3505", "Wlingi"),
+        District("3505060", "3505", "Doko"),
+        District("3505070", "3505", "Selorejo"),
+        District("3505080", "3505", "Kesamben"),
+        District("3505090", "3505", "Sutojayan"),
+        District("3505100", "3505", "Kademangan"),
+        District("3505110", "3505", "Nglegok"),
+        District("3505120", "3505", "Sanankulon"),
+        District("3505130", "3505", "Srengat"),
+        District("3505140", "3505", "Ponggok")
+    )
+
+    private val ponorogoDistricts = listOf(
+        District("3502010", "3502", "Ponorogo"),
+        District("3502020", "3502", "Babadan"),
+        District("3502030", "3502", "Jenangan"),
+        District("3502040", "3502", "Siman"),
+        District("3502050", "3502", "Kauman"),
+        District("3502060", "3502", "Sukorejo"),
+        District("3502070", "3502", "Mlarak"),
+        District("3502080", "3502", "Jetis"),
+        District("3502090", "3502", "Sambit"),
+        District("3502100", "3502", "Sawoo"),
+        District("3502110", "3502", "Slahung"),
+        District("3502120", "3502", "Balong"),
+        District("3502130", "3502", "Badegan"),
+        District("3502140", "3502", "Sampung"),
+        District("3502150", "3502", "Bungkal"),
+        District("3502160", "3502", "Jambon"),
+        District("3502170", "3502", "Pulung"),
+        District("3502180", "3502", "Ngebel")
+    )
+
+    private val pacitanDistricts = listOf(
+        District("3501010", "3501", "Pacitan"),
+        District("3501020", "3501", "Kebonagung"),
+        District("3501030", "3501", "Arjosari"),
+        District("3501040", "3501", "Nawangan"),
+        District("3501050", "3501", "Bandar"),
+        District("3501060", "3501", "Tegalombo"),
+        District("3501070", "3501", "Tulakan"),
+        District("3501080", "3501", "Ngadirojo"),
+        District("3501090", "3501", "Sudimoro"),
+        District("3501100", "3501", "Donorojo"),
+        District("3501110", "3501", "Punung"),
+        District("3501120", "3501", "Pringkuku")
+    )
+
     private fun getFallbackDistricts(regencyId: String, regencyName: String = ""): List<District> {
         val cleanId = regencyId.replace(".", "")
         val nameUpper = regencyName.uppercase()
 
         return when {
             cleanId == "3504" || nameUpper.contains("TULUNGAGUNG") -> tulungagungDistricts
+            cleanId == "3503" || nameUpper.contains("TRENGGALEK") -> trenggalekDistricts
+            cleanId == "3502" || nameUpper.contains("PONOROGO") -> ponorogoDistricts
+            cleanId == "3501" || nameUpper.contains("PACITAN") -> pacitanDistricts
+            cleanId == "3505" || cleanId == "3572" || nameUpper.contains("BLITAR") -> blitarDistricts
             cleanId == "3578" || nameUpper.contains("SURABAYA") -> surabayaDistricts
             cleanId == "3573" || nameUpper.contains("MALANG") -> malangDistricts
             cleanId == "3506" || cleanId == "3571" || nameUpper.contains("KEDIRI") -> kediriKabDistricts
@@ -669,23 +869,30 @@ class HomeViewModel : ViewModel() {
     }
 
     fun fetchDistricts(regencyId: String, regencyName: String = "") {
+        districtsJob?.cancel()
         districts.clear()
-        viewModelScope.launch {
+        if (regencyId.isBlank()) return
+
+        districtsJob = viewModelScope.launch {
             isDistrictsLoading = true
+            regionError = null
             val cleanId = regencyId.replace(".", "")
             val dottedId = if (cleanId.length == 4) "${cleanId.substring(0, 2)}.${cleanId.substring(2)}" else regencyId
 
             try {
+                Log.d("RegionFetch", "Fetching districts for regencyId=$regencyId ($regencyName, clean=$cleanId, dotted=$dottedId)...")
                 val list = try {
-                    // 1. Try Primary GitHub Raw Emsifa V2 API with dotted ID (e.g. 35.78.json)
-                    RegionRetrofitClient.regionApiService.getDistricts(dottedId)
+                    // 1. Try Primary Ibnux API with clean ID (e.g. 3503.json)
+                    RegionRetrofitClient.regionApiService.getDistricts(cleanId)
                 } catch (e1: Exception) {
-                    Log.w("HomeViewModel", "Primary Emsifa V2 districts failed for $dottedId: ${e1.message}, trying Secondary Ibnux API")
+                    if (e1 is kotlinx.coroutines.CancellationException) throw e1
+                    Log.w("RegionFetch", "Primary Ibnux API districts failed for $cleanId: ${e1.message}, trying Secondary Emsifa V2 API")
                     try {
-                        // 2. Try Secondary Ibnux API with clean ID (e.g. 3578.json)
-                        RegionRetrofitClient.secondaryRegionApiService.getDistricts(cleanId)
+                        // 2. Try Secondary Emsifa V2 API with dotted ID (e.g. 35.03.json)
+                        RegionRetrofitClient.secondaryRegionApiService.getDistricts(dottedId)
                     } catch (e2: Exception) {
-                        RegionRetrofitClient.regionApiService.getDistricts(cleanId)
+                        if (e2 is kotlinx.coroutines.CancellationException) throw e2
+                        RegionRetrofitClient.secondaryRegionApiService.getDistricts(cleanId)
                     }
                 }
 
@@ -693,12 +900,18 @@ class HomeViewModel : ViewModel() {
                 if (list.isNotEmpty()) {
                     districts.addAll(list)
                 } else {
-                    districts.addAll(getFallbackDistricts(cleanId, regencyName))
+                    val fallback = getFallbackDistricts(cleanId, regencyName)
+                    districts.addAll(fallback)
                 }
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "Gagal load districts dari API: ${e.message}", e)
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Log.e("RegionFetch", "Gagal load districts for regencyId=$regencyId ($regencyName): ${e.message}", e)
+                val fallback = getFallbackDistricts(cleanId, regencyName)
                 districts.clear()
-                districts.addAll(getFallbackDistricts(cleanId, regencyName))
+                districts.addAll(fallback)
+                if (fallback.isEmpty()) {
+                    regionError = "Gagal memuat kecamatan: Koneksi jaringan terputus."
+                }
             } finally {
                 isDistrictsLoading = false
             }
@@ -706,8 +919,12 @@ class HomeViewModel : ViewModel() {
     }
 
     fun resetRegions() {
+        provincesJob?.cancel()
+        regenciesJob?.cancel()
+        districtsJob?.cancel()
         regencies.clear()
         districts.clear()
+        regionError = null
     }
 
     fun createNewCustomer(
