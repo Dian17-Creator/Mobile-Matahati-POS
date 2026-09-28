@@ -299,7 +299,8 @@ private fun CustomerItemRow(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = PanelBgColor,
+                    color = Color.White,
+                    border = BorderStroke(1.dp, PanelBlueHeader),
                     modifier = Modifier.size(28.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
