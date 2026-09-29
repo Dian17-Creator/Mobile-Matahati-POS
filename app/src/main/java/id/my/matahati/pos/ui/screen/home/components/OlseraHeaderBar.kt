@@ -10,12 +10,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -182,10 +183,6 @@ fun TransaksiHeaderBar(
     onMenuClick: () -> Unit,
     currentDate: String = "",
     onDateClick: () -> Unit = {},
-    searchQuery: String = "",
-    onSearchQueryChange: (String) -> Unit = {},
-    selectedPaymentType: String = "Semua Tipe Pembayaran",
-    onPaymentTypeClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -217,84 +214,7 @@ fun TransaksiHeaderBar(
                 Text("Online", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Long Search Bar (Similar to Product Search)
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color.White.copy(alpha = 0.15f),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(38.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Cari",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    BasicTextField(
-                        value = searchQuery,
-                        onValueChange = onSearchQueryChange,
-                        singleLine = true,
-                        textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium),
-                        cursorBrush = SolidColor(Color.White),
-                        decorationBox = { innerTextField ->
-                            Box(contentAlignment = Alignment.CenterStart) {
-                                if (searchQuery.isEmpty()) {
-                                    Text(
-                                        text = "Cari transaksi...",
-                                        color = Color.White.copy(alpha = 0.6f),
-                                        fontSize = 13.sp
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Payment Type Filter Button (Left of Date)
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color.White.copy(alpha = 0.18f),
-                modifier = Modifier.clickable { onPaymentTypeClick() }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = selectedPaymentType,
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Pilih Pembayaran",
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
             val isPhone = LocalConfiguration.current.screenWidthDp < 600
 
@@ -336,115 +256,113 @@ fun TransaksiHeaderBar(
 }
 
 @Composable
-fun TransaksiLeftHeaderBar(
-    onMenuClick: () -> Unit,
+fun TransactionHistoryHeader(
     searchQuery: String = "",
     onSearchQueryChange: (String) -> Unit = {},
     selectedPaymentType: String = "Semua Tipe Pembayaran",
     onPaymentTypeClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var isSearchActive by remember(searchQuery) { mutableStateOf(searchQuery.isNotBlank()) }
+
     Surface(
         color = OlseraBlueHeader,
         modifier = modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onMenuClick) {
-                Icon(Icons.Default.Menu, "Menu", tint = Color.White)
-            }
-
-            // Online Status
+        if (isSearchActive) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable { }
-                    .padding(horizontal = 6.dp, vertical = 4.dp)
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Cloud, "Online", tint = Color.White, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Online", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-            }
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            // Search Bar
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color.White.copy(alpha = 0.15f),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(36.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Cari",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
                     BasicTextField(
                         value = searchQuery,
                         onValueChange = onSearchQueryChange,
                         singleLine = true,
-                        textStyle = TextStyle(color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                        textStyle = TextStyle(color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium),
                         cursorBrush = SolidColor(Color.White),
                         decorationBox = { innerTextField ->
                             Box(contentAlignment = Alignment.CenterStart) {
                                 if (searchQuery.isEmpty()) {
                                     Text(
-                                        text = "Cari transaksi...",
-                                        color = Color.White.copy(alpha = 0.6f),
-                                        fontSize = 12.sp
+                                        text = "Cari",
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        fontSize = 15.sp
                                     )
                                 }
                                 innerTextField()
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp)
+                    )
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.8f), thickness = 1.dp)
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                IconButton(
+                    onClick = {
+                        onSearchQueryChange("")
+                        isSearchActive = false
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Tutup Cari",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            // Payment Type Filter Button
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color.White.copy(alpha = 0.18f),
-                modifier = Modifier.clickable { onPaymentTypeClick() }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                IconButton(
+                    onClick = { isSearchActive = true }
                 ) {
-                    Text(
-                        text = selectedPaymentType,
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
                     Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Pilih Pembayaran",
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Cari Transaksi",
                         tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Text(
+                    text = selectedPaymentType,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onPaymentTypeClick() }
+                        .padding(horizontal = 8.dp)
+                )
+
+                IconButton(
+                    onClick = onPaymentTypeClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FilterList,
+                        contentDescription = "Filter Pembayaran",
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
