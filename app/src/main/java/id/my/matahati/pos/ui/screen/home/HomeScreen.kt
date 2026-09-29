@@ -377,12 +377,8 @@ fun HomeScreen(
                         )
                     } else if (currentScreen == "transaksi") {
                         TransaksiHeaderBar(
-                            searchQuery = transaksiSearchQuery,
-                            onSearchQueryChange = { transaksiSearchQuery = it },
                             currentDate = selectedDateRange,
                             onDateClick = { showDateFilterDialog = true },
-                            selectedPaymentType = selectedPaymentType,
-                            onPaymentTypeClick = { showPaymentTypeDialog = true },
                             onMenuClick = {
                                 coroutineScope.launch {
                                     if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -434,25 +430,12 @@ fun HomeScreen(
                                         ) {
 
                                             // Header Left Panel
-                                            Surface(
-                                                color = Color(0xFF1565C0),
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(56.dp)
-                                                        .padding(horizontal = 16.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Text(
-                                                        text = "Riwayat Transaksi",
-                                                        color = Color.White,
-                                                        fontSize = 18.sp,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
-                                            }
+                                            TransactionHistoryHeader(
+                                                searchQuery = transaksiSearchQuery,
+                                                onSearchQueryChange = { transaksiSearchQuery = it },
+                                                selectedPaymentType = selectedPaymentType,
+                                                onPaymentTypeClick = { showPaymentTypeDialog = true }
+                                            )
 
                                             // Transaction History List
                                             TransactionHistoryList(
@@ -521,19 +504,32 @@ fun HomeScreen(
                                         }
                                     }
                                 } else {
-                                    TransactionHistoryList(
-                                        transactions = filteredTransactions,
-                                        isLoading = viewModel.isHistoryLoading,
-                                        selectedTransactionId = selectedHistoryTransaction?.id,
-                                        onTransactionClick = { 
-                                            selectedHistoryTransaction = it
-                                            currentScreen = "transaksi_detail"
-                                        },
+                                    Column(
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(innerPadding)
                                             .background(Color.White)
-                                    )
+                                    ) {
+                                        TransactionHistoryHeader(
+                                            searchQuery = transaksiSearchQuery,
+                                            onSearchQueryChange = { transaksiSearchQuery = it },
+                                            selectedPaymentType = selectedPaymentType,
+                                            onPaymentTypeClick = { showPaymentTypeDialog = true }
+                                        )
+
+                                        TransactionHistoryList(
+                                            transactions = filteredTransactions,
+                                            isLoading = viewModel.isHistoryLoading,
+                                            selectedTransactionId = selectedHistoryTransaction?.id,
+                                            onTransactionClick = { 
+                                                selectedHistoryTransaction = it
+                                                currentScreen = "transaksi_detail"
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(1f)
+                                        )
+                                    }
                                 }
                             }
                             "transaksi_detail" -> {
