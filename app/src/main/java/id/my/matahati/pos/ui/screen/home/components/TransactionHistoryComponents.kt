@@ -5,23 +5,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import id.my.matahati.pos.model.TransactionModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -32,6 +27,7 @@ fun TransactionHistoryList(
     transactions: List<TransactionModel>,
     isLoading: Boolean,
     onTransactionClick: (TransactionModel) -> Unit,
+    selectedTransactionId: String? = null,
     modifier: Modifier = Modifier
 ) {
     if (isLoading && transactions.isEmpty()) {
@@ -51,7 +47,6 @@ fun TransactionHistoryList(
     // Grouping by date (Safe for API 24)
     val grouped = transactions.groupBy {
         try {
-            // Support both "2026-09-11T..." and "2026-09-11 ..."
             if (it.transactionDate.length >= 10) {
                 it.transactionDate.substring(0, 10)
             } else {
@@ -65,7 +60,7 @@ fun TransactionHistoryList(
     fun formatDateHeader(dateStr: String): String {
         return try {
             val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
+            val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale.forLanguageTag("id-ID"))
             val date = inputFormat.parse(dateStr)
             if (date != null) outputFormat.format(date) else dateStr
         } catch (e: Exception) {
@@ -78,8 +73,13 @@ fun TransactionHistoryList(
             item {
                 TransactionDateHeader(formatDateHeader(date))
             }
-            items(items) { trx ->
-                TransactionItemCard(trx, onClick = { onTransactionClick(trx) })
+            items(items, key = { it.id }) { trx ->
+                val isSelected = (trx.id == selectedTransactionId)
+                TransactionItemCard(
+                    transaction = trx,
+                    isSelected = isSelected,
+                    onClick = { onTransactionClick(trx) }
+                )
                 HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
             }
         }
@@ -89,13 +89,13 @@ fun TransactionHistoryList(
 @Composable
 fun TransactionDateHeader(date: String) {
     Surface(
-        color = Color(0xFF66BB6A), // Green header similar to image 2
+        color = Color(0xFF66BB6A), // Green header
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             text = date,
             color = Color.White,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
         )
@@ -105,16 +105,16 @@ fun TransactionDateHeader(date: String) {
 @Composable
 fun TransactionItemCard(
     transaction: TransactionModel,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isSelected: Boolean = false
 ) {
-    val isCancelled = transaction.status == "CANCELLED"
-    
+    val statusUpper = transaction.status.uppercase()
+    val isCancelled = statusUpper in listOf("CANCELLED", "CANCEL", "VOID", "VOIDED", "REFUND", "REFUNDED")
+
     val timeStr = try {
-        // Handle "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss"
         val dateTime = transaction.transactionDate.replace("T", " ")
         if (dateTime.contains(" ")) {
-            val timePart = dateTime.substringAfter(" ") // HH:mm:ss
-            timePart.substring(0, 5) // HH:mm
+            dateTime.substringAfter(" ").substring(0, 5)
         } else {
             ""
         }
@@ -125,63 +125,80 @@ fun TransactionItemCard(
     val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
         maximumFractionDigits = 0
     }
-    val amountStr = formatter.format(transaction.grandTotal.toDoubleOrNull() ?: 0.0)
+    val amountNum = transaction.grandTotal.toDoubleOrNull() ?: 0.0
+    val amountStr = formatter.format(amountNum)
+    val paymentName = transaction.payment?.cname?.uppercase() ?: "CASH"
+    val customerStr = if (!transaction.customerName.isNullOrBlank()) " (${transaction.customerName})" else ""
+    val itemsSummary = transaction.details?.joinToString(", ") { "${it.quantity}x ${it.productName}" } ?: ""
 
-    Row(
+    val cardBg = if (isSelected) Color(0xFFEBF3FA) else Color.White
+
+    Surface(
+        color = cardBg,
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon
-        Surface(
-            shape = CircleShape,
-            color = if (isCancelled) Color(0xFFFEEBEE) else Color(0xFFE3F2FD),
-            modifier = Modifier.size(40.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = if (isCancelled) Icons.Default.Block else Icons.Default.Receipt,
-                    contentDescription = null,
-                    tint = if (isCancelled) Color.Red else OlseraBlueHeader,
-                    modifier = Modifier.size(24.dp)
-                )
+            // Icon
+            Surface(
+                shape = CircleShape,
+                color = if (isCancelled) Color(0xFFFEEBEE) else Color(0xFFE3F2FD),
+                modifier = Modifier.size(38.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = if (isCancelled) Icons.Default.Block else Icons.Default.Receipt,
+                        contentDescription = null,
+                        tint = if (isCancelled) Color.Red else Color(0xFF1565C0),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-        // Info
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = transaction.transactionNo,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.DarkGray
-            )
-            Text(
-                text = if (transaction.customerName.isNullOrBlank()) "Pelanggan Umum" else transaction.customerName,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-        }
+            // Main Details
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = transaction.transactionNo,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF222222)
+                    )
+                    Text(text = timeStr, fontSize = 11.sp, color = Color.Gray)
+                }
 
-        // Amount & Time
-        Column(horizontalAlignment = Alignment.End) {
-            Text(text = timeStr, fontSize = 12.sp, color = Color.Gray)
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (itemsSummary.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = itemsSummary,
+                        fontSize = 11.sp,
+                        color = Color.Gray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(2.dp))
+
                 Text(
-                    text = if (isCancelled) "0 (Dibatalkan)" else "Rp $amountStr",
-                    fontSize = 14.sp,
+                    text = if (isCancelled) "0 (Dibatalkan) - $paymentName" else "$amountStr - $paymentName$customerStr",
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isCancelled) Color.Red else Color.Black
+                    color = if (isCancelled) Color.Red else Color(0xFF1565C0)
                 )
-                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(16.dp))
             }
         }
     }
 }
-
-
