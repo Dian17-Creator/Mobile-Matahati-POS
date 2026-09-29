@@ -336,6 +336,123 @@ fun TransaksiHeaderBar(
 }
 
 @Composable
+fun TransaksiLeftHeaderBar(
+    onMenuClick: () -> Unit,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
+    selectedPaymentType: String = "Semua Tipe Pembayaran",
+    onPaymentTypeClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = OlseraBlueHeader,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onMenuClick) {
+                Icon(Icons.Default.Menu, "Menu", tint = Color.White)
+            }
+
+            // Online Status
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { }
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
+            ) {
+                Icon(Icons.Default.Cloud, "Online", tint = Color.White, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Online", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // Search Bar
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color.White.copy(alpha = 0.15f),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(36.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Cari",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = onSearchQueryChange,
+                        singleLine = true,
+                        textStyle = TextStyle(color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                        cursorBrush = SolidColor(Color.White),
+                        decorationBox = { innerTextField ->
+                            Box(contentAlignment = Alignment.CenterStart) {
+                                if (searchQuery.isEmpty()) {
+                                    Text(
+                                        text = "Cari transaksi...",
+                                        color = Color.White.copy(alpha = 0.6f),
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // Payment Type Filter Button
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White.copy(alpha = 0.18f),
+                modifier = Modifier.clickable { onPaymentTypeClick() }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = selectedPaymentType,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Pilih Pembayaran",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun PengaturanHeaderBar(
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier

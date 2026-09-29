@@ -320,6 +320,14 @@ fun HomeScreen(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isTablet = maxWidth >= 600.dp
 
+        LaunchedEffect(viewModel.transactionHistory.size, filteredTransactions.size, isTablet, currentScreen) {
+            if (isTablet && currentScreen == "transaksi" && filteredTransactions.isNotEmpty()) {
+                if (selectedHistoryTransaction == null || filteredTransactions.none { it.id == selectedHistoryTransaction?.id }) {
+                    selectedHistoryTransaction = filteredTransactions.first()
+                }
+            }
+        }
+
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
@@ -411,18 +419,122 @@ fun HomeScreen(
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (targetScreen) {
                             "transaksi" -> {
-                                TransactionHistoryList(
-                                    transactions = filteredTransactions,
-                                    isLoading = viewModel.isHistoryLoading,
-                                    onTransactionClick = { 
-                                        selectedHistoryTransaction = it
-                                        currentScreen = "transaksi_detail"
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(innerPadding)
-                                        .background(Color.White)
-                                )
+                                if (isTablet) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(innerPadding)
+                                            .background(Color.White)
+                                    ) {
+                                        // LEFT PANEL
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(0.50f)
+                                                .fillMaxHeight()
+                                        ) {
+
+                                            // Header Left Panel
+                                            Surface(
+                                                color = Color(0xFF1565C0),
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(56.dp)
+                                                        .padding(horizontal = 16.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = "Riwayat Transaksi",
+                                                        color = Color.White,
+                                                        fontSize = 18.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
+
+                                            // Transaction History List
+                                            TransactionHistoryList(
+                                                transactions = filteredTransactions,
+                                                isLoading = viewModel.isHistoryLoading,
+                                                selectedTransactionId = selectedHistoryTransaction?.id,
+                                                onTransactionClick = {
+                                                    selectedHistoryTransaction = it
+                                                },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .weight(1f)
+                                            )
+                                        }
+
+                                        VerticalDivider(color = DividerDefaults.color.copy(alpha = 0.5f))
+
+                                        // Right Pane: Selected Transaction Detail (50% Width)
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(0.50f)
+                                                .fillMaxHeight()
+                                                .background(Color.White)
+                                        ) {
+                                            if (selectedHistoryTransaction != null) {
+                                                TransactionDetailScreen(
+                                                    transaction = selectedHistoryTransaction!!,
+                                                    showBackButton = false,
+                                                    onSendToKitchen = {
+                                                        viewModel.openKitchenPrintDialogFromHistory(context, selectedHistoryTransaction!!)
+                                                    },
+                                                    onVoidRefundClick = {
+                                                        showVoidRefundDialog = true
+                                                    },
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
+                                            } else {
+                                                Column(modifier = Modifier.fillMaxSize()) {
+                                                    Surface(
+                                                        color = Color(0xFF1565C0),
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .height(56.dp)
+                                                                .padding(horizontal = 16.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Text(
+                                                                text = "Detail Transaksi",
+                                                                color = Color.White,
+                                                                fontSize = 18.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                        }
+                                                    }
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Text("Pilih transaksi untuk melihat detail", color = Color.Gray)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    TransactionHistoryList(
+                                        transactions = filteredTransactions,
+                                        isLoading = viewModel.isHistoryLoading,
+                                        selectedTransactionId = selectedHistoryTransaction?.id,
+                                        onTransactionClick = { 
+                                            selectedHistoryTransaction = it
+                                            currentScreen = "transaksi_detail"
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(innerPadding)
+                                            .background(Color.White)
+                                    )
+                                }
                             }
                             "transaksi_detail" -> {
                                 if (selectedHistoryTransaction != null) {
