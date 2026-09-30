@@ -1171,7 +1171,8 @@ class HomeViewModel : ViewModel() {
         tax: Double,
         paidAmount: Double,
         nidVoucher: Int? = null,
-        nidOutlet: String?
+        nidOutlet: String?,
+        orderNote: String? = null
     ) {
         executeTransaction(
             context = context,
@@ -1185,7 +1186,8 @@ class HomeViewModel : ViewModel() {
             nidVoucher = nidVoucher,
             nidOutlet = nidOutlet,
             status = null,
-            cancelNote = null
+            cancelNote = null,
+            orderNote = orderNote
         )
     }
 
@@ -1195,7 +1197,8 @@ class HomeViewModel : ViewModel() {
         orderType: String,
         selectedCustomer: Customer?,
         cancelNote: String,
-        nidOutlet: String?
+        nidOutlet: String?,
+        orderNote: String? = null
     ) {
         executeTransaction(
             context = context,
@@ -1208,7 +1211,8 @@ class HomeViewModel : ViewModel() {
             paidAmount = 0.0,
             nidOutlet = nidOutlet,
             status = "CANCELLED",
-            cancelNote = cancelNote
+            cancelNote = cancelNote,
+            orderNote = orderNote
         )
     }
 
@@ -1219,6 +1223,7 @@ class HomeViewModel : ViewModel() {
         discount: Double,
         tax: Double,
         nidOutlet: String?,
+        orderNote: String? = null,
         onSuccess: () -> Unit = {}
     ) {
         executeTransaction(
@@ -1233,6 +1238,7 @@ class HomeViewModel : ViewModel() {
             nidOutlet = nidOutlet,
             status = "DRAFT",
             cancelNote = null,
+            orderNote = orderNote,
             onSuccess = onSuccess
         )
     }
@@ -1250,6 +1256,7 @@ class HomeViewModel : ViewModel() {
         nidOutlet: String?,
         status: String?,
         cancelNote: String?,
+        orderNote: String? = null,
         onSuccess: (() -> Unit)? = null
     ) {
         if (status != "CANCELLED" && cartItems.isEmpty()) {
@@ -1304,6 +1311,7 @@ class HomeViewModel : ViewModel() {
             paidAmount = paidAmount,
             status = status,
             cancelNote = cancelNote,
+            orderNote = orderNote?.ifBlank { null },
             details = details
         )
 

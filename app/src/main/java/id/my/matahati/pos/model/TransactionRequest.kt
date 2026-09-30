@@ -16,6 +16,7 @@ data class TransactionRequest(
     @SerializedName("ntax") val tax: Double,
     @SerializedName("npaid") val paidAmount: Double,
     @SerializedName("ccancel_note") val cancelNote: String? = null,
+    @SerializedName("cnote") val orderNote: String? = null,
     @SerializedName("cstatus") val status: String? = null,
     @SerializedName("details") val details: List<TransactionDetailRequest>
 )
