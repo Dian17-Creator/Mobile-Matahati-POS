@@ -87,6 +87,8 @@ fun HomeScreen(
     var showPaymentTypeDialog by remember { mutableStateOf(false) }
     var showTableInputDialog by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
+    var orderNote by remember { mutableStateOf("") }
+    var showOrderNoteDialog by remember { mutableStateOf(false) }
     var validationWarningMessage by remember { mutableStateOf<String?>(null) }
     
     val today = remember { Calendar.getInstance().time }
@@ -621,6 +623,7 @@ fun HomeScreen(
                                                             discount = discountAmount,
                                                             tax = 0.0,
                                                             nidOutlet = nidOutlet,
+                                                            orderNote = orderNote,
                                                             onSuccess = {
                                                                 cartItems.clear()
                                                                 orderType = ""
@@ -628,6 +631,7 @@ fun HomeScreen(
                                                                 selectedCustomer = null
                                                                 selectedVoucher = null
                                                                 manualDiscountInput = ""
+                                                                orderNote = ""
                                                             }
                                                         )
                                                     }
@@ -654,6 +658,8 @@ fun HomeScreen(
                                                 cashierName = userName,
                                                 servedByName = viewModel.selectedServedBy?.name ?: userName,
                                                 onServedByClick = { viewModel.showServedByDialog = true },
+                                                orderNote = orderNote,
+                                                onOrderNoteClick = { showOrderNoteDialog = true },
                                                 discountAmount = discountAmount,
                                                 grandTotal = cartGrandTotal,
                                                 modifier = Modifier
@@ -1136,6 +1142,17 @@ fun HomeScreen(
         )
     }
 
+    if (showOrderNoteDialog) {
+        OlseraOrderNoteDialog(
+            initialNote = orderNote,
+            onDismiss = { showOrderNoteDialog = false },
+            onSave = { newNote ->
+                orderNote = newNote
+                showOrderNoteDialog = false
+            }
+        )
+    }
+
     if (viewModel.showPaymentScreen) {
         PaymentScreen(
             grandTotal = cartGrandTotal,
@@ -1154,7 +1171,8 @@ fun HomeScreen(
                     tax = 0.0,
                     paidAmount = amount,
                     nidVoucher = selectedVoucher?.id?.toIntOrNull(),
-                    nidOutlet = nidOutlet
+                    nidOutlet = nidOutlet,
+                    orderNote = orderNote
                 )
             }
         )
@@ -1174,7 +1192,8 @@ fun HomeScreen(
                     orderType = orderType,
                     selectedCustomer = selectedCustomer,
                     cancelNote = note,
-                    nidOutlet = nidOutlet
+                    nidOutlet = nidOutlet,
+                    orderNote = orderNote
                 )
             }
         )
@@ -1190,6 +1209,7 @@ fun HomeScreen(
                 viewModel.selectedTable = ""
                 selectedVoucher = null
                 manualDiscountInput = ""
+                orderNote = ""
             },
             containerColor = Color.White,
             modifier = Modifier.width(480.dp).wrapContentHeight(),
@@ -1205,6 +1225,7 @@ fun HomeScreen(
                         viewModel.selectedTable = ""
                         selectedVoucher = null
                         manualDiscountInput = ""
+                        orderNote = ""
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
                     shape = RoundedCornerShape(8.dp),
@@ -1296,6 +1317,7 @@ fun HomeScreen(
                 }
                 viewModel.selectedTable = heldOrder.tableName ?: ""
                 orderType = heldOrder.orderType ?: ""
+                orderNote = heldOrder.orderNote ?: ""
                 selectedCustomer = viewModel.customers.find { it.name == heldOrder.customerName }
                 val draftDiscount = heldOrder.discount.toDoubleOrNull() ?: 0.0
                 if (draftDiscount > 0) {
@@ -1497,6 +1519,7 @@ fun HomeScreen(
                     selectedCustomer = null
                     selectedVoucher = null
                     manualDiscountInput = ""
+                    orderNote = ""
                     viewModel.showPaymentScreen = false
                 }
             }

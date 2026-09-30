@@ -86,6 +86,8 @@ fun OlseraCartPanel(
     cashierName: String = "april",
     servedByName: String = cashierName,
     onServedByClick: () -> Unit = {},
+    orderNote: String = "",
+    onOrderNoteClick: () -> Unit = {},
     discountAmount: Double = 0.0,
     grandTotal: Double = 0.0
 ) {
@@ -263,9 +265,8 @@ fun OlseraCartPanel(
 
                 if (cartItems.isNotEmpty()) {
                     item {
-
                         Surface(
-                            color = Color(0xFFF3F3F3),
+                            color = Color.White,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -324,6 +325,37 @@ fun OlseraCartPanel(
                         }
                     }
 
+                    if (orderNote.isNotBlank()) {
+                        item {
+                            Surface(
+                                color = Color(0xFFF3F3F3),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Catatan",
+                                        fontSize = 12.sp,
+                                        color = Color.Black
+                                    )
+                                    Text(
+                                        text = orderNote,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     item {
                         Surface(
                             color = Color.White,
@@ -345,7 +377,6 @@ fun OlseraCartPanel(
                     }
 
                     item {
-
                         Surface(
                             color = Color(0xFFF3F3F3),
                             modifier = Modifier.fillMaxWidth()
@@ -391,7 +422,7 @@ fun OlseraCartPanel(
                         )
                         QuickActionButton(icon = Icons.Default.LocalOffer, label = "Disc. Pesanan", onClick = onDiscountClick)
                         QuickActionButton(icon = Icons.Default.LocalShipping, label = "Ongkos Kirim", onClick = {})
-                        QuickActionButton(icon = Icons.Default.ChatBubbleOutline, label = "Catatan Pesanan", onClick = {})
+                        QuickActionButton(icon = Icons.Default.ChatBubbleOutline, label = "Catatan Pesanan", onClick = onOrderNoteClick)
                         QuickActionButton(icon = Icons.Default.Person, label = "Dilayani Oleh", onClick = onServedByClick)
                         QuickActionButton(icon = Icons.Default.Restaurant, label = "Kirim ke Dapur", onClick = onSendToKitchenClick)
                         QuickActionButton(

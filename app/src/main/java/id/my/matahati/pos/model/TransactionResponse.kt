@@ -37,6 +37,7 @@ data class TransactionModel(
     @SerializedName("cstatus") val status: String,
     @SerializedName("nitem") val itemCount: Int,
     @SerializedName("ccancel_note") val cancelNote: String? = null,
+    @SerializedName("cnote") val orderNote: String? = null,
     @SerializedName("details") val details: List<TransactionDetailModel>? = null,
     @SerializedName("pos_user") val posUser: PosUserModel? = null,
     @SerializedName("payment") val payment: PaymentMethodDto? = null,
