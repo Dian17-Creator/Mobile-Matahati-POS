@@ -100,6 +100,9 @@ fun ReceiptDialog(
                             if (trx.tableName != null) {
                                 TextRow("Meja", trx.tableName)
                             }
+                            if (!trx.orderNote.isNullOrBlank()) {
+                                TextRow("Catatan", trx.orderNote)
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))

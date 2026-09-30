@@ -198,6 +198,12 @@ fun TransactionDetailScreen(
                     icon = Icons.Default.Restaurant,
                     text = "${transaction.orderType} (${transaction.visitorCount} Pax)"
                 )
+                if (!transaction.orderNote.isNullOrBlank()) {
+                    InfoIconRow(
+                        icon = Icons.Default.ChatBubbleOutline,
+                        text = "Catatan: ${transaction.orderNote}"
+                    )
+                }
                 InfoIconRow(
                     icon = Icons.Default.AttachMoney,
                     text = if (isCancelled) "null (VOIDED)" else "Rp ${formatStringNum(displayGrandTotal.toString())}",
@@ -373,6 +379,31 @@ fun TransactionDetailScreen(
                                     fontWeight = FontWeight.Bold,
                                     color = Color.Black
                                 )
+                            }
+                        }
+
+                        // Catatan Pesanan row
+                        if (!transaction.orderNote.isNullOrBlank()) {
+                            Surface(
+                                color = Color(0xFFF3F3F3),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = "Catatan", fontSize = 12.sp, color = Color.Black)
+                                    Text(
+                                        text = transaction.orderNote,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black,
+                                        textAlign = TextAlign.End
+                                    )
+                                }
                             }
                         }
 

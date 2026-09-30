@@ -190,6 +190,18 @@ fun TransactionItemCard(
                     )
                 }
 
+                if (!transaction.orderNote.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Catatan: ${transaction.orderNote}",
+                        fontSize = 11.sp,
+                        color = Color(0xFFE65100),
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(

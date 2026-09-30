@@ -84,6 +84,9 @@ class EscPosFormatter(private val cols: Int = 42) {
         if (trx.tableName != null) {
             out.addAll(formatLabelValue("Meja", trx.tableName).toList())
         }
+        if (!trx.orderNote.isNullOrBlank()) {
+            out.addAll(formatLabelValue("Catatan", trx.orderNote).toList())
+        }
 
         // 4. Separator
         out.addAll(drawLine("-").toByteArray().toList())
