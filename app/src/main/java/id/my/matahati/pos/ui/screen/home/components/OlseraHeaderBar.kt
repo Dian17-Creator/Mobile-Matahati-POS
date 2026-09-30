@@ -359,10 +359,10 @@ fun TransactionHistoryHeader(
                     onClick = onPaymentTypeClick
                 ) {
                     Icon(
-                        imageVector = Icons.Default.FilterList,
+                        painter = painterResource(id = R.drawable.filter),
                         contentDescription = "Filter Pembayaran",
                         tint = Color.White,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
