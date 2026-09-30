@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,11 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import id.my.matahati.pos.model.TransactionDetailModel
 import id.my.matahati.pos.model.TransactionModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
-import androidx.compose.runtime.*
 
 @Composable
 fun TransactionDetailScreen(
@@ -33,6 +34,7 @@ fun TransactionDetailScreen(
     onDateClick: (() -> Unit)? = null,
     onSendToKitchen: () -> Unit = {},
     onVoidRefundClick: () -> Unit = {},
+    onItemVoidRefundClick: ((TransactionDetailModel?) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
@@ -46,6 +48,22 @@ fun TransactionDetailScreen(
     val statusUpper = transaction.status.uppercase()
     val isCancelled = statusUpper in listOf("CANCELLED", "CANCEL", "VOID", "VOIDED", "REFUND", "REFUNDED")
     val cashierName = transaction.posUser?.user?.name ?: "Unknown"
+    val hasPartialHistory = transaction.details?.any { it.qtyVoid > 0 || it.qtyRefund > 0 } == true
+
+    val detailsList = transaction.details ?: emptyList()
+    val activeItemsTotal = detailsList.sumOf { item ->
+        val unitPrice = item.price.toDoubleOrNull() ?: 0.0
+        unitPrice * item.qtyAvailable
+    }
+    val taxVal = transaction.tax.toDoubleOrNull() ?: 0.0
+    val discountVal = transaction.discount.toDoubleOrNull() ?: 0.0
+    val displayGrandTotal = if (detailsList.isNotEmpty()) {
+        maxOf(0.0, activeItemsTotal - discountVal + taxVal)
+    } else {
+        transaction.grandTotal.toDoubleOrNull() ?: 0.0
+    }
+
+    var showPartialActionWarningDialog by remember { mutableStateOf(false) }
 
     fun formatTransactionDate(rawDate: String): String {
         if (rawDate.isBlank()) return ""
@@ -182,7 +200,7 @@ fun TransactionDetailScreen(
                 )
                 InfoIconRow(
                     icon = Icons.Default.AttachMoney,
-                    text = if (isCancelled) "null (VOIDED)" else "Rp ${formatStringNum(transaction.grandTotal)}",
+                    text = if (isCancelled) "null (VOIDED)" else "Rp ${formatStringNum(displayGrandTotal.toString())}",
                     textColor = if (isCancelled) Color.Red else Color.Black
                 )
             }
@@ -202,7 +220,7 @@ fun TransactionDetailScreen(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.DarkGray,
-                        modifier = Modifier.weight(0.5f)
+                        modifier = Modifier.weight(0.45f)
                     )
                     Text(
                         text = "Qty",
@@ -218,7 +236,7 @@ fun TransactionDetailScreen(
                         fontWeight = FontWeight.Bold,
                         color = Color.DarkGray,
                         textAlign = TextAlign.End,
-                        modifier = Modifier.weight(0.3f)
+                        modifier = Modifier.weight(0.35f)
                     )
                 }
             }
@@ -234,28 +252,87 @@ fun TransactionDetailScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = item.productName,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.weight(0.5f)
-                            )
+                            Column(modifier = Modifier.weight(0.45f)) {
+                                Text(
+                                    text = item.productName,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                if (item.qtyVoid > 0 || item.qtyRefund > 0) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        if (item.qtyVoid > 0) {
+                                            Surface(
+                                                color = Color(0xFFFFEBEE),
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                                            ) {
+                                                Text(
+                                                    text = "${item.qtyVoid}/${item.quantity} Voided",
+                                                    fontSize = 10.sp,
+                                                    color = Color.Red,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                        if (item.qtyRefund > 0) {
+                                            Surface(
+                                                color = Color(0xFFFFF3E0),
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                                            ) {
+                                                Text(
+                                                    text = "${item.qtyRefund}/${item.quantity} Refunded",
+                                                    fontSize = 10.sp,
+                                                    color = Color(0xFFE65100),
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             Text(
                                 text = "${item.quantity}x",
                                 fontSize = 14.sp,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.weight(0.2f)
                             )
-                            Text(
-                                text = formatStringNum(item.subtotal),
-                                fontSize = 14.sp,
-                                textAlign = TextAlign.End,
-                                modifier = Modifier.weight(0.3f)
-                            )
+
+                            Row(
+                                modifier = Modifier.weight(0.35f),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val activeSubtotal = (item.price.toDoubleOrNull() ?: 0.0) * item.qtyAvailable
+                                Text(
+                                    text = formatStringNum(activeSubtotal.toString()),
+                                    fontSize = 14.sp,
+                                    textAlign = TextAlign.End
+                                )
+
+                                if (!isCancelled && onItemVoidRefundClick != null) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    IconButton(
+                                        onClick = { onItemVoidRefundClick(item) },
+                                        enabled = item.qtyAvailable > 0,
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.RemoveCircleOutline,
+                                            contentDescription = "Void/Refund Item",
+                                            tint = if (item.qtyAvailable > 0) Color.Red else Color.LightGray,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
+
                         if (!item.note.isNullOrBlank()) {
                             val (cleanNote, _) = id.my.matahati.pos.model.CartItem.parseNoteAndSentQty(item.note)
                             if (cleanNote.isNotBlank()) {
@@ -299,7 +376,7 @@ fun TransactionDetailScreen(
                             }
                         }
 
-                        // Jumlah Item row (White background like OlseraCartPanel)
+                        // Jumlah Item row
                         Surface(
                             color = Color.White,
                             modifier = Modifier.fillMaxWidth()
@@ -315,7 +392,7 @@ fun TransactionDetailScreen(
                             )
                         }
 
-                        // Catatan Batal (White background)
+                        // Catatan Batal
                         if (isCancelled && !transaction.cancelNote.isNullOrBlank()) {
                             Surface(
                                 color = Color.White,
@@ -332,7 +409,7 @@ fun TransactionDetailScreen(
                             }
                         }
 
-                        // Dilayani Oleh row with background
+                        // Dilayani Oleh row
                         Surface(
                             color = Color(0xFFF3F3F3),
                             modifier = Modifier.fillMaxWidth()
@@ -381,7 +458,7 @@ fun TransactionDetailScreen(
                             modifier = Modifier.align(Alignment.TopStart)
                         )
                         Text(
-                            text = "Rp ${formatStringNum(transaction.grandTotal)}",
+                            text = "Rp ${formatStringNum(displayGrandTotal.toString())}",
                             fontSize = 24.sp,
                             color = Color(0xFF1565C0),
                             fontWeight = FontWeight.ExtraBold,
@@ -392,76 +469,127 @@ fun TransactionDetailScreen(
                     // Option Button Right with Pop-up Menu
                     var showOptionsMenu by remember { mutableStateOf(false) }
 
-                Box {
-                    Surface(
-                        color = Color(0xFF1565C0),
-                        modifier = Modifier
-                            .width(64.dp)
-                            .fillMaxHeight()
-                            .clickable { showOptionsMenu = true }
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.List,
-                                contentDescription = "Opsi",
-                                tint = Color.White
-                            )
-                        }
-                    }
-
-                    DropdownMenu(
-                        expanded = showOptionsMenu,
-                        onDismissRequest = { showOptionsMenu = false },
-                        modifier = Modifier.background(Color.White)
-                    ) {
-                        DropdownMenuItem(
-                            text = { 
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Restaurant,
-                                        contentDescription = null,
-                                        tint = Color(0xFF1565C0),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text("Kirim ke Dapur", color = Color.DarkGray)
-                                }
-                            },
-                            onClick = {
-                                showOptionsMenu = false
-                                onSendToKitchen()
+                    Box {
+                        Surface(
+                            color = Color(0xFF1565C0),
+                            modifier = Modifier
+                                .width(64.dp)
+                                .fillMaxHeight()
+                                .clickable { showOptionsMenu = true }
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.List,
+                                    contentDescription = "Opsi",
+                                    tint = Color.White
+                                )
                             }
-                        )
+                        }
 
-                        val canVoidRefund = statusUpper !in listOf("VOID", "REFUND", "CANCELLED", "CANCEL", "VOIDED", "REFUNDED")
-
-                        if (canVoidRefund) {
-                            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                        DropdownMenu(
+                            expanded = showOptionsMenu,
+                            onDismissRequest = { showOptionsMenu = false },
+                            modifier = Modifier.background(Color.White)
+                        ) {
                             DropdownMenuItem(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            imageVector = Icons.Default.MoneyOff,
+                                            imageVector = Icons.Default.Restaurant,
                                             contentDescription = null,
-                                            tint = Color.Red,
+                                            tint = Color(0xFF1565C0),
                                             modifier = Modifier.size(20.dp)
                                         )
                                         Spacer(modifier = Modifier.width(12.dp))
-                                        Text("Pengembalian / Batal", color = Color.Red, fontWeight = FontWeight.SemiBold)
+                                        Text("Kirim ke Dapur", color = Color.DarkGray)
                                     }
                                 },
                                 onClick = {
                                     showOptionsMenu = false
-                                    onVoidRefundClick()
+                                    onSendToKitchen()
                                 }
                             )
+
+                            val canVoidRefund = statusUpper !in listOf("VOID", "REFUND", "CANCELLED", "CANCEL", "VOIDED", "REFUNDED")
+
+                            if (canVoidRefund) {
+                                if (onItemVoidRefundClick != null) {
+                                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    imageVector = Icons.Default.RemoveCircleOutline,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF1565C0),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Text("Void / Refund Per Item", color = Color(0xFF1565C0), fontWeight = FontWeight.SemiBold)
+                                            }
+                                        },
+                                        onClick = {
+                                            showOptionsMenu = false
+                                            onItemVoidRefundClick(null)
+                                        }
+                                    )
+                                }
+
+                                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.MoneyOff,
+                                                contentDescription = null,
+                                                tint = if (hasPartialHistory) Color.Gray else Color.Red,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text("Pengembalian / Batal (Semua)", color = if (hasPartialHistory) Color.Gray else Color.Red, fontWeight = FontWeight.SemiBold)
+                                        }
+                                    },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        if (hasPartialHistory) {
+                                            showPartialActionWarningDialog = true
+                                        } else {
+                                            onVoidRefundClick()
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
-}
+
+    // Warning Dialog for Full Transaction Void/Refund when Partial Actions exist
+    if (showPartialActionWarningDialog) {
+        AlertDialog(
+            onDismissRequest = { showPartialActionWarningDialog = false },
+            title = {
+                Text(
+                    text = "Tidak Dapat Membatalkan Penuh",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Red
+                )
+            },
+            text = {
+                Text("Transaksi ini sudah memiliki riwayat partial item action, tidak bisa dibatalkan secara penuh sekaligus.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showPartialActionWarningDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                ) {
+                    Text("Mengerti")
+                }
+            }
+        )
+    }
 }
 
 @Composable

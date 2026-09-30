@@ -33,3 +33,13 @@ data class VoidTransactionRequest(
 data class RefundTransactionRequest(
     @SerializedName("crefund_note") val refundNote: String
 )
+
+data class ItemVoidRefundRequestItem(
+    @SerializedName("detail_id") val detailId: Int,
+    @SerializedName("qty") val qty: Int
+)
+
+data class ItemVoidRefundRequest(
+    @SerializedName("items") val items: List<ItemVoidRefundRequestItem>,
+    @SerializedName("reason") val reason: String
+)

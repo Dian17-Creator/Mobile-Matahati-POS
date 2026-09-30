@@ -298,7 +298,7 @@ fun ShiftScreen(
     // Dialog Tutup Shift
     if (showCloseShiftDialog && currentShift != null) {
         val expectedCashVal = currentShift.expectedCash
-            ?: (currentShift.openingCash + (currentShift.cashSales ?: 0.0) + currentShift.cashIn - currentShift.cashOut)
+            ?: (currentShift.openingCash + (currentShift.cashSales ?: 0.0) + currentShift.cashIn - currentShift.cashOut - currentShift.refundCash - currentShift.cancellationCash)
         CloseShiftDialog(
             expectedCash = expectedCashVal,
             isSubmitting = shiftViewModel.isSubmitting,
