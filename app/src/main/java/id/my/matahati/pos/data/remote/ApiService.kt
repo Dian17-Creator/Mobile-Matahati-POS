@@ -110,6 +110,11 @@ interface ApiService {
         @Query("per_page") perPage: Int = 15
     ): Response<BaseResponse<List<ShiftResponse>>>
 
+    @GET("api/pos/transactions/{id}")
+    suspend fun getTransactionDetail(
+        @Path("id") id: String
+    ): Response<id.my.matahati.pos.model.TransactionResponse>
+
     @POST("api/pos/transactions/{id}/void")
     suspend fun voidTransaction(
         @Path("id") id: String,
@@ -120,5 +125,17 @@ interface ApiService {
     suspend fun refundTransaction(
         @Path("id") id: String,
         @Body request: id.my.matahati.pos.model.RefundTransactionRequest
+    ): Response<id.my.matahati.pos.model.TransactionResponse>
+
+    @POST("api/pos/transactions/{id}/items/void")
+    suspend fun voidItemTransaction(
+        @Path("id") id: String,
+        @Body request: id.my.matahati.pos.model.ItemVoidRefundRequest
+    ): Response<id.my.matahati.pos.model.TransactionResponse>
+
+    @POST("api/pos/transactions/{id}/items/refund")
+    suspend fun refundItemTransaction(
+        @Path("id") id: String,
+        @Body request: id.my.matahati.pos.model.ItemVoidRefundRequest
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 }

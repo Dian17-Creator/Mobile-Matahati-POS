@@ -100,6 +100,8 @@ fun HomeScreen(
     var transaksiSearchQuery by remember { mutableStateOf("") }
     var selectedHistoryTransaction by remember { mutableStateOf<id.my.matahati.pos.model.TransactionModel?>(null) }
     var showVoidRefundDialog by remember { mutableStateOf(false) }
+    var showItemVoidRefundDialog by remember { mutableStateOf(false) }
+    var targetItemForVoidRefund by remember { mutableStateOf<id.my.matahati.pos.model.TransactionDetailModel?>(null) }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
     var selectedCustomer by remember { mutableStateOf<id.my.matahati.pos.model.Customer?>(null) }
     var showCustomerPanel by remember { mutableStateOf(false) }
@@ -470,6 +472,10 @@ fun HomeScreen(
                                                     onVoidRefundClick = {
                                                         showVoidRefundDialog = true
                                                     },
+                                                    onItemVoidRefundClick = { item ->
+                                                        targetItemForVoidRefund = item
+                                                        showItemVoidRefundDialog = true
+                                                    },
                                                     modifier = Modifier.fillMaxSize()
                                                 )
                                             } else {
@@ -542,6 +548,10 @@ fun HomeScreen(
                                         },
                                         onVoidRefundClick = {
                                             showVoidRefundDialog = true
+                                        },
+                                        onItemVoidRefundClick = { item ->
+                                            targetItemForVoidRefund = item
+                                            showItemVoidRefundDialog = true
                                         },
                                         modifier = Modifier.fillMaxSize()
                                     )
@@ -1408,6 +1418,57 @@ fun HomeScreen(
             onDismiss = {
                 if (!viewModel.isVoidRefundLoading) {
                     showVoidRefundDialog = false
+                }
+            }
+        )
+    }
+
+    if (showItemVoidRefundDialog && selectedHistoryTransaction != null) {
+        val details = selectedHistoryTransaction!!.details ?: emptyList()
+        id.my.matahati.pos.ui.screen.home.components.ItemVoidRefundDialog(
+            items = details,
+            isLoading = viewModel.isVoidRefundLoading,
+            errorMessage = viewModel.voidRefundError,
+            initialTargetItem = targetItemForVoidRefund,
+            onSubmit = { actionType, requestItems, reason ->
+                val targetTrx = selectedHistoryTransaction!!
+                val onSuccessHandler: (id.my.matahati.pos.model.TransactionData?) -> Unit = { updatedData ->
+                    showItemVoidRefundDialog = false
+                    targetItemForVoidRefund = null
+
+                    if (updatedData?.transaction != null) {
+                        selectedHistoryTransaction = updatedData.transaction
+                    }
+
+                    // Refresh Shift Data & History secara realtime
+                    shiftViewModel.checkCurrentShift(nidOutlet)
+
+                    val actionLabel = if (actionType == id.my.matahati.pos.ui.screen.home.components.VoidRefundActionType.VOID) "dibatalkan" else "di-refund"
+                    android.widget.Toast.makeText(context, "Item berhasil $actionLabel", android.widget.Toast.LENGTH_SHORT).show()
+                }
+
+                if (actionType == id.my.matahati.pos.ui.screen.home.components.VoidRefundActionType.VOID) {
+                    viewModel.voidItemTransaction(
+                        transactionId = targetTrx.id,
+                        items = requestItems,
+                        reason = reason,
+                        nidOutlet = nidOutlet,
+                        onSuccess = onSuccessHandler
+                    )
+                } else {
+                    viewModel.refundItemTransaction(
+                        transactionId = targetTrx.id,
+                        items = requestItems,
+                        reason = reason,
+                        nidOutlet = nidOutlet,
+                        onSuccess = onSuccessHandler
+                    )
+                }
+            },
+            onDismiss = {
+                if (!viewModel.isVoidRefundLoading) {
+                    showItemVoidRefundDialog = false
+                    targetItemForVoidRefund = null
                 }
             }
         )

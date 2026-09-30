@@ -63,7 +63,12 @@ data class TransactionDetailModel(
     @SerializedName("nid_product") val productId: String,
     @SerializedName("cname") val productName: String,
     @SerializedName("nqty") val quantity: Int,
+    @SerializedName("nqty_void") val qtyVoid: Int = 0,
+    @SerializedName("nqty_refund") val qtyRefund: Int = 0,
     @SerializedName("nprice") val price: String,
     @SerializedName("nsubtotal") val subtotal: String,
-    @SerializedName("cnote") val note: String?
-)
+    @SerializedName("cnote") val note: String? = null
+) {
+    val qtyAvailable: Int
+        get() = (quantity - qtyVoid - qtyRefund).coerceAtLeast(0)
+}
