@@ -11,6 +11,7 @@ import id.my.matahati.pos.model.VoucherResponse
 import id.my.matahati.pos.model.BaseResponse
 import id.my.matahati.pos.model.CashMovementRequest
 import id.my.matahati.pos.model.CloseShiftRequest
+import id.my.matahati.pos.model.DashboardResponse
 import id.my.matahati.pos.model.OpenShiftRequest
 import id.my.matahati.pos.model.ShiftResponse
 import retrofit2.Response
@@ -138,4 +139,11 @@ interface ApiService {
         @Path("id") id: String,
         @Body request: id.my.matahati.pos.model.ItemVoidRefundRequest
     ): Response<id.my.matahati.pos.model.TransactionResponse>
+
+    @GET("api/pos/dashboard")
+    suspend fun getDashboard(
+        @Query("date_from") dateFrom: String? = null,
+        @Query("date_to") dateTo: String? = null,
+        @Query("nid_outlet") outletId: Int? = null
+    ): Response<DashboardResponse>
 }
