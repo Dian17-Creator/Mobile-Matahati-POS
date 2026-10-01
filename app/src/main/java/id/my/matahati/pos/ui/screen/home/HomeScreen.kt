@@ -1067,22 +1067,59 @@ fun HomeScreen(
     }
 
     // =============================================================
-    // EDIT ITEM DIALOG
+    // EDIT ITEM PANEL (Right Side Overlay with Slide Animation)
     // =============================================================
-    if (showEditDialog && selectedCartItem != null) {
-        OlseraEditItemDialog(
-            cartItem = selectedCartItem!!,
-            onDismiss = {
-                showEditDialog = false
-                selectedCartItem = null
-            },
-            onConfirmUpdate = { newQty, newNote ->
-                onUpdateCartItem(selectedCartItem!!.product.id, newQty, newNote)
-            },
-            onRemoveItem = {
-                onRemoveCartItem(selectedCartItem!!.product.id)
+    AnimatedVisibility(
+        visible = showEditDialog && selectedCartItem != null,
+        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300)),
+        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.50f))
+                .clickable {
+                    showEditDialog = false
+                    selectedCartItem = null
+                }
+        ) {
+            AnimatedVisibility(
+                visible = showEditDialog && selectedCartItem != null,
+                enter = slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                ),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable(enabled = false) {}
+            ) {
+                if (selectedCartItem != null) {
+                    OlseraEditItemPanel(
+                        cartItem = selectedCartItem!!,
+                        onDismiss = {
+                            showEditDialog = false
+                            selectedCartItem = null
+                        },
+                        onConfirmUpdate = { newQty, newNote ->
+                            onUpdateCartItem(selectedCartItem!!.product.id, newQty, newNote)
+                        },
+                        onRemoveItem = {
+                            onRemoveCartItem(selectedCartItem!!.product.id)
+                        }
+                    )
+                }
             }
-        )
+        }
     }
 
     // =============================================================
