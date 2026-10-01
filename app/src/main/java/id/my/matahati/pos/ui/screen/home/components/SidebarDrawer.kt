@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
@@ -33,6 +34,7 @@ fun SidebarDrawer(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToShift: () -> Unit = {},
+    onNavigateToLaporan: () -> Unit = {},
     onNavigateToPengaturan: () -> Unit = {}
 ) {
     val rolesList = mutableListOf<String>()
@@ -124,6 +126,15 @@ fun SidebarDrawer(
             label = { Text("Shift", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) },
             selected = currentScreen == "shift",
             onClick = onNavigateToShift,
+            shape = RoundedCornerShape(4.dp),
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+
+        NavigationDrawerItem(
+            icon = { Icon(imageVector = Icons.Default.BarChart, contentDescription = "Laporan") },
+            label = { Text("Laporan", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) },
+            selected = currentScreen == "laporan",
+            onClick = onNavigateToLaporan,
             shape = RoundedCornerShape(4.dp),
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )

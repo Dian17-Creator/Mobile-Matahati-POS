@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.data.printer.BluetoothPrinterManager
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.Product
+import id.my.matahati.pos.ui.screen.report.ProductSalesSummaryScreen
 import id.my.matahati.pos.ui.screen.home.components.*
 import id.my.matahati.pos.ui.theme.MobileMatahati_POSTheme
 import kotlinx.coroutines.launch
@@ -353,6 +354,10 @@ fun HomeScreen(
                         currentScreen = "shift"
                         coroutineScope.launch { drawerState.close() }
                     },
+                    onNavigateToLaporan = {
+                        currentScreen = "laporan"
+                        coroutineScope.launch { drawerState.close() }
+                    },
                     onNavigateToPengaturan = {
                         currentScreen = "pengaturan"
                         coroutineScope.launch { drawerState.close() }
@@ -404,12 +409,12 @@ fun HomeScreen(
                 AnimatedContent(
                     targetState = currentScreen,
                     transitionSpec = {
-                        if (targetState == "transaksi_detail") {
+                        if (targetState == "transaksi_detail" || targetState == "ringkasan_penjualan_produk") {
                             slideInHorizontally(initialOffsetX = { it }) + fadeIn() togetherWith
                             slideOutHorizontally(targetOffsetX = { -it / 2 }) + fadeOut()
-                        } else if (initialState == "transaksi_detail") {
-                            // Keluar dari detail dibuat langsung menghilang tanpa animasi geser
-                            EnterTransition.None togetherWith ExitTransition.None
+                        } else if (initialState == "transaksi_detail" || initialState == "ringkasan_penjualan_produk") {
+                            slideInHorizontally(initialOffsetX = { -it / 2 }) + fadeIn() togetherWith
+                            slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
                         } else {
                             fadeIn() togetherWith fadeOut()
                         }
@@ -568,6 +573,31 @@ fun HomeScreen(
                                         coroutineScope.launch {
                                             if (drawerState.isClosed) drawerState.open() else drawerState.close()
                                         }
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            "laporan" -> {
+                                id.my.matahati.pos.ui.screen.report.ReportScreen(
+                                    nidOutlet = nidOutlet,
+                                    onMenuClick = {
+                                        coroutineScope.launch {
+                                            if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                        }
+                                    },
+                                    onNavigateToTransaksi = {
+                                        currentScreen = "transaksi"
+                                    },
+                                    onNavigateToProductSalesSummary = {
+                                        currentScreen = "ringkasan_penjualan_produk"
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            "ringkasan_penjualan_produk" -> {
+                                id.my.matahati.pos.ui.screen.report.ProductSalesSummaryScreen(
+                                    onBack = {
+                                        currentScreen = "laporan"
                                     },
                                     modifier = Modifier.fillMaxSize()
                                 )
