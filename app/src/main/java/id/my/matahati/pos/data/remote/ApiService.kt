@@ -13,6 +13,7 @@ import id.my.matahati.pos.model.CashMovementRequest
 import id.my.matahati.pos.model.CloseShiftRequest
 import id.my.matahati.pos.model.DashboardResponse
 import id.my.matahati.pos.model.OpenShiftRequest
+import id.my.matahati.pos.model.ProductSalesSummaryResponse
 import id.my.matahati.pos.model.ShiftResponse
 import retrofit2.Response
 import retrofit2.http.Body
@@ -146,4 +147,11 @@ interface ApiService {
         @Query("date_to") dateTo: String? = null,
         @Query("nid_outlet") outletId: Int? = null
     ): Response<DashboardResponse>
+
+    @GET("api/pos/reports/product-summary")
+    suspend fun getProductSalesSummary(
+        @Query("date_from") dateFrom: String,
+        @Query("date_to") dateTo: String? = null,
+        @Query("nid_outlet") outletId: Int? = null
+    ): Response<ProductSalesSummaryResponse>
 }

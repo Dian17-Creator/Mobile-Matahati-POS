@@ -407,4 +407,66 @@ class EscPosFormatter(private val cols: Int = 42) {
         out.addAll("\n\n\n\n\n".toByteArray().toList())
         return out.toByteArray()
     }
+
+    fun formatProductSalesSummaryReceipt(
+        dateDisplay: String,
+        items: List<id.my.matahati.pos.model.ProductSalesSummaryItem>,
+        header: id.my.matahati.pos.model.ProductSalesSummaryHeader?,
+        savedOutletName: String? = null
+    ): ByteArray {
+        val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
+            maximumFractionDigits = 0
+        }
+        fun formatNum(num: Double): String {
+            return formatter.format(num)
+        }
+
+        val out = mutableListOf<Byte>()
+        out.addAll(INIT.toList())
+        out.addAll(FONT_B.toList())
+        out.addAll(ALIGN_CENTER.toList())
+
+        val outletName = (savedOutletName ?: "OUTLET MH").uppercase()
+        out.addAll(BOLD_ON.toList())
+        out.addAll(SIZE_DOUBLE.toList())
+        out.addAll("$outletName\n".toByteArray().toList())
+        out.addAll(SIZE_NORMAL.toList())
+        out.addAll("RINGKASAN PENJUALAN PRODUK\n".toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+        out.addAll(drawLine("=").toByteArray().toList())
+
+        out.addAll(ALIGN_LEFT.toList())
+        out.addAll(drawTwoColumns("Tanggal", dateDisplay).toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        items.forEach { item ->
+            val nameLines = wrapText(item.productName, cols)
+            nameLines.forEach { line ->
+                out.addAll("$line\n".toByteArray().toList())
+            }
+
+            val priceStr = formatNum(item.price)
+            val qtyLine = "    $priceStr x${item.soldQty}"
+            val itemTotalStr = formatNum(item.totalSales)
+            out.addAll(drawTwoColumns(qtyLine, itemTotalStr).toByteArray().toList())
+            if (item.categoryName.isNotBlank()) {
+                out.addAll("    Kat: ${item.categoryName}\n".toByteArray().toList())
+            }
+        }
+
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        val totalQty = header?.grandTotalQty ?: items.sumOf { it.soldQty }
+        val grandTotalSales = header?.grandTotalSales ?: items.sumOf { it.totalSales }
+
+        out.addAll(drawTwoColumns("Total Qty", "$totalQty Item").toByteArray().toList())
+        out.addAll(BOLD_ON.toList())
+        out.addAll(drawTwoColumns("Grand Total", "Rp ${formatNum(grandTotalSales)}").toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+
+        out.addAll(drawLine("=").toByteArray().toList())
+        out.addAll("\n\n\n\n\n".toByteArray().toList())
+
+        return out.toByteArray()
+    }
 }
