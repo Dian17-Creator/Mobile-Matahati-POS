@@ -55,8 +55,8 @@ data class ShiftResponse(
     @SerializedName("user") val user: UserInternalModel? = null,
 
     // Field Opsional Laporan Penutupan
-    @SerializedName("total_pax", alternate = ["guest_count", "pax_count", "total_guests", "ntotal_guests"]) val totalPax: Int? = null,
-    @SerializedName("total_receipts", alternate = ["receipt_count", "total_orders", "order_count", "ntotal_orders"]) val totalReceipts: Int? = null,
+    @SerializedName("total_pax", alternate = ["guest_count", "pax_count", "total_guests", "ntotal_guests", "nvisitor", "total_visitors", "npax", "pax"]) val totalPax: Int? = null,
+    @SerializedName("total_receipts", alternate = ["receipt_count", "total_orders", "order_count", "ntotal_orders", "ntotal_transactions", "total_transactions", "transaction_count", "ntransaction", "ntransactions", "norder", "norders", "nreceipt", "nreceipts"]) val totalReceipts: Int? = null,
     @SerializedName("subtotal", alternate = ["nsubtotal", "gross_subtotal"]) val subtotal: Double? = null,
     @SerializedName("discount_amount", alternate = ["bill_discount", "ndiscount", "total_discount"]) val discountAmount: Double? = null
 )
