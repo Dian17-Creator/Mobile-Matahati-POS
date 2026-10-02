@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -33,12 +34,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.my.matahati.pos.model.ShiftResponse
 import id.my.matahati.pos.ui.screen.home.components.OlseraDateFilterDialog
+import id.my.matahati.pos.ui.screen.shift.components.ShiftCloseSalesReceiptDialog
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
 private val OlseraBlueHeader = Color(0xFF1565C0)
+private val GreenSubHeader = Color(0xFF4CAF50)
 private val OlseraGreenButton = Color(0xFF4CAF50)
+
+data class ShiftDayItem(
+    val displayLabel: String,
+    val apiDate: String
+)
 
 @Composable
 fun ShiftScreen(
@@ -48,14 +56,26 @@ fun ShiftScreen(
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var showCashMovementDialog by remember { mutableStateOf(false) }
     var showCloseShiftDialog by remember { mutableStateOf(false) }
     var showDateFilterDialog by remember { mutableStateOf(false) }
+    var showCloseSalesReceiptDialog by remember { mutableStateOf(false) }
 
     val today = remember { Calendar.getInstance().time }
-    val displaySdf = remember { SimpleDateFormat("dd MMM yyyy", Locale("id", "ID")) }
-    var selectedDateText by remember { mutableStateOf(displaySdf.format(today)) }
+    val apiSdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
+    val displayDaySdf = remember { SimpleDateFormat("dd MMM yyyy", Locale("id", "ID")) }
+
+    var selectedDayItems by remember {
+        mutableStateOf(
+            listOf(ShiftDayItem(displayLabel = displayDaySdf.format(today), apiDate = apiSdf.format(today)))
+        )
+    }
+
+    var activeSelectedDayDisplay by remember { mutableStateOf(displayDaySdf.format(today)) }
+    var activeSelectedDayApi by remember { mutableStateOf(apiSdf.format(today)) }
+    var selectedShiftForDetail by remember { mutableStateOf<ShiftResponse?>(null) }
 
     val currentShift = shiftViewModel.currentShift
     val shiftHistory = shiftViewModel.shiftHistory
@@ -63,7 +83,18 @@ fun ShiftScreen(
 
     LaunchedEffect(nidOutlet) {
         shiftViewModel.checkCurrentShift(nidOutlet)
-        shiftViewModel.fetchShiftHistory(nidOutlet)
+    }
+
+    LaunchedEffect(selectedTabIndex, activeSelectedDayApi) {
+        if (selectedTabIndex == 1) {
+            shiftViewModel.fetchShiftHistory(nidOutlet, date = activeSelectedDayApi)
+        }
+    }
+
+    LaunchedEffect(shiftHistory.toList()) {
+        if (selectedTabIndex == 1) {
+            selectedShiftForDetail = shiftHistory.firstOrNull()
+        }
     }
 
     Scaffold(
@@ -126,7 +157,7 @@ fun ShiftScreen(
                         selected = selectedTabIndex == 1,
                         onClick = {
                             selectedTabIndex = 1
-                            shiftViewModel.fetchShiftHistory(nidOutlet)
+                            shiftViewModel.fetchShiftHistory(nidOutlet, date = activeSelectedDayApi)
                         },
                         text = {
                             Text(
@@ -173,95 +204,367 @@ fun ShiftScreen(
                     }
                 }
                 1 -> {
-                    // TAB 1: RIWAYAT
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        // Date Filter Selector Bar
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Color.White,
-                            shadowElevation = 1.dp
+                    // TAB 1: RIWAYAT (2-PANEL SPLIT VIEW MATCHING GAMBAR 2)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
+                    ) {
+                        // =========================================================
+                        // PANEL KIRI: DAFTAR TANGGAL (40% Width)
+                        // =========================================================
+                        Column(
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .fillMaxHeight()
+                                .background(Color.White)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showDateFilterDialog = true }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            // Sub-Header Bar "Tanggal" (Background Putih dengan Garis Pemisah Biru)
+                            Column(modifier = Modifier.fillMaxWidth()) {
                                 Surface(
-                                    shape = CircleShape,
-                                    color = Color(0xFFE1F5FE),
-                                    modifier = Modifier.size(36.dp)
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showDateFilterDialog = true }
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 13.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Icon(
                                             imageVector = Icons.Default.CalendarToday,
-                                            contentDescription = "Pilih Tanggal",
+                                            contentDescription = "Filter Tanggal",
                                             tint = OlseraBlueHeader,
                                             modifier = Modifier.size(18.dp)
+                                        )
+
+                                        Spacer(modifier = Modifier.width(10.dp))
+
+                                        Text(
+                                            text = "Tanggal",
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = OlseraBlueHeader
                                         )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                Text(
-                                    text = selectedDateText,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = OlseraBlueHeader
+                                HorizontalDivider(
+                                    color = OlseraBlueHeader,
+                                    thickness = 1.dp
                                 )
+                            }
+
+                            // Date List Content
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(selectedDayItems) { dayItem ->
+                                    val isSelected = (dayItem.apiDate == activeSelectedDayApi)
+                                    val rowBgColor = if (isSelected) Color(0xFFE3F2FD) else Color.White
+                                    val textColor = if (isSelected) OlseraBlueHeader else Color(0xFF424242)
+                                    val textWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(rowBgColor)
+                                            .clickable {
+                                                activeSelectedDayDisplay = dayItem.displayLabel
+                                                activeSelectedDayApi = dayItem.apiDate
+                                                shiftViewModel.fetchShiftHistory(
+                                                    outletId = nidOutlet,
+                                                    date = dayItem.apiDate
+                                                )
+                                            }
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 14.dp)
+                                        ) {
+                                            Text(
+                                                text = dayItem.displayLabel,
+                                                fontSize = 15.sp,
+                                                fontWeight = textWeight,
+                                                color = textColor
+                                            )
+                                        }
+
+                                        HorizontalDivider(
+                                            color = Color.LightGray.copy(alpha = 0.4f),
+                                            thickness = 0.8.dp
+                                        )
+                                    }
+                                }
                             }
                         }
 
-                        HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                        // Vertical Divider
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .fillMaxHeight()
+                                .background(Color.LightGray.copy(alpha = 0.5f))
+                        )
 
-                        if (shiftViewModel.isHistoryLoading) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = OlseraBlueHeader)
-                            }
-                        } else if (shiftHistory.isEmpty()) {
-                            // EMPTY STATE
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(32.dp),
-                                contentAlignment = Alignment.Center
+                        // =========================================================
+                        // PANEL KANAN: DETAIL SHIFT & CETAK (60% Width)
+                        // =========================================================
+                        Column(
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .fillMaxHeight()
+                                .background(Color.White)
+                        ) {
+                            // Header Bar dengan Tanggal Terpilih (Biru)
+                            Surface(
+                                color = OlseraBlueHeader,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Tidak ada transaksi ditemukan",
+                                        text = activeSelectedDayDisplay.ifBlank { "Detail Shift" },
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF757575)
-                                    )
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    Text(
-                                        text = "Tidak ada transaksi untuk tanggal yang dipilih",
-                                        fontSize = 14.sp,
-                                        color = Color(0xFFBDBDBD),
-                                        textAlign = TextAlign.Center
+                                        color = Color.White,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }
-                        } else {
-                            // HISTORY LIST
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+
+                            // Detail Content / Empty State
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
                             ) {
-                                items(shiftHistory) { shift ->
-                                    ShiftHistoryCard(
-                                        shift = shift,
-                                        onClick = {
-                                            shiftViewModel.selectShiftDetail(shift)
+                                if (shiftViewModel.isHistoryLoading) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(color = OlseraBlueHeader)
+                                    }
+                                } else if (shiftHistory.isEmpty()) {
+                                    // EMPTY STATE (matching Gambar 2)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = "Tidak ada transaksi ditemukan",
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF424242),
+                                                textAlign = TextAlign.Center
+                                            )
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            Text(
+                                                text = "Tidak ada transaksi untuk tanggal yang dipilih",
+                                                fontSize = 14.sp,
+                                                color = Color(0xFF757575),
+                                                textAlign = TextAlign.Center
+                                            )
                                         }
+                                    }
+                                } else {
+                                    // SHIFT DETAIL VIEW
+                                    val shiftToShow = selectedShiftForDetail ?: shiftHistory.first()
+                                    val openingCashVal = shiftToShow.openingCash
+                                    val totalSalesVal = shiftToShow.totalSales
+                                    val cashSalesVal = shiftToShow.cashSales ?: 0.0
+                                    val cashInVal = shiftToShow.cashIn
+                                    val cashOutVal = shiftToShow.cashOut
+                                    val cashRefundVal = shiftToShow.refundCash
+                                    val cashCanceledVal = shiftToShow.cancellationCash
+                                    val netCashMovement = cashInVal - cashOutVal
+
+                                    val expectedCashVal = shiftToShow.expectedCash
+                                        ?: (openingCashVal + cashSalesVal + netCashMovement - cashRefundVal - cashCanceledVal)
+
+                                    val cashierName = shiftToShow.user?.name ?: userName ?: "-"
+                                    val formattedOpenedAt = formatShiftDate(shiftToShow.openedAt)
+
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .verticalScroll(rememberScrollState())
+                                    ) {
+                                        // If multiple shifts exist for selected date, show selector chips
+                                        if (shiftHistory.size > 1) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                shiftHistory.forEach { s ->
+                                                    FilterChip(
+                                                        selected = (s.nid == shiftToShow.nid),
+                                                        onClick = { selectedShiftForDetail = s },
+                                                        label = { Text("Shift #${s.shiftNo}") }
+                                                    )
+                                                }
+                                            }
+                                            HorizontalDivider(color = Color(0xFFE0E0E0))
+                                        }
+
+                                        ShiftInfoRow(
+                                            label = "Kasir",
+                                            value = cashierName,
+                                            isBold = true,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "Mulai Shift",
+                                            value = formattedOpenedAt,
+                                            isBold = true,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        if (!shiftToShow.closedAt.isNullOrBlank()) {
+                                            ShiftInfoRow(
+                                                label = "Shift Berakhir",
+                                                value = formatShiftDate(shiftToShow.closedAt),
+                                                isBold = true,
+                                                verticalPadding = 16.dp
+                                            )
+                                            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+                                        }
+
+                                        ShiftInfoRow(
+                                            label = "Kas",
+                                            value = formatNumberDisplay(expectedCashVal),
+                                            isBold = true,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "Awal di Laci",
+                                            value = formatNumberDisplay(openingCashVal),
+                                            startPadding = 32.dp,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "Total Penjualan",
+                                            value = formatNumberDisplay(totalSalesVal),
+                                            startPadding = 32.dp,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "Kas Pengembalian",
+                                            value = formatNumberDisplay(cashRefundVal),
+                                            startPadding = 32.dp,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "Kas Pembatalan",
+                                            value = formatNumberDisplay(cashCanceledVal),
+                                            startPadding = 32.dp,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "Kas Masuk-Keluar",
+                                            value = formatNumberDisplay(netCashMovement),
+                                            startPadding = 32.dp,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "Total Diharapkan",
+                                            value = formatNumberDisplay(expectedCashVal),
+                                            isBold = true,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        if (shiftToShow.status.uppercase() != "OPEN") {
+                                            val actualCash = shiftToShow.actualCash ?: 0.0
+                                            val difference = shiftToShow.difference ?: 0.0
+
+                                            ShiftInfoRow(
+                                                label = "Kas Fisik (Aktual)",
+                                                value = formatNumberDisplay(actualCash),
+                                                isBold = true,
+                                                verticalPadding = 16.dp,
+                                                valueColor = OlseraBlueHeader
+                                            )
+                                            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                            val diffColor = when {
+                                                difference < 0 -> Color(0xFFC62828)
+                                                difference > 0 -> Color(0xFF2E7D32)
+                                                else -> Color(0xFF555555)
+                                            }
+                                            ShiftInfoRow(
+                                                label = "Selisih",
+                                                value = formatNumberDisplay(difference),
+                                                isBold = true,
+                                                verticalPadding = 16.dp,
+                                                valueColor = diffColor
+                                            )
+                                            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Sticky Bottom Button "Cetak" di Panel Kanan (Full Width Edge-to-Edge)
+                            val currentShiftToPrint = selectedShiftForDetail ?: shiftHistory.firstOrNull()
+                            Button(
+                                onClick = {
+                                    if (currentShiftToPrint != null) {
+                                        showCloseSalesReceiptDialog = true
+                                    }
+                                },
+                                enabled = currentShiftToPrint != null && !shiftViewModel.isPrinting,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = OlseraGreenButton,
+                                    disabledContainerColor = OlseraGreenButton.copy(alpha = 0.5f)
+                                ),
+                                shape = RoundedCornerShape(0.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp)
+                            ) {
+                                if (shiftViewModel.isPrinting) {
+                                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                                } else {
+                                    Text(
+                                        text = "Cetak",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -318,8 +621,36 @@ fun ShiftScreen(
         OlseraDateFilterDialog(
             onDismiss = { showDateFilterDialog = false },
             onDateSelected = { result ->
-                selectedDateText = result.displayLabel
-                shiftViewModel.fetchShiftHistory(nidOutlet, date = result.startDate)
+                val dayList = mutableListOf<ShiftDayItem>()
+                try {
+                    val start = apiSdf.parse(result.startDate)
+                    val end = apiSdf.parse(result.endDate)
+                    if (start != null && end != null) {
+                        val cal = Calendar.getInstance().apply { time = start }
+                        while (!cal.time.after(end)) {
+                            dayList.add(
+                                ShiftDayItem(
+                                    displayLabel = displayDaySdf.format(cal.time),
+                                    apiDate = apiSdf.format(cal.time)
+                                )
+                            )
+                            cal.add(Calendar.DATE, 1)
+                        }
+                    }
+                } catch (e: Exception) {
+                    dayList.add(ShiftDayItem(displayLabel = result.displayLabel, apiDate = result.startDate))
+                }
+
+                if (dayList.isEmpty()) {
+                    dayList.add(ShiftDayItem(displayLabel = result.displayLabel, apiDate = result.startDate))
+                }
+
+                selectedDayItems = dayList
+                if (dayList.isNotEmpty()) {
+                    activeSelectedDayDisplay = dayList.first().displayLabel
+                    activeSelectedDayApi = dayList.first().apiDate
+                }
+                showDateFilterDialog = false
             }
         )
     }
@@ -332,7 +663,23 @@ fun ShiftScreen(
         )
     }
 
-    // Success / Error Alerts
+    // Dialog Pratinjau Penutupan Penjualan (Pop-up Struk)
+    if (showCloseSalesReceiptDialog) {
+        val shiftToPreview = selectedShiftForDetail ?: shiftHistory.firstOrNull()
+        if (shiftToPreview != null) {
+            ShiftCloseSalesReceiptDialog(
+                shift = shiftToPreview,
+                userName = userName,
+                isPrinting = shiftViewModel.isPrinting,
+                onPrintToPhysicalPrinter = {
+                    shiftViewModel.printShift(context, shiftToPreview, userName = userName)
+                },
+                onDismiss = { showCloseSalesReceiptDialog = false }
+            )
+        }
+    }
+
+    // Success / Error / Print Alerts
     if (shiftViewModel.errorMessage != null) {
         AlertDialog(
             onDismissRequest = { shiftViewModel.clearError() },
@@ -353,6 +700,19 @@ fun ShiftScreen(
             text = { Text(shiftViewModel.successMessage ?: "") },
             confirmButton = {
                 TextButton(onClick = { shiftViewModel.clearSuccess() }) {
+                    Text("OK", color = OlseraBlueHeader, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    if (shiftViewModel.printMessage != null) {
+        AlertDialog(
+            onDismissRequest = { shiftViewModel.clearPrintMessage() },
+            title = { Text("Informasi Cetak", fontWeight = FontWeight.Bold) },
+            text = { Text(shiftViewModel.printMessage ?: "") },
+            confirmButton = {
+                TextButton(onClick = { shiftViewModel.clearPrintMessage() }) {
                     Text("OK", color = OlseraBlueHeader, fontWeight = FontWeight.Bold)
                 }
             }
