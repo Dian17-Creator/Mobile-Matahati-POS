@@ -596,6 +596,8 @@ fun HomeScreen(
                             }
                             "ringkasan_penjualan_produk" -> {
                                 id.my.matahati.pos.ui.screen.report.ProductSalesSummaryScreen(
+                                    nidOutlet = nidOutlet,
+                                    savedOutletName = outletName,
                                     onBack = {
                                         currentScreen = "laporan"
                                     },
