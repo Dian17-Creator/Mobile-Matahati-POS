@@ -105,7 +105,8 @@ class ProductSalesSummaryViewModel : ViewModel() {
                     dateDisplay = selectedDayDisplay,
                     items = itemsList,
                     header = summaryHeader,
-                    savedOutletName = savedOutletName
+                    savedOutletName = savedOutletName,
+                    apiDate = selectedDayApi
                 )
 
                 val result = printerManager.printData(address, printBytes)
