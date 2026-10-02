@@ -415,6 +415,7 @@ fun ProductSalesSummaryScreen(
                 Button(
                     onClick = {
                         summaryViewModel.selectedDayDisplay = activeSelectedDayDisplay
+                        summaryViewModel.selectedDayApi = activeSelectedDayApi
                         summaryViewModel.openReceiptPreview()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = OlseraGreenButton),
@@ -452,6 +453,7 @@ fun ProductSalesSummaryScreen(
             items = summaryViewModel.itemsList,
             summaryHeader = summaryViewModel.summaryHeader,
             savedOutletName = savedOutletName,
+            apiDate = activeSelectedDayApi,
             isPrinting = summaryViewModel.isPrinting,
             onPrintToPhysicalPrinter = {
                 summaryViewModel.printToPhysicalPrinter(context, savedOutletName)
