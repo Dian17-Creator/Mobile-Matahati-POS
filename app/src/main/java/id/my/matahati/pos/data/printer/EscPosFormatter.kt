@@ -6,7 +6,7 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class EscPosFormatter(private val cols: Int = 42) {
+class EscPosFormatter(private val cols: Int = 32) {
 
     private val ESC: Byte = 0x1B
     private val GS: Byte = 0x1D
