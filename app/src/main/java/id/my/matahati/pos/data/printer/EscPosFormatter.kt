@@ -483,4 +483,114 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         return out.toByteArray()
     }
+
+    fun formatShiftReceipt(
+        shift: id.my.matahati.pos.model.ShiftResponse,
+        savedOutletName: String? = null,
+        userName: String? = null
+    ): ByteArray {
+        val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
+            maximumFractionDigits = 0
+        }
+        fun formatNum(num: Double): String {
+            return formatter.format(num)
+        }
+
+        fun formatShiftDay(dateTime: String?): String {
+            if (dateTime.isNullOrBlank()) return "-"
+            return try {
+                val inputFormat = if (dateTime.contains("T")) {
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                } else {
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+                }
+                val outputFormat = SimpleDateFormat("EEE, dd MMM yyyy", Locale("id", "ID"))
+                val date = inputFormat.parse(dateTime.replace(".000000Z", "").replace("Z", ""))
+                if (date != null) outputFormat.format(date) else dateTime
+            } catch (e: Exception) {
+                dateTime
+            }
+        }
+
+        val currentPrintedTime = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.forLanguageTag("id-ID")).format(java.util.Date())
+        val outletName = (savedOutletName ?: "MATA HATI CAFE").uppercase()
+
+        val cashierName = shift.user?.name ?: userName ?: "Kasir"
+        val rawReceipts = shift.totalReceipts ?: 0
+        val totalSales = shift.totalSales
+        val totalReceipts = if (rawReceipts > 0) rawReceipts else if (totalSales > 0) 1 else 0
+        val totalPax = if ((shift.totalPax ?: 0) > 0) shift.totalPax!! else totalReceipts
+
+        val discountVal = shift.discountAmount ?: 0.0
+        val subtotalVal = shift.subtotal ?: (totalSales + discountVal)
+
+        val cashSalesVal = shift.cashSales ?: totalSales
+        val refundCashVal = shift.refundCash
+        val cancellationCashVal = shift.cancellationCash
+        val netCashMovement = shift.cashIn - shift.cashOut
+        val expectedCashVal = shift.expectedCash ?: (shift.openingCash + cashSalesVal + netCashMovement - refundCashVal - cancellationCashVal)
+
+        val out = mutableListOf<Byte>()
+        out.addAll(INIT.toList())
+        out.addAll(FONT_B.toList())
+        out.addAll(ALIGN_CENTER.toList())
+
+        // Outlet Name & Title
+        out.addAll(BOLD_ON.toList())
+        out.addAll(SIZE_DOUBLE.toList())
+        out.addAll("$outletName\n".toByteArray().toList())
+        out.addAll(SIZE_NORMAL.toList())
+        out.addAll("Penutupan Penjualan\n\n".toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+
+        // Header Metadata
+        out.addAll(ALIGN_LEFT.toList())
+        out.addAll("Tercetak     : $currentPrintedTime\n".toByteArray().toList())
+        out.addAll("Dicetak Oleh : $cashierName\n\n".toByteArray().toList())
+        out.addAll("Tanggal      : ${formatShiftDay(shift.openedAt)}\n\n".toByteArray().toList())
+
+        // Tamu & Resi
+        out.addAll(drawTwoColumns("Jumlah Tamu", "$totalPax").toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+        out.addAll(drawTwoColumns("Resi", "$totalReceipts").toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+        out.addAll(drawTwoColumns("Pengembalian", formatNum(refundCashVal)).toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        // Penjualan & Subtotal
+        out.addAll(BOLD_ON.toList())
+        out.addAll(drawTwoColumns("Total Penjualan", formatNum(totalSales)).toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        if (discountVal != 0.0) {
+            out.addAll(drawTwoColumns("  Subtotal", formatNum(subtotalVal)).toByteArray().toList())
+            val discText = if (discountVal > 0) "-${formatNum(discountVal)}" else formatNum(discountVal)
+            out.addAll(drawTwoColumns("  Diskon Bill", discText).toByteArray().toList())
+            out.addAll(drawTwoColumns("", formatNum(totalSales)).toByteArray().toList())
+        } else {
+            out.addAll(drawTwoColumns("  Subtotal", formatNum(totalSales)).toByteArray().toList())
+        }
+        out.addAll("\n".toByteArray().toList())
+
+        // Kas Section
+        out.addAll(BOLD_ON.toList())
+        out.addAll(drawTwoColumns("Kas", formatNum(expectedCashVal)).toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        out.addAll(drawTwoColumns("  Kas Penjualan", formatNum(cashSalesVal)).toByteArray().toList())
+        out.addAll(drawTwoColumns("  Kas Pengembalian", formatNum(refundCashVal)).toByteArray().toList())
+        out.addAll(drawTwoColumns("  Kas Pembatalan", formatNum(cancellationCashVal)).toByteArray().toList())
+        out.addAll(drawTwoColumns("  Kas Masuk-Keluar", formatNum(netCashMovement)).toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        out.addAll(BOLD_ON.toList())
+        out.addAll(drawTwoColumns("Total Diharapkan", formatNum(expectedCashVal)).toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+
+        out.addAll("\n\n\n\n\n".toByteArray().toList())
+
+        return out.toByteArray()
+    }
 }

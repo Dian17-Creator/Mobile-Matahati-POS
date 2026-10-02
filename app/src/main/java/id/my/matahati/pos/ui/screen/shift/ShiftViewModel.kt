@@ -1,5 +1,6 @@
 package id.my.matahati.pos.ui.screen.shift
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -7,12 +8,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import id.my.matahati.pos.data.printer.BluetoothPrinterManager
+import id.my.matahati.pos.data.printer.EscPosFormatter
+import id.my.matahati.pos.data.printer.PrinterConnectionManager
 import id.my.matahati.pos.data.remote.RetrofitClient
+import id.my.matahati.pos.data.repository.PrinterRepository
 import id.my.matahati.pos.model.CashMovementRequest
 import id.my.matahati.pos.model.CloseShiftRequest
+import id.my.matahati.pos.model.LocalPrinter
 import id.my.matahati.pos.model.OpenShiftRequest
+import id.my.matahati.pos.model.PrinterRole
+import id.my.matahati.pos.model.PrinterType
 import id.my.matahati.pos.model.ShiftResponse
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 class ShiftViewModel : ViewModel() {
@@ -220,6 +230,87 @@ class ShiftViewModel : ViewModel() {
                 isHistoryLoading = false
             }
         }
+    }
+
+    var isPrinting by mutableStateOf(false)
+        private set
+
+    var printMessage by mutableStateOf<String?>(null)
+
+    fun printShift(
+        context: Context,
+        shift: ShiftResponse?,
+        savedOutletName: String? = null,
+        userName: String? = null
+    ) {
+        if (shift == null) {
+            printMessage = "Tidak ada data shift untuk dicetak"
+            return
+        }
+
+        isPrinting = true
+        printMessage = null
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val repository = PrinterRepository(context)
+                val printers = repository.getPrinters()
+                val receiptPrinter = printers.find { it.role == PrinterRole.RECEIPT }
+
+                val connectionManager = PrinterConnectionManager(context)
+                val formatter = EscPosFormatter(cols = 32)
+                val printBytes = formatter.formatShiftReceipt(
+                    shift = shift,
+                    savedOutletName = savedOutletName,
+                    userName = userName
+                )
+
+                val result = if (receiptPrinter != null) {
+                    connectionManager.printData(receiptPrinter, printBytes)
+                } else {
+                    val prefs = context.getSharedPreferences("printer_prefs", Context.MODE_PRIVATE)
+                    val address = prefs.getString("selected_printer_address", null)
+                    if (!address.isNullOrBlank()) {
+                        val fallbackPrinter = LocalPrinter(
+                            id = "fallback",
+                            name = "Saved Printer",
+                            type = PrinterType.BLUETOOTH,
+                            address = address,
+                            role = PrinterRole.RECEIPT
+                        )
+                        connectionManager.printData(fallbackPrinter, printBytes)
+                    } else {
+                        val btManager = BluetoothPrinterManager(context)
+                        val paired = btManager.getPairedDevices()
+                        if (paired.isNotEmpty()) {
+                            btManager.printData(paired.first().address, printBytes)
+                        } else {
+                            Result.failure(Exception("Printer belum terhubung. Silakan atur printer terlebih dahulu di menu Pengaturan."))
+                        }
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    if (result.isSuccess) {
+                        printMessage = "Berhasil mencetak laporan shift"
+                    } else {
+                        printMessage = "Gagal mencetak: ${result.exceptionOrNull()?.localizedMessage ?: "Cek koneksi printer"}"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    printMessage = "Terjadi kesalahan saat mencetak: ${e.localizedMessage}"
+                }
+            } finally {
+                withContext(Dispatchers.Main) {
+                    isPrinting = false
+                }
+            }
+        }
+    }
+
+    fun clearPrintMessage() {
+        printMessage = null
     }
 
     fun selectShiftDetail(shift: ShiftResponse) {
