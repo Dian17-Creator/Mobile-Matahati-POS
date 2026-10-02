@@ -8,7 +8,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import id.my.matahati.pos.data.printer.BluetoothPrinterManager
 import id.my.matahati.pos.data.printer.EscPosFormatter
+import id.my.matahati.pos.data.printer.PrinterConnectionManager
 import id.my.matahati.pos.data.remote.RetrofitClient
+import id.my.matahati.pos.data.repository.PrinterRepository
+import id.my.matahati.pos.model.LocalPrinter
+import id.my.matahati.pos.model.PrinterRole
+import id.my.matahati.pos.model.PrinterType
 import id.my.matahati.pos.model.ProductSalesSummaryHeader
 import id.my.matahati.pos.model.ProductSalesSummaryItem
 import kotlinx.coroutines.launch
@@ -90,17 +95,12 @@ class ProductSalesSummaryViewModel : ViewModel() {
             isPrinting = true
             printMessage = null
             try {
-                val prefs = context.getSharedPreferences("pos_prefs", Context.MODE_PRIVATE)
-                val address = prefs.getString("selected_printer_address", null)
+                val repo = PrinterRepository(context)
+                val printers = repo.getPrinters()
+                val receiptPrinter = printers.find { it.role == PrinterRole.RECEIPT }
 
-                if (address.isNullOrBlank()) {
-                    printMessage = "Printer belum terhubung. Silakan atur printer terlebih dahulu di menu Pengaturan."
-                    isPrinting = false
-                    return@launch
-                }
-
-                val printerManager = BluetoothPrinterManager(context)
-                val formatter = EscPosFormatter()
+                val connectionManager = PrinterConnectionManager(context)
+                val formatter = EscPosFormatter(cols = 32)
                 val printBytes = formatter.formatProductSalesSummaryReceipt(
                     dateDisplay = selectedDayDisplay,
                     items = itemsList,
@@ -109,11 +109,35 @@ class ProductSalesSummaryViewModel : ViewModel() {
                     apiDate = selectedDayApi
                 )
 
-                val result = printerManager.printData(address, printBytes)
+                val result = if (receiptPrinter != null) {
+                    connectionManager.printData(receiptPrinter, printBytes)
+                } else {
+                    val prefs = context.getSharedPreferences("printer_prefs", Context.MODE_PRIVATE)
+                    val address = prefs.getString("selected_printer_address", null)
+                    if (!address.isNullOrBlank()) {
+                        val fallbackPrinter = LocalPrinter(
+                            id = "fallback",
+                            name = "Saved Printer",
+                            type = PrinterType.BLUETOOTH,
+                            address = address,
+                            role = PrinterRole.RECEIPT
+                        )
+                        connectionManager.printData(fallbackPrinter, printBytes)
+                    } else {
+                        val btManager = BluetoothPrinterManager(context)
+                        val paired = btManager.getPairedDevices()
+                        if (paired.isNotEmpty()) {
+                            btManager.printData(paired.first().address, printBytes)
+                        } else {
+                            Result.failure(Exception("Printer belum terhubung. Silakan atur printer terlebih dahulu di menu Pengaturan."))
+                        }
+                    }
+                }
+
                 if (result.isSuccess) {
                     printMessage = "Berhasil mencetak ke printer fisik"
                 } else {
-                    printMessage = "Gagal mencetak: ${result.exceptionOrNull()?.localizedMessage}"
+                    printMessage = "Gagal mencetak: ${result.exceptionOrNull()?.localizedMessage ?: "Cek koneksi printer"}"
                 }
             } catch (e: Exception) {
                 printMessage = "Terjadi kesalahan saat mencetak: ${e.localizedMessage}"
