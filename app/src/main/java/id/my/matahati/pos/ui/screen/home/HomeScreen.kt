@@ -1710,7 +1710,7 @@ fun HomeScreen(
                         showAddCustomerPanel = false
                     },
                     onSubmit = { req ->
-                        viewModel.createNewCustomer(req) { newCustomer ->
+                        viewModel.createNewCustomer(req, nidOutlet) { newCustomer ->
                             selectedCustomer = newCustomer
                             viewModel.resetRegions()
                             showAddCustomerPanel = false
@@ -1780,7 +1780,7 @@ fun HomeScreen(
                     },
                     onSubmit = { req ->
                         customerToEdit?.let { target ->
-                            viewModel.updateCustomer(target.id, req) { updatedCustomer ->
+                            viewModel.updateCustomer(target.id, req, nidOutlet) { updatedCustomer ->
                                 if (selectedCustomer?.id == updatedCustomer.id) {
                                     selectedCustomer = updatedCustomer
                                 }

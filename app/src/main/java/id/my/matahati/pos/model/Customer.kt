@@ -13,7 +13,9 @@ data class CustomerTypeDto(
     @SerializedName("nid")
     val nid: Int,
     @SerializedName("cname")
-    val cname: String
+    val cname: String,
+    @SerializedName("nid_outlet")
+    val nidOutlet: Int? = null
 )
 
 data class CustomerResponse(
@@ -37,6 +39,8 @@ data class CustomerDto(
     val nid: Int? = null,
     @SerializedName("nid_type")
     val nidType: Int? = null,
+    @SerializedName("nid_outlet")
+    val nidOutlet: Int? = null,
     @SerializedName("type")
     val type: CustomerTypeDto? = null,
     @SerializedName("cname")
@@ -92,6 +96,7 @@ data class CustomerDto(
 
 data class CreateCustomerRequest(
     @SerializedName("nid_type") val nidType: Int? = null,
+    @SerializedName("nid_outlet") val nidOutlet: Int? = null,
     @SerializedName("cname") val name: String,
     @SerializedName("cphone") val phone: String? = null,
     @SerializedName("cemail") val email: String? = null,

@@ -115,17 +115,48 @@ fun CheckPrintPreviewDialog(
                             )
                         }
 
-                        val infoText = buildString {
-                            if (!tableName.isNullOrBlank()) append("Meja: $tableName ")
-                            if (!customerName.isNullOrBlank()) append("Cust: $customerName")
-                        }.trim()
+                        if (!tableName.isNullOrBlank()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Meja",
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = tableName,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        if (!customerName.isNullOrBlank()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Customer",
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = customerName,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = infoText,
+                                text = "Jumlah Tamu",
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 12.sp
                             )
@@ -138,7 +169,7 @@ fun CheckPrintPreviewDialog(
 
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "------------------------------------------",
+                            text = "--------------------------------",
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center,
@@ -147,7 +178,7 @@ fun CheckPrintPreviewDialog(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         // Order Type
-                        val displayOrderType = if (orderType.isNotBlank()) orderType.uppercase() else "DINE-IN"
+                        val displayOrderType = if (orderType.isNotBlank()) orderType.replace("_", "-").uppercase() else "DINE-IN"
                         Text(
                             text = displayOrderType,
                             fontFamily = FontFamily.Monospace,
@@ -201,7 +232,7 @@ fun CheckPrintPreviewDialog(
 
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "------------------------------------------",
+                            text = "--------------------------------",
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center,

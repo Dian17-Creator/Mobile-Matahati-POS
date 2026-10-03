@@ -63,12 +63,17 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(FONT_B.toList())
         out.addAll(ALIGN_CENTER.toList())
         
-        // 2. Header Outlet (Bold & Double Size)
-        val outletName = (trx.outlet?.name ?: savedOutletName ?: "OUTLET MH").uppercase()
+        // 2. Header Outlet (Bold & Double Size if <= 16 chars)
+        val outletName = (trx.outlet?.name ?: savedOutletName ?: "MATA HATI CAFE").uppercase()
         out.addAll(BOLD_ON.toList())
-        out.addAll(SIZE_DOUBLE.toList())
-        out.addAll("$outletName\n".toByteArray().toList())
-        out.addAll(SIZE_NORMAL.toList())
+        if (outletName.length <= 16) {
+            out.addAll(SIZE_DOUBLE.toList())
+            out.addAll("$outletName\n".toByteArray().toList())
+            out.addAll(SIZE_NORMAL.toList())
+        } else {
+            out.addAll(SIZE_NORMAL.toList())
+            out.addAll("$outletName\n".toByteArray().toList())
+        }
         out.addAll(BOLD_OFF.toList())
         out.addAll("\n".toByteArray().toList())
 
@@ -183,21 +188,17 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         // 3. Info Pemesanan
         out.addAll(ALIGN_LEFT.toList())
-        out.addAll(drawTwoColumns("Waktu Pemesanan", "Dilayani Ole").toByteArray().toList())
+        out.addAll(drawTwoColumns("Waktu Pemesanan", "Dilayani Oleh").toByteArray().toList())
         val cashierText = cashierName.ifBlank { "kasir" }
         out.addAll(drawTwoColumns(now, cashierText).toByteArray().toList())
 
-        val paxText = "$paxCount Tamu"
-        val infoText = buildString {
-            if (!tableName.isNullOrBlank()) append("Meja: $tableName  ")
-            if (!customerName.isNullOrBlank()) append("Cust: $customerName")
-        }.trim()
-
-        if (infoText.isNotBlank()) {
-            out.addAll(drawTwoColumns(infoText, paxText).toByteArray().toList())
-        } else {
-            out.addAll(drawTwoColumns("", paxText).toByteArray().toList())
+        if (!tableName.isNullOrBlank()) {
+            out.addAll(drawTwoColumns("Meja", tableName).toByteArray().toList())
         }
+        if (!customerName.isNullOrBlank()) {
+            out.addAll(drawTwoColumns("Customer", customerName).toByteArray().toList())
+        }
+        out.addAll(drawTwoColumns("Jumlah Tamu", "$paxCount Tamu").toByteArray().toList())
 
         // 4. Separator
         out.addAll(drawLine("-").toByteArray().toList())
@@ -205,7 +206,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         // 5. Order Type
         out.addAll(ALIGN_CENTER.toList())
         out.addAll(BOLD_ON.toList())
-        val displayOrderType = if (orderType.isNotBlank()) orderType.uppercase() else "DINE-IN"
+        val displayOrderType = if (orderType.isNotBlank()) orderType.replace("_", "-").uppercase() else "DINE-IN"
         out.addAll("$displayOrderType\n".toByteArray().toList())
         out.addAll(BOLD_OFF.toList())
         out.addAll(ALIGN_LEFT.toList())
@@ -347,11 +348,16 @@ class EscPosFormatter(private val cols: Int = 32) {
     }
 
     private fun drawTwoColumns(left: String, right: String): String {
-        val padding = cols - left.length - right.length
-        return if (padding > 0) {
-            left + " ".repeat(padding) + right + "\n"
+        val availableLeft = cols - right.length - 1
+        return if (left.length <= availableLeft) {
+            val padding = cols - left.length - right.length
+            left + " ".repeat(padding.coerceAtLeast(0)) + right + "\n"
+        } else if (availableLeft > 3) {
+            val truncatedLeft = left.take(availableLeft)
+            val padding = cols - truncatedLeft.length - right.length
+            truncatedLeft + " ".repeat(padding.coerceAtLeast(0)) + right + "\n"
         } else {
-            left + "\n" + " ".repeat(cols - right.length) + right + "\n"
+            left + "\n" + " ".repeat((cols - right.length).coerceAtLeast(0)) + right + "\n"
         }
     }
 
