@@ -375,8 +375,10 @@ class HomeViewModel : ViewModel() {
             isLoading = true
             errorMessage = null
             try {
+                val outletIdInt = nidOutlet?.toIntOrNull()
+
                 // Fetch Categories
-                val catResponse = RetrofitClient.apiService.getCategories()
+                val catResponse = RetrofitClient.apiService.getCategories(outletId = outletIdInt)
                 if (catResponse.isSuccessful && catResponse.body()?.success == true) {
                     val dtos = catResponse.body()?.data ?: emptyList()
                     val fetchedCategories = mutableListOf<Category>(
@@ -396,7 +398,7 @@ class HomeViewModel : ViewModel() {
                 }
 
                 // Fetch Customers
-                val custResponse = RetrofitClient.apiService.getCustomers()
+                val custResponse = RetrofitClient.apiService.getCustomers(outletId = outletIdInt)
                 if (custResponse.isSuccessful && custResponse.body()?.success == true) {
                     val dtos = custResponse.body()?.data ?: emptyList()
                     val fetchedCustomers = dtos.map { it.toCustomer() }
@@ -406,7 +408,7 @@ class HomeViewModel : ViewModel() {
 
                 // Fetch Customer Types
                 try {
-                    val custTypeResponse = RetrofitClient.apiService.getCustomerTypes()
+                    val custTypeResponse = RetrofitClient.apiService.getCustomerTypes(outletId = outletIdInt)
                     if (custTypeResponse.isSuccessful && custTypeResponse.body()?.success == true) {
                         val types = custTypeResponse.body()?.data ?: emptyList()
                         customerTypes.clear()
@@ -983,14 +985,37 @@ class HomeViewModel : ViewModel() {
         regionError = null
     }
 
+    fun fetchCustomers(nidOutlet: String? = null, search: String? = null) {
+        viewModelScope.launch {
+            try {
+                val outletIdInt = nidOutlet?.toIntOrNull()
+                val response = RetrofitClient.apiService.getCustomers(outletId = outletIdInt, search = search)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val dtos = response.body()?.data ?: emptyList()
+                    val fetchedCustomers = dtos.map { it.toCustomer() }
+                    customers.clear()
+                    customers.addAll(fetchedCustomers)
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Gagal memuat customers: ${e.message}")
+            }
+        }
+    }
+
     fun createNewCustomer(
         request: id.my.matahati.pos.model.CreateCustomerRequest,
+        nidOutlet: String? = null,
         onSuccess: (id.my.matahati.pos.model.Customer) -> Unit
     ) {
         viewModelScope.launch {
             isSubmitting = true
             try {
-                val response = RetrofitClient.apiService.createCustomer(request)
+                val payload = if (request.nidOutlet == null && nidOutlet != null) {
+                    request.copy(nidOutlet = nidOutlet.toIntOrNull())
+                } else {
+                    request
+                }
+                val response = RetrofitClient.apiService.createCustomer(payload)
                 if (response.isSuccessful && response.body()?.success == true) {
                     val dto = response.body()?.data
                     val newCustomer = dto?.toCustomer() ?: id.my.matahati.pos.model.Customer(
@@ -1063,12 +1088,18 @@ class HomeViewModel : ViewModel() {
     fun updateCustomer(
         id: String,
         request: id.my.matahati.pos.model.CreateCustomerRequest,
+        nidOutlet: String? = null,
         onSuccess: (id.my.matahati.pos.model.Customer) -> Unit
     ) {
         viewModelScope.launch {
             isSubmitting = true
             try {
-                val response = RetrofitClient.apiService.updateCustomer(id, request)
+                val payload = if (request.nidOutlet == null && nidOutlet != null) {
+                    request.copy(nidOutlet = nidOutlet.toIntOrNull())
+                } else {
+                    request
+                }
+                val response = RetrofitClient.apiService.updateCustomer(id, payload)
                 val dto = response.body()?.data
                 val updatedCustomer = dto?.toCustomer() ?: Customer(
                     id = id,

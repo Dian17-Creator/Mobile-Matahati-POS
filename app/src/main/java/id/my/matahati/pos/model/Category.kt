@@ -13,7 +13,9 @@ data class CategoryDto(
     @SerializedName("nid")
     val nid: Int,
     @SerializedName("cname")
-    val cname: String
+    val cname: String,
+    @SerializedName("nid_outlet")
+    val nidOutlet: Int? = null
 ) {
     fun toCategory(): Category {
         return Category(

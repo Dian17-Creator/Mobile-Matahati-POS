@@ -28,7 +28,9 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @GET("api/categories")
-    suspend fun getCategories(): Response<CategoryResponse>
+    suspend fun getCategories(
+        @Query("nid_outlet") outletId: Int? = null
+    ): Response<CategoryResponse>
 
     @GET("api/products")
     suspend fun getProducts(
@@ -36,10 +38,15 @@ interface ApiService {
     ): Response<ProductResponse>
 
     @GET("api/customers")
-    suspend fun getCustomers(): Response<CustomerResponse>
+    suspend fun getCustomers(
+        @Query("nid_outlet") outletId: Int? = null,
+        @Query("search") search: String? = null
+    ): Response<CustomerResponse>
 
     @GET("api/customer-types")
-    suspend fun getCustomerTypes(): Response<id.my.matahati.pos.model.CustomerTypeResponse>
+    suspend fun getCustomerTypes(
+        @Query("nid_outlet") outletId: Int? = null
+    ): Response<id.my.matahati.pos.model.CustomerTypeResponse>
 
     @POST("api/customers")
     suspend fun createCustomer(@Body request: id.my.matahati.pos.model.CreateCustomerRequest): Response<id.my.matahati.pos.model.SingleCustomerResponse>
