@@ -1328,7 +1328,7 @@ class HomeViewModel : ViewModel() {
         val parsedOutlet = nidOutlet?.toIntOrNull() ?: 1
 
         val request = TransactionRequest(
-            nidCustomer = selectedCustomer?.id,
+            nidCustomer = selectedCustomer?.id?.toIntOrNull(),
             nidOutlet = parsedOutlet,
             nidUser = selectedServedBy?.id,
             nidPayment = selectedPayment?.id,
