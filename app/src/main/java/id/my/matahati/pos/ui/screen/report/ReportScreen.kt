@@ -33,7 +33,7 @@ import id.my.matahati.pos.model.SalesByDate
 import id.my.matahati.pos.model.TopProductGroup
 import id.my.matahati.pos.ui.screen.home.components.OlseraDateFilterDialog
 
-private val OlseraBlueHeader = Color(0xFF1565C0)
+private val OlseraBlueHeader = Color(0xFF24BBCC)
 private val GreenSalesCard = Color(0xFF4CAF50)
 private val OrangeRefundCard = Color(0xFFFB8C00)
 
@@ -349,7 +349,7 @@ private fun ReportTypeSelectionDialog(
                             selected = (tempSelection == option),
                             onClick = { tempSelection = option },
                             colors = RadioButtonDefaults.colors(
-                                selectedColor = Color(0xFF0288D1)
+                                selectedColor = Color(0xFF24BBCC)
                             )
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -369,7 +369,7 @@ private fun ReportTypeSelectionDialog(
                 Text(
                     text = "PILIH",
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0288D1)
+                    color = Color(0xFF24BBCC)
                 )
             }
         },
@@ -380,7 +380,7 @@ private fun ReportTypeSelectionDialog(
                 Text(
                     text = "BATAL",
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0288D1)
+                    color = Color(0xFF24BBCC)
                 )
             }
         }

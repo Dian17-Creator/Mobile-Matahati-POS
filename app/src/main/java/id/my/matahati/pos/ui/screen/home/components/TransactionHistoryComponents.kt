@@ -148,14 +148,14 @@ fun TransactionItemCard(
             // Icon
             Surface(
                 shape = CircleShape,
-                color = if (isCancelled) Color(0xFFFEEBEE) else Color(0xFFE3F2FD),
+                color = if (isCancelled) Color(0xFFFEEBEE) else Color(0xFFE0F7FA),
                 modifier = Modifier.size(38.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = if (isCancelled) Icons.Default.Block else Icons.Default.Receipt,
                         contentDescription = null,
-                        tint = if (isCancelled) Color.Red else Color(0xFF1565C0),
+                        tint = if (isCancelled) Color.Red else Color(0xFF24BBCC),
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -208,7 +208,7 @@ fun TransactionItemCard(
                     text = if (isCancelled) "0 (Dibatalkan) - $paymentName" else "$amountStr - $paymentName$customerStr",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isCancelled) Color.Red else Color(0xFF1565C0)
+                    color = if (isCancelled) Color.Red else Color(0xFF24BBCC)
                 )
             }
         }

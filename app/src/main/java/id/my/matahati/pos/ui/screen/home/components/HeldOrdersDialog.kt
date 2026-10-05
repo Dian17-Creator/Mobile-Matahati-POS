@@ -160,7 +160,7 @@ fun HeldOrdersDialog(
                                             text = "Ketuk untuk membuka",
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF1565C0)
+                                            color = Color(0xFF24BBCC)
                                         )
                                     }
                                 }

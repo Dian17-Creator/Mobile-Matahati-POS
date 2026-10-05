@@ -90,8 +90,8 @@ fun ServedByDialog(
                             val isSelected = selectedUser?.id == user.id
                             Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                color = if (isSelected) Color(0xFFE3F2FD) else Color(0xFFFAFAFA),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) Color(0xFF1565C0) else Color(0xFFE0E0E0)),
+                                color = if (isSelected) Color(0xFFE0F7FA) else Color(0xFFFAFAFA),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) Color(0xFF24BBCC) else Color(0xFFE0E0E0)),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { onUserSelected(user) }
@@ -108,7 +108,7 @@ fun ServedByDialog(
                                             text = user.name,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp,
-                                            color = if (isSelected) Color(0xFF1565C0) else Color.Black
+                                            color = if (isSelected) Color(0xFF24BBCC) else Color.Black
                                         )
                                         if (user.username.isNotBlank()) {
                                             Text(
@@ -121,14 +121,14 @@ fun ServedByDialog(
 
                                     Surface(
                                         shape = RoundedCornerShape(12.dp),
-                                        color = if (isSelected) Color(0xFF1565C0).copy(alpha = 0.12f) else Color(0xFFEEEEEE),
+                                        color = if (isSelected) Color(0xFF24BBCC).copy(alpha = 0.12f) else Color(0xFFEEEEEE),
                                         modifier = Modifier.padding(start = 8.dp)
                                     ) {
                                         Text(
                                             text = user.displayRole,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = if (isSelected) Color(0xFF1565C0) else Color.DarkGray,
+                                            color = if (isSelected) Color(0xFF24BBCC) else Color.DarkGray,
                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                         )
                                     }

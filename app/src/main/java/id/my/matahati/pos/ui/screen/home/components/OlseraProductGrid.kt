@@ -85,7 +85,7 @@ fun OlseraProductCard(
 ) {
     Card(
         shape = RoundedCornerShape(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0D47A1)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF24BBCC)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = modifier
             .fillMaxWidth()
@@ -145,10 +145,21 @@ fun OlseraProductCard(
                     text = formatRawCurrency(product.price),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF0D47A1),
+                    color = Color(0xFF24BBCC),
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                if (product.onlinePrice > 0.0) {
+                    Text(
+                        text = "Online: Rp ${formatRawCurrency(product.onlinePrice)}",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Gray,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

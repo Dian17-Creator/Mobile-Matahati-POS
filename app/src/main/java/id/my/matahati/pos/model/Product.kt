@@ -20,6 +20,8 @@ data class ProductDto(
     val cname: String,
     @SerializedName("nprice")
     val nprice: Double,
+    @SerializedName("nprice_online")
+    val npriceOnline: Double? = null,
     @SerializedName("cphotos")
     val cphotos: String?,
     @SerializedName("cstatus")
@@ -30,9 +32,10 @@ data class ProductDto(
             id = nid.toString(),
             name = cname,
             price = nprice,
+            onlinePrice = npriceOnline ?: 0.0,
             categoryId = nidCategory?.toString() ?: "1",
             stock = 99,
-            iconEmoji = "🍽️",
+            iconEmoji = "📦",
             imageUrl = cphotos,
             isAvailable = cstatus?.lowercase() != "inactive",
             stationName = when (nidCategory) {
@@ -48,6 +51,7 @@ data class Product(
     val id: String,
     val name: String,
     val price: Double,
+    val onlinePrice: Double = 0.0,
     val categoryId: String,
     val stock: Int,
     val iconEmoji: String = "📦",
@@ -60,5 +64,12 @@ data class Product(
             val formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("id-ID"))
             formatter.maximumFractionDigits = 0
             return formatter.format(price)
+        }
+
+    val formattedOnlinePrice: String
+        get() {
+            val formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("id-ID"))
+            formatter.maximumFractionDigits = 0
+            return formatter.format(onlinePrice)
         }
 }

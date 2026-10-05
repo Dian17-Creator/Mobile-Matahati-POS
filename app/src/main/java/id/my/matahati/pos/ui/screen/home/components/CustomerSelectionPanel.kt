@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.my.matahati.pos.model.Customer
 
-private val PanelBlueHeader = Color(0xFF1565C0)
-private val PanelBgColor = Color(0xFFEBF5FE)
+private val PanelBlueHeader = Color(0xFF24BBCC)
+private val PanelBgColor = Color(0xFFE0F7FA)
 
 @Composable
 fun CustomerSelectionPanel(
@@ -214,7 +214,7 @@ private fun CustomerItemRow(
 
     val avatarBgColor = remember(customer.name) {
         val colors = listOf(
-            Color(0xFF0288D1), Color(0xFF00897B), Color(0xFF7CB342),
+            Color(0xFF24BBCC), Color(0xFF00897B), Color(0xFF7CB342),
             Color(0xFF8E24AA), Color(0xFFE53935), Color(0xFFD81B60), Color(0xFFF57C00)
         )
         val index = kotlin.math.abs(customer.name.hashCode()) % colors.size

@@ -45,7 +45,7 @@ fun CashierConfirmationDialog(
                 Text(
                     text = buildAnnotatedString {
                         append("Apakah kasir yang melayani sudah benar? ")
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))) {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color(0xFF24BBCC))) {
                             append(cashierName)
                         }
                     },
@@ -73,7 +73,7 @@ fun CashierConfirmationDialog(
 
                     Button(
                         onClick = onConfirm,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC)),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .weight(1f)

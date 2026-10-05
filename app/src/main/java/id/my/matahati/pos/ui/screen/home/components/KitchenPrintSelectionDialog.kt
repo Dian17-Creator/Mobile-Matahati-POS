@@ -71,7 +71,7 @@ fun KitchenPrintSelectionDialog(
                         Checkbox(
                             checked = selectedStations.contains(station),
                             onCheckedChange = { onToggleStation(station) },
-                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF0288D1))
+                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF24BBCC))
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
@@ -116,7 +116,7 @@ fun KitchenPrintSelectionDialog(
                     
                     Text(
                         text = "CETAK ULANG PESANAN",
-                        color = Color(0xFF0288D1),
+                        color = Color(0xFF24BBCC),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         modifier = Modifier.clickable { onConfirmPrint("ULANG") }

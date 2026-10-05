@@ -97,7 +97,7 @@ fun OlseraOrderNoteDialog(
 
                     Button(
                         onClick = { onSave(noteText.trim()) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC)),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .weight(1f)
