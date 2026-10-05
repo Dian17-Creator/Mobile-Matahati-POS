@@ -61,8 +61,8 @@ import java.text.NumberFormat
 import java.util.Locale
 
 val OlseraGreenPay = Color(0xFF4CAF50)
-val OlseraHeaderBlue = Color(0xFF1565C0)
-val OlseraLightBg = Color(0xFFEBF3FA)
+val OlseraHeaderBlue = Color(0xFF24BBCC)
+val OlseraLightBg = Color(0xFFE0F7FA)
 
 @Composable
 fun OlseraCartPanel(
@@ -588,7 +588,7 @@ private fun QuickActionButton(
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(if (isDestructive) Color(0xFFE53935) else Color(0xFF0288D1)),
+                .background(if (isDestructive) Color(0xFFE53935) else Color(0xFF24BBCC)),
             contentAlignment = Alignment.Center
         ) {
             Icon(

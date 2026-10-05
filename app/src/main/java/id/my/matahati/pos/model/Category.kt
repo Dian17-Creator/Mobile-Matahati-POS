@@ -33,7 +33,7 @@ private fun getEmojiForCategory(name: String): String {
         lower.contains("minuman") || lower.contains("drink") || lower.contains("kopi") || lower.contains("coffee") -> "☕"
         lower.contains("snack") || lower.contains("cemilan") -> "🍟"
         lower.contains("dessert") || lower.contains("cake") -> "🍰"
-        else -> "🍽️"
+        else -> "📦"
     }
 }
 

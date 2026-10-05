@@ -34,8 +34,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-private val PanelBlueHeader = Color(0xFF1565C0)
-private val PanelBgColor = Color(0xFFEBF5FE)
+private val PanelBlueHeader = Color(0xFF24BBCC)
+private val PanelBgColor = Color(0xFFE0F7FA)
 
 @Composable
 fun AddCustomerPanel(

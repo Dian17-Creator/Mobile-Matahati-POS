@@ -77,7 +77,7 @@ fun PaymentScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
             Surface(
-                color = Color(0xFF1565C0),
+                color = Color(0xFF24BBCC),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -137,8 +137,8 @@ fun PaymentScreen(
                                 val isSelected = selectedPayment?.id == method.id
                                 Surface(
                                     shape = RoundedCornerShape(10.dp),
-                                    color = if (isSelected) Color(0xFFE3F2FD) else Color(0xFFFAFAFA),
-                                    border = BorderStroke(1.dp, if (isSelected) Color(0xFF1565C0) else Color(0xFFE0E0E0)),
+                                    color = if (isSelected) Color(0xFFE0F7FA) else Color(0xFFFAFAFA),
+                                    border = BorderStroke(1.dp, if (isSelected) Color(0xFF24BBCC) else Color(0xFFE0E0E0)),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable { selectedPayment = method }
@@ -158,7 +158,7 @@ fun PaymentScreen(
                                             text = method.name,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp,
-                                            color = if (isSelected) Color(0xFF1565C0) else Color.DarkGray
+                                            color = if (isSelected) Color(0xFF24BBCC) else Color.DarkGray
                                         )
                                     }
                                 }
@@ -197,7 +197,7 @@ fun PaymentScreen(
                             // Total Tagihan Card
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFFEBF3FA),
+                                color = Color(0xFFE0F7FA),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
@@ -212,7 +212,7 @@ fun PaymentScreen(
                                         text = "Rp ${formatter.format(grandTotal)}",
                                         fontWeight = FontWeight.ExtraBold,
                                         fontSize = 18.sp,
-                                        color = Color(0xFF1565C0)
+                                        color = Color(0xFF24BBCC)
                                     )
                                 }
                             }

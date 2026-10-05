@@ -35,7 +35,7 @@ import id.my.matahati.pos.model.LocalPrinter
 import id.my.matahati.pos.model.PrinterRole
 import id.my.matahati.pos.model.PrinterType
 
-val SettingsBlue = Color(0xFF1565C0)
+val SettingsBlue = Color(0xFF24BBCC)
 
 @Composable
 fun SettingsScreen(
@@ -453,7 +453,7 @@ fun PrinterCard(
                     Surface(
                         shape = RoundedCornerShape(6.dp),
                         color = when (printer.role) {
-                            PrinterRole.RECEIPT -> Color(0xFF1565C0) // Blue
+                            PrinterRole.RECEIPT -> Color(0xFF24BBCC) // Blue
                             PrinterRole.KITCHEN -> Color(0xFFE65100) // Orange
                             PrinterRole.BAR -> Color(0xFF6A1B9A) // Purple
                         }

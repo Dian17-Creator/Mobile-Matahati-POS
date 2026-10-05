@@ -98,7 +98,7 @@ fun OlseraDiscountDialog(
                         .padding(horizontal = 24.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF1565C0),
+                        focusedBorderColor = Color(0xFF24BBCC),
                         unfocusedBorderColor = Color.LightGray
                     )
                 )
@@ -149,7 +149,7 @@ fun OlseraDiscountDialog(
                                 Icon(
                                     imageVector = Icons.Default.ConfirmationNumber,
                                     contentDescription = null,
-                                    tint = if (isEligible) Color(0xFF1565C0) else Color.Gray,
+                                    tint = if (isEligible) Color(0xFF24BBCC) else Color.Gray,
                                     modifier = Modifier.size(32.dp)
                                 )
                                 
@@ -216,7 +216,7 @@ fun OlseraDiscountDialog(
                         onManualDiscountApplied(manualDiscount)
                         onDismiss()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC)),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()

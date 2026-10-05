@@ -74,7 +74,7 @@ fun PrinterSelectionDialog(
                         onClick = onTestPrint,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(4.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1E88E5))
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF24BBCC))
                     ) {
                         Text("TEST PRINT")
                     }
@@ -108,7 +108,7 @@ fun DeviceItem(name: String, address: String, isSelected: Boolean, onClick: () -
                 text = name, 
                 fontSize = 16.sp, 
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, 
-                color = if (isSelected) Color(0xFF1E88E5) else Color.Black
+                color = if (isSelected) Color(0xFF24BBCC) else Color.Black
             )
             Text(text = address, fontSize = 12.sp, color = Color.Gray)
         }
@@ -117,7 +117,7 @@ fun DeviceItem(name: String, address: String, isSelected: Boolean, onClick: () -
                 text = "✓",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E88E5),
+                color = Color(0xFF24BBCC),
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
         }

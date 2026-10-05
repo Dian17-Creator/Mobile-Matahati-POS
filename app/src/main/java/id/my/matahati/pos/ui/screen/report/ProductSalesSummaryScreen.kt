@@ -29,7 +29,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val OlseraBlueHeader = Color(0xFF1565C0)
+private val OlseraBlueHeader = Color(0xFF24BBCC)
 private val GreenSubHeader = Color(0xFF4CAF50)
 private val OlseraGreenButton = Color(0xFF4CAF50)
 

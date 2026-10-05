@@ -34,8 +34,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-val OlseraBlueHeader = Color(0xFF1565C0)
-val OlseraHeaderTabActive = Color(0xFF1E88E5)
+val OlseraBlueHeader = Color(0xFF24BBCC)
+val OlseraHeaderTabActive = Color(0xFF24BBCC)
 
 @Composable
 fun OlseraHeaderBar(

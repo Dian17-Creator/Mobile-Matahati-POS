@@ -61,8 +61,8 @@ fun SummarySection(
                 title = "Total Transaksi",
                 value = "${summary.totalTransactions} Pesanan",
                 icon = Icons.Default.ReceiptLong,
-                iconBgColor = Color(0xFFE3F2FD),
-                iconTint = Color(0xFF1565C0),
+                iconBgColor = Color(0xFFE0F7FA),
+                iconTint = Color(0xFF24BBCC),
                 modifier = Modifier.weight(1f)
             )
         }

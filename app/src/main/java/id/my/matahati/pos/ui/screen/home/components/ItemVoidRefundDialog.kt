@@ -75,7 +75,7 @@ fun ItemVoidRefundDialog(
                     text = "Void / Refund Per Item",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1565C0)
+                    color = Color(0xFF24BBCC)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -339,7 +339,7 @@ fun ItemVoidRefundDialog(
                             onSubmit(selectedAction, selectedRequestItems, reasonText.trim())
                         },
                         enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC))
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(

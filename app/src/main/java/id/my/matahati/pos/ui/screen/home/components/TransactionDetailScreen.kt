@@ -117,7 +117,7 @@ fun TransactionDetailScreen(
     ) {
         // Header Bar
         Surface(
-            color = Color(0xFF1565C0),
+            color = Color(0xFF24BBCC),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -466,7 +466,7 @@ fun TransactionDetailScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                HorizontalDivider(color = Color(0xFF1565C0), thickness = 2.dp)
+                HorizontalDivider(color = Color(0xFF24BBCC), thickness = 2.dp)
 
                 Row(
                     modifier = Modifier
@@ -484,14 +484,14 @@ fun TransactionDetailScreen(
                         Text(
                             text = "Total",
                             fontSize = 11.sp,
-                            color = Color(0xFF1565C0),
+                            color = Color(0xFF24BBCC),
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.align(Alignment.TopStart)
                         )
                         Text(
                             text = "Rp ${formatStringNum(displayGrandTotal.toString())}",
                             fontSize = 24.sp,
-                            color = Color(0xFF1565C0),
+                            color = Color(0xFF24BBCC),
                             fontWeight = FontWeight.ExtraBold,
                             modifier = Modifier.align(Alignment.Center)
                         )
@@ -502,7 +502,7 @@ fun TransactionDetailScreen(
 
                     Box {
                         Surface(
-                            color = Color(0xFF1565C0),
+                            color = Color(0xFF24BBCC),
                             modifier = Modifier
                                 .width(64.dp)
                                 .fillMaxHeight()
@@ -528,7 +528,7 @@ fun TransactionDetailScreen(
                                         Icon(
                                             imageVector = Icons.Default.Restaurant,
                                             contentDescription = null,
-                                            tint = Color(0xFF1565C0),
+                                            tint = Color(0xFF24BBCC),
                                             modifier = Modifier.size(20.dp)
                                         )
                                         Spacer(modifier = Modifier.width(12.dp))
@@ -552,11 +552,11 @@ fun TransactionDetailScreen(
                                                 Icon(
                                                     imageVector = Icons.Default.RemoveCircleOutline,
                                                     contentDescription = null,
-                                                    tint = Color(0xFF1565C0),
+                                                    tint = Color(0xFF24BBCC),
                                                     modifier = Modifier.size(20.dp)
                                                 )
                                                 Spacer(modifier = Modifier.width(12.dp))
-                                                Text("Void / Refund Per Item", color = Color(0xFF1565C0), fontWeight = FontWeight.SemiBold)
+                                                Text("Void / Refund Per Item", color = Color(0xFF24BBCC), fontWeight = FontWeight.SemiBold)
                                             }
                                         },
                                         onClick = {
@@ -614,7 +614,7 @@ fun TransactionDetailScreen(
             confirmButton = {
                 Button(
                     onClick = { showPartialActionWarningDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC))
                 ) {
                     Text("Mengerti")
                 }

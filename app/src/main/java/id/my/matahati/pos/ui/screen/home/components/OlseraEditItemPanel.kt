@@ -60,7 +60,7 @@ import java.util.Locale
 private val OlseraPanelBg = Color(0xFF1E2638)
 private val OlseraPanelHeaderTabBg = Color(0xFF181F2E)
 private val OlseraPanelCardBg = Color(0xFF263248)
-private val OlseraPanelBlueBtn = Color(0xFF1565C0)
+private val OlseraPanelBlueBtn = Color(0xFF24BBCC)
 private val OlseraPanelGreenBtn = Color(0xFF2E7D32)
 private val OlseraPanelRedBtn = Color(0xFFE53935)
 private val OlseraTextLight = Color(0xFFECEFF1)
