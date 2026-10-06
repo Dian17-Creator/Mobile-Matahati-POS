@@ -1204,7 +1204,10 @@ class HomeViewModel : ViewModel() {
         paidAmount: Double,
         nidVoucher: Int? = null,
         nidOutlet: String?,
-        orderNote: String? = null
+        orderNote: String? = null,
+        userName: String = "",
+        outletName: String = "",
+        onSuccess: (() -> Unit)? = null
     ) {
         executeTransaction(
             context = context,
@@ -1219,7 +1222,10 @@ class HomeViewModel : ViewModel() {
             nidOutlet = nidOutlet,
             status = null,
             cancelNote = null,
-            orderNote = orderNote
+            orderNote = orderNote,
+            userName = userName,
+            outletName = outletName,
+            onSuccess = onSuccess
         )
     }
 
@@ -1289,6 +1295,8 @@ class HomeViewModel : ViewModel() {
         status: String?,
         cancelNote: String?,
         orderNote: String? = null,
+        userName: String = "",
+        outletName: String = "",
         onSuccess: (() -> Unit)? = null
     ) {
         if (status != "CANCELLED" && cartItems.isEmpty()) {
@@ -1355,9 +1363,16 @@ class HomeViewModel : ViewModel() {
                             pendingShowReceipt = true
                             fetchVouchers() // Refresh voucher quota after success
                             if (context != null) {
-                                openKitchenPrintDialog(context, cartItems)
+                                openKitchenPrintDialog(
+                                    context = context,
+                                    items = cartItems,
+                                    userName = userName,
+                                    outletName = outletName,
+                                    onAutoFinishCheckout = onSuccess
+                                )
+                            } else {
+                                onSuccess?.invoke()
                             }
-                            onSuccess?.invoke()
                         }
                     } else {
                         transactionError = body?.message ?: "Gagal memproses transaksi."
@@ -1418,8 +1433,40 @@ class HomeViewModel : ViewModel() {
         selectedTable = ""
     }
 
+    fun isShowPrintPreviewEnabled(context: android.content.Context): Boolean {
+        val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+        return prefs.getBoolean("show_print_preview", true)
+    }
+
+    fun handlePendingReceipt(
+        context: android.content.Context,
+        userName: String = "",
+        outletName: String = "",
+        onAutoFinishCheckout: (() -> Unit)? = null
+    ) {
+        if (pendingShowReceipt) {
+            pendingShowReceipt = false
+            if (isShowPrintPreviewEnabled(context)) {
+                showReceiptDialog = true
+            } else {
+                lastTransaction?.let { trx ->
+                    printReceipt(context, trx, userName, outletName)
+                }
+                closeReceiptDialog()
+                onAutoFinishCheckout?.invoke()
+            }
+        }
+    }
+
     // Kitchen Printing logic
-    fun openKitchenPrintDialog(context: android.content.Context, items: List<id.my.matahati.pos.model.CartItem>, isHistory: Boolean = false) {
+    fun openKitchenPrintDialog(
+        context: android.content.Context,
+        items: List<id.my.matahati.pos.model.CartItem>,
+        isHistory: Boolean = false,
+        userName: String = "",
+        outletName: String = "",
+        onAutoFinishCheckout: (() -> Unit)? = null
+    ) {
         if (items.isEmpty()) return
         
         loadSavedPrinters(context)
@@ -1429,10 +1476,7 @@ class HomeViewModel : ViewModel() {
         }
 
         if (!hasKitchenOrBarPrinter && !isHistory) {
-            if (pendingShowReceipt) {
-                pendingShowReceipt = false
-                showReceiptDialog = true
-            }
+            handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
             return
         }
 
@@ -1487,6 +1531,10 @@ class HomeViewModel : ViewModel() {
 
     fun onConfirmKitchenPrint(
         type: String,
+        context: android.content.Context? = null,
+        userName: String = "",
+        outletName: String = "",
+        onAutoFinishCheckout: (() -> Unit)? = null,
         onUpdateActiveCart: (List<id.my.matahati.pos.model.CartItem>) -> Unit
     ) {
         val tickets = mutableMapOf<String, MutableList<id.my.matahati.pos.model.CartItem>>()
@@ -1529,9 +1577,17 @@ class HomeViewModel : ViewModel() {
             receiptTickets = tickets.mapValues { it.value.toList() }.toMutableMap()
             currentPrintType = if (type == "PERUBAHAN") "PERUBAHAN PESANAN" else "CETAK ULANG PESANAN"
             showKitchenPrintDialog = false
-            showSimulatedReceipt = true
+            if (context != null && !isShowPrintPreviewEnabled(context)) {
+                printKitchenTickets(context, receiptTickets)
+                closeSimulatedReceipt(context, userName, outletName, onAutoFinishCheckout)
+            } else {
+                showSimulatedReceipt = true
+            }
         } else {
             showKitchenPrintDialog = false
+            if (context != null) {
+                handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
+            }
         }
     }
 
@@ -1543,18 +1599,32 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun closeSimulatedReceipt() {
+    fun closeSimulatedReceipt(
+        context: android.content.Context? = null,
+        userName: String = "",
+        outletName: String = "",
+        onAutoFinishCheckout: (() -> Unit)? = null
+    ) {
         showSimulatedReceipt = false
         receiptTickets.clear()
-        if (pendingShowReceipt) {
+        if (context != null) {
+            handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
+        } else if (pendingShowReceipt) {
             pendingShowReceipt = false
             showReceiptDialog = true
         }
     }
 
-    fun closeKitchenPrintDialog() {
+    fun closeKitchenPrintDialog(
+        context: android.content.Context? = null,
+        userName: String = "",
+        outletName: String = "",
+        onAutoFinishCheckout: (() -> Unit)? = null
+    ) {
         showKitchenPrintDialog = false
-        if (pendingShowReceipt) {
+        if (context != null) {
+            handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
+        } else if (pendingShowReceipt) {
             pendingShowReceipt = false
             showReceiptDialog = true
         }

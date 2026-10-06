@@ -161,6 +161,17 @@ fun HomeScreen(
         }
     }
 
+    val autoFinishCheckout: () -> Unit = {
+        cartItems.clear()
+        orderType = ""
+        viewModel.selectedTable = ""
+        selectedCustomer = null
+        selectedVoucher = null
+        manualDiscountInput = ""
+        orderNote = ""
+        viewModel.showPaymentScreen = false
+    }
+
     val triggerCheckout: () -> Unit = {
         if (cartItems.isNotEmpty()) {
             if (shiftViewModel.currentShift == null) {
@@ -680,13 +691,34 @@ fun HomeScreen(
                                                     }
                                                 },
                                                 onSendToKitchenClick = {
-                                                    viewModel.openKitchenPrintDialog(context, cartItems)
+                                                    viewModel.openKitchenPrintDialog(
+                                                        context = context,
+                                                        items = cartItems,
+                                                        userName = userName,
+                                                        outletName = outletName ?: "",
+                                                        onAutoFinishCheckout = autoFinishCheckout
+                                                    )
                                                 },
                                                 onCheckPrintClick = {
                                                     if (cartItems.isEmpty()) {
                                                         android.widget.Toast.makeText(context, "Keranjang belanja kosong", android.widget.Toast.LENGTH_SHORT).show()
                                                     } else {
-                                                        viewModel.openCheckPrintDialog()
+                                                        val activeServedByName = viewModel.selectedServedBy?.name ?: userName
+                                                        if (viewModel.isShowPrintPreviewEnabled(context)) {
+                                                            viewModel.openCheckPrintDialog()
+                                                        } else {
+                                                            viewModel.printCheckReceipt(
+                                                                context = context,
+                                                                cartItems = cartItems,
+                                                                orderType = orderType,
+                                                                cashierName = activeServedByName,
+                                                                customerName = selectedCustomer?.name,
+                                                                tableName = viewModel.selectedTable.ifBlank { null },
+                                                                discountAmount = discountAmount,
+                                                                taxAmount = 0.0,
+                                                                paxCount = 1
+                                                            )
+                                                        }
                                                     }
                                                 },
                                                 onCheckoutClick = triggerCheckout,
@@ -1255,7 +1287,10 @@ fun HomeScreen(
                     paidAmount = amount,
                     nidVoucher = selectedVoucher?.id?.toIntOrNull(),
                     nidOutlet = nidOutlet,
-                    orderNote = orderNote
+                    orderNote = orderNote,
+                    userName = userName,
+                    outletName = outletName ?: "",
+                    onSuccess = autoFinishCheckout
                 )
             }
         )
@@ -1427,6 +1462,10 @@ fun HomeScreen(
             onConfirmPrint = { type ->
                 viewModel.onConfirmKitchenPrint(
                     type = type,
+                    context = context,
+                    userName = userName,
+                    outletName = outletName ?: "",
+                    onAutoFinishCheckout = autoFinishCheckout,
                     onUpdateActiveCart = { updatedItems ->
                         // Perbarui status sentQuantity di keranjang lokal
                         updatedItems.forEach { updated ->
@@ -1438,7 +1477,14 @@ fun HomeScreen(
                     }
                 )
             },
-            onDismiss = { viewModel.closeKitchenPrintDialog() }
+            onDismiss = {
+                viewModel.closeKitchenPrintDialog(
+                    context = context,
+                    userName = userName,
+                    outletName = outletName ?: "",
+                    onAutoFinishCheckout = autoFinishCheckout
+                )
+            }
         )
     }
 
@@ -1449,7 +1495,14 @@ fun HomeScreen(
             onPrint = {
                 viewModel.printKitchenTickets(context, viewModel.receiptTickets)
             },
-            onDismiss = { viewModel.closeSimulatedReceipt() }
+            onDismiss = {
+                viewModel.closeSimulatedReceipt(
+                    context = context,
+                    userName = userName,
+                    outletName = outletName ?: "",
+                    onAutoFinishCheckout = autoFinishCheckout
+                )
+            }
         )
     }
 

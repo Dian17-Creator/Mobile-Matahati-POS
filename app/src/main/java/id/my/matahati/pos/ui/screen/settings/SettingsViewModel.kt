@@ -34,6 +34,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     var isConfirmOrderEnabled by mutableStateOf(true)
         private set
 
+    var isShowPrintPreviewEnabled by mutableStateOf(true)
+        private set
+
     init {
         loadPrinters()
         loadPaymentSettings()
@@ -41,11 +44,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun loadPaymentSettings() {
         isConfirmOrderEnabled = prefs.getBoolean("confirm_order_before_payment", true)
+        isShowPrintPreviewEnabled = prefs.getBoolean("show_print_preview", true)
     }
 
     fun updateConfirmOrderEnabled(enabled: Boolean) {
         isConfirmOrderEnabled = enabled
         prefs.edit().putBoolean("confirm_order_before_payment", enabled).apply()
+    }
+
+    fun updateShowPrintPreviewEnabled(enabled: Boolean) {
+        isShowPrintPreviewEnabled = enabled
+        prefs.edit().putBoolean("show_print_preview", enabled).apply()
     }
 
     fun loadPrinters() {

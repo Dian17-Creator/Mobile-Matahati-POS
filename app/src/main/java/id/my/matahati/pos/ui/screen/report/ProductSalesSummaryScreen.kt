@@ -450,18 +450,26 @@ fun ProductSalesSummaryScreen(
 
     // Modal Preview Hasil Cetak Struk
     if (summaryViewModel.showReceiptPreview) {
-        ProductSalesReceiptDialog(
-            dateDisplay = activeSelectedDayDisplay,
-            items = summaryViewModel.itemsList,
-            summaryHeader = summaryViewModel.summaryHeader,
-            savedOutletName = savedOutletName,
-            apiDate = activeSelectedDayApi,
-            isPrinting = summaryViewModel.isPrinting,
-            onPrintToPhysicalPrinter = {
-                summaryViewModel.printToPhysicalPrinter(context, savedOutletName)
-            },
-            onDismiss = { summaryViewModel.closeReceiptPreview() }
-        )
+        val isPreviewEnabled = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+            .getBoolean("show_print_preview", true)
+
+        if (!isPreviewEnabled) {
+            summaryViewModel.showReceiptPreview = false
+            summaryViewModel.printToPhysicalPrinter(context, savedOutletName)
+        } else {
+            ProductSalesReceiptDialog(
+                dateDisplay = activeSelectedDayDisplay,
+                items = summaryViewModel.itemsList,
+                summaryHeader = summaryViewModel.summaryHeader,
+                savedOutletName = savedOutletName,
+                apiDate = activeSelectedDayApi,
+                isPrinting = summaryViewModel.isPrinting,
+                onPrintToPhysicalPrinter = {
+                    summaryViewModel.printToPhysicalPrinter(context, savedOutletName)
+                },
+                onDismiss = { summaryViewModel.closeReceiptPreview() }
+            )
+        }
     }
 
     // Alert Dialog untuk Status Cetak Printer
