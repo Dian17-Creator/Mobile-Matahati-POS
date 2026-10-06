@@ -72,4 +72,8 @@ data class Product(
             formatter.maximumFractionDigits = 0
             return formatter.format(onlinePrice)
         }
+
+    fun getEffectivePrice(isOnline: Boolean): Double {
+        return if (isOnline && onlinePrice > 0.0) onlinePrice else price
+    }
 }

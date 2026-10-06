@@ -69,6 +69,7 @@ private val OlseraTextMuted = Color(0xFF90A4AE)
 @Composable
 fun OlseraEditItemPanel(
     cartItem: CartItem,
+    orderType: String = "",
     onDismiss: () -> Unit,
     onConfirmUpdate: (newQty: Int, newNote: String) -> Unit,
     onRemoveItem: () -> Unit,
@@ -79,7 +80,6 @@ fun OlseraEditItemPanel(
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Item Pesanan, 1 = Items Paket, 2 = Add-Ons
-    var selectedOrderType by remember { mutableStateOf("DINE-IN") }
     var discountInput by remember { mutableStateOf("0") }
     var isPercentageDiscount by remember { mutableStateOf(false) }
 
@@ -239,13 +239,15 @@ fun OlseraEditItemPanel(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // DINE-IN / TAKEAWAY Switch
+                    // Order Type Badge
+                    val displayOrderType = when {
+                        orderType.isBlank() -> "OFFLINE"
+                        orderType.uppercase() == "TAKE_AWAY" || orderType.uppercase() == "TAKEAWAY" || orderType.uppercase().contains("TAKE") -> "TAKE-AWAY / OFFLINE"
+                        else -> orderType
+                    }
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.12f),
-                        modifier = Modifier.clickable {
-                            selectedOrderType = if (selectedOrderType == "DINE-IN") "TAKEAWAY" else "DINE-IN"
-                        }
+                        color = Color.White.copy(alpha = 0.12f)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -255,11 +257,11 @@ fun OlseraEditItemPanel(
                                 modifier = Modifier
                                     .size(10.dp)
                                     .clip(CircleShape)
-                                    .background(if (selectedOrderType == "DINE-IN") Color(0xFF4CAF50) else Color(0xFFFF9800))
+                                    .background(if (orderType.equals("ONLINE", ignoreCase = true)) Color(0xFF24BBCC) else Color(0xFF4CAF50))
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = selectedOrderType,
+                                text = displayOrderType,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = OlseraTextLight
@@ -292,7 +294,7 @@ fun OlseraEditItemPanel(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = formatRawCurrency(cartItem.product.price),
+                                text = formatRawCurrency(cartItem.unitPrice),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = OlseraTextLight

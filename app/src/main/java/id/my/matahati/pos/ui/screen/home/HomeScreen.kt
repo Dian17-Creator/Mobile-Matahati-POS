@@ -212,14 +212,28 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(orderType) {
+        val isOnline = orderType.equals("ONLINE", ignoreCase = true)
+        for (i in cartItems.indices) {
+            val item = cartItems[i]
+            if (item.isOnlineOrder != isOnline) {
+                cartItems[i] = item.copy(isOnlineOrder = isOnline)
+            }
+        }
+    }
+
     // Cart Helper Functions
     val onAddToCart: (Product) -> Unit = { product ->
+        val isOnline = orderType.equals("ONLINE", ignoreCase = true)
         val existingIndex = cartItems.indexOfFirst { it.product.id == product.id }
         if (existingIndex >= 0) {
             val item = cartItems[existingIndex]
-            cartItems[existingIndex] = item.copy(quantity = item.quantity + 1)
+            cartItems[existingIndex] = item.copy(
+                quantity = item.quantity + 1,
+                isOnlineOrder = isOnline
+            )
         } else {
-            cartItems.add(CartItem(product = product, quantity = 1))
+            cartItems.add(CartItem(product = product, quantity = 1, isOnlineOrder = isOnline))
         }
     }
 
@@ -819,6 +833,7 @@ fun HomeScreen(
                                                             products = filteredProducts,
                                                             onAddToCart = onAddToCart,
                                                             columnsCount = 4,
+                                                            orderType = orderType,
                                                             modifier = Modifier
                                                                 .weight(1f)
                                                                 .fillMaxWidth()
@@ -859,6 +874,7 @@ fun HomeScreen(
                                                             products = filteredProducts,
                                                             onAddToCart = onAddToCart,
                                                             columnsCount = 2,
+                                                            orderType = orderType,
                                                             modifier = Modifier.weight(1f)
                                                         )
                                                     }
@@ -1134,6 +1150,7 @@ fun HomeScreen(
                 if (selectedCartItem != null) {
                     OlseraEditItemPanel(
                         cartItem = selectedCartItem!!,
+                        orderType = orderType,
                         onDismiss = {
                             showEditDialog = false
                             selectedCartItem = null

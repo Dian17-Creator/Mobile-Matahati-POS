@@ -81,6 +81,16 @@ fun OlseraOrderTypeDialog(
                     }
                 } else {
                     orderTypes.forEach { item ->
+                        val displayLabel = if (
+                            item.value.uppercase() == "TAKE_AWAY" || 
+                            item.value.uppercase() == "TAKEAWAY" || 
+                            item.label.uppercase().contains("TAKE")
+                        ) {
+                            "TAKE-AWAY / OFFLINE"
+                        } else {
+                            item.label
+                        }
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -92,7 +102,7 @@ fun OlseraOrderTypeDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = item.label,
+                                text = displayLabel,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = OlseraBlueHeader,

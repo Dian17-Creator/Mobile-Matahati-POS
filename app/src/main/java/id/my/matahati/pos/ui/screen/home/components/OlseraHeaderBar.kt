@@ -82,8 +82,13 @@ fun OlseraHeaderBar(
                     isSelected = selectedTable.isNotBlank(),
                     onClick = onTableClick
                 )
+                val orderTypeTabLabel = when {
+                    selectedOrderType.isBlank() -> "In/Aw"
+                    selectedOrderType.uppercase() == "TAKE_AWAY" || selectedOrderType.uppercase() == "TAKEAWAY" || selectedOrderType.uppercase().contains("TAKE") -> "TAKE-AWAY / OFFLINE"
+                    else -> selectedOrderType
+                }
                 HeaderTabItem(
-                    label = if (selectedOrderType.isBlank()) "In/Aw" else selectedOrderType,
+                    label = orderTypeTabLabel,
                     isSelected = selectedOrderType.isNotBlank(),
                     onClick = onInAwayClick
                 )

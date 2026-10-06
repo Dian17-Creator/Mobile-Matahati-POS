@@ -7,10 +7,14 @@ data class CartItem(
     val product: Product,
     val quantity: Int,
     val note: String = "",
-    val sentQuantity: Int = 0 // Track how many items already sent to kitchen/bar
+    val sentQuantity: Int = 0, // Track how many items already sent to kitchen/bar
+    val isOnlineOrder: Boolean = false
 ) {
+    val unitPrice: Double
+        get() = product.getEffectivePrice(isOnlineOrder)
+
     val totalPrice: Double
-        get() = product.price * quantity
+        get() = unitPrice * quantity
 
     val formattedTotalPrice: String
         get() {
