@@ -27,6 +27,7 @@ fun ReceiptDialog(
     savedOutletName: String? = null,
     onPrint: () -> Unit = {},
     isPrinting: Boolean = false,
+    isOrderTypeSelected: Boolean = true,
     onDismiss: () -> Unit
 ) {
     val trx = transactionData.transaction ?: return
@@ -93,11 +94,13 @@ fun ReceiptDialog(
                             TextRow("No. Trx", trx.transactionNo)
                             TextRow("Waktu", formatDateTime(trx.transactionDate))
                             TextRow("Kasir", finalCashierName)
-                            TextRow("Order", trx.orderType)
-                            if (trx.customerName != null) {
+                            if (isOrderTypeSelected && !trx.orderType.isNullOrBlank()) {
+                                TextRow("Order", trx.orderType)
+                            }
+                            if (!trx.customerName.isNullOrBlank()) {
                                 TextRow("Customer", trx.customerName)
                             }
-                            if (trx.tableName != null) {
+                            if (!trx.tableName.isNullOrBlank()) {
                                 TextRow("Meja", trx.tableName)
                             }
                             if (!trx.orderNote.isNullOrBlank()) {

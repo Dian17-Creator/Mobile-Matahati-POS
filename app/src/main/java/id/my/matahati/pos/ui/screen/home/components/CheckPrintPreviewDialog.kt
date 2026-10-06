@@ -178,17 +178,18 @@ fun CheckPrintPreviewDialog(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         // Order Type
-                        val displayOrderType = if (orderType.isNotBlank()) orderType.replace("_", "-").uppercase() else "DINE-IN"
-                        Text(
-                            text = displayOrderType,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
+                        if (orderType.isNotBlank()) {
+                            val displayOrderType = orderType.replace("_", "-").uppercase()
+                            Text(
+                                text = displayOrderType,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
 
                         // Item List
                         cartItems.forEach { item ->

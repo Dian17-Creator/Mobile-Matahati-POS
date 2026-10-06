@@ -66,6 +66,7 @@ class HomeViewModel : ViewModel() {
     var lastTransaction by mutableStateOf<TransactionData?>(null)
     var showReceiptDialog by mutableStateOf(false)
     var showShiftNotStartedDialog by mutableStateOf(false)
+    var isOrderTypeSelectedByUser by mutableStateOf(true)
 
     // Kitchen & Check Print States
     var showKitchenPrintDialog by mutableStateOf(false)
@@ -222,7 +223,7 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             val connectionManager = id.my.matahati.pos.data.printer.PrinterConnectionManager(context)
             val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
-            val receiptBytes = formatter.formatReceipt(data, cashierName, savedOutletName)
+            val receiptBytes = formatter.formatReceipt(data, cashierName, savedOutletName, isOrderTypeSelectedByUser)
             
             val result = connectionManager.printData(receiptPrinter, receiptBytes)
             if (result.isFailure) {
@@ -1295,21 +1296,8 @@ class HomeViewModel : ViewModel() {
             return
         }
         if (status != "CANCELLED" && status != "DRAFT") {
-            if (orderType.isBlank()) {
-                transactionError = "Silakan pilih In/Aw (Order Type) terlebih dahulu."
-                return
-            }
-            if (orderType == "DINE_IN" && selectedTable.isBlank()) {
-                transactionError = "Silakan pilih meja terlebih dahulu."
-                return
-            }
             if (selectedPayment == null) {
                 transactionError = "Silakan pilih metode pembayaran."
-                return
-            }
-        } else if (status == "DRAFT") {
-            if (orderType.isBlank()) {
-                transactionError = "Silakan pilih In/Aw (Order Type) terlebih dahulu."
                 return
             }
         }
@@ -1326,6 +1314,8 @@ class HomeViewModel : ViewModel() {
         }
 
         val parsedOutlet = nidOutlet?.toIntOrNull() ?: 1
+        isOrderTypeSelectedByUser = orderType.isNotBlank()
+        val defaultOrderType = "ONLINE"
 
         val request = TransactionRequest(
             nidCustomer = selectedCustomer?.id?.toIntOrNull(),
@@ -1334,7 +1324,7 @@ class HomeViewModel : ViewModel() {
             nidPayment = selectedPayment?.id,
             nidVoucher = nidVoucher,
             customerName = selectedCustomer?.name,
-            orderType = orderType.ifBlank { "TAKE_AWAY" },
+            orderType = orderType.ifBlank { defaultOrderType },
             visitorCount = 1,
             tableName = selectedTable.ifBlank { null },
             discount = discount,
@@ -1433,6 +1423,19 @@ class HomeViewModel : ViewModel() {
         if (items.isEmpty()) return
         
         loadSavedPrinters(context)
+
+        val hasKitchenOrBarPrinter = savedPrinters.any { 
+            it.role == id.my.matahati.pos.model.PrinterRole.KITCHEN || it.role == id.my.matahati.pos.model.PrinterRole.BAR 
+        }
+
+        if (!hasKitchenOrBarPrinter && !isHistory) {
+            if (pendingShowReceipt) {
+                pendingShowReceipt = false
+                showReceiptDialog = true
+            }
+            return
+        }
+
         itemsToPrint = items
         isPrintingFromHistory = isHistory
         
