@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -160,7 +162,7 @@ fun HeldOrdersDialog(
                                             text = "Ketuk untuk membuka",
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF24BBCC)
+                                            color = AppPrimaryColor
                                         )
                                     }
                                 }

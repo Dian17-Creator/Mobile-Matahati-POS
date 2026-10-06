@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -71,7 +73,7 @@ fun KitchenPrintSelectionDialog(
                         Checkbox(
                             checked = selectedStations.contains(station),
                             onCheckedChange = { onToggleStation(station) },
-                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF24BBCC))
+                            colors = CheckboxDefaults.colors(checkedColor = AppPrimaryColor)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
@@ -116,7 +118,7 @@ fun KitchenPrintSelectionDialog(
                     
                     Text(
                         text = "CETAK ULANG PESANAN",
-                        color = Color(0xFF24BBCC),
+                        color = AppPrimaryColor,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         modifier = Modifier.clickable { onConfirmPrint("ULANG") }

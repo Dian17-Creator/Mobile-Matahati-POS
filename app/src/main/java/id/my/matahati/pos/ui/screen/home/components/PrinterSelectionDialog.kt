@@ -1,5 +1,9 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.clickable
@@ -74,7 +78,7 @@ fun PrinterSelectionDialog(
                         onClick = onTestPrint,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(4.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF24BBCC))
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AppPrimaryColor)
                     ) {
                         Text("TEST PRINT")
                     }
@@ -108,7 +112,7 @@ fun DeviceItem(name: String, address: String, isSelected: Boolean, onClick: () -
                 text = name, 
                 fontSize = 16.sp, 
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, 
-                color = if (isSelected) Color(0xFF24BBCC) else Color.Black
+                color = if (isSelected) AppPrimaryColor else Color.Black
             )
             Text(text = address, fontSize = 12.sp, color = Color.Gray)
         }
@@ -117,7 +121,7 @@ fun DeviceItem(name: String, address: String, isSelected: Boolean, onClick: () -
                 text = "✓",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF24BBCC),
+                color = AppPrimaryColor,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
         }

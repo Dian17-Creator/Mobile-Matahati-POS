@@ -41,7 +41,9 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-private val OlseraBlueHeader = Color(0xFF24BBCC)
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
+private val OlseraBlueHeader = AppPrimaryColor
 private val GreenSubHeader = Color(0xFF4CAF50)
 private val OlseraGreenButton = Color(0xFF4CAF50)
 

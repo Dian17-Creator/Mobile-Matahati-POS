@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -60,7 +62,7 @@ import java.util.Locale
 private val OlseraPanelBg = Color(0xFF1E2638)
 private val OlseraPanelHeaderTabBg = Color(0xFF181F2E)
 private val OlseraPanelCardBg = Color(0xFF263248)
-private val OlseraPanelBlueBtn = Color(0xFF24BBCC)
+private val OlseraPanelBlueBtn = AppPrimaryColor
 private val OlseraPanelGreenBtn = Color(0xFF2E7D32)
 private val OlseraPanelRedBtn = Color(0xFFE53935)
 private val OlseraTextLight = Color(0xFFECEFF1)
@@ -257,7 +259,7 @@ fun OlseraEditItemPanel(
                                 modifier = Modifier
                                     .size(10.dp)
                                     .clip(CircleShape)
-                                    .background(if (orderType.equals("ONLINE", ignoreCase = true)) Color(0xFF24BBCC) else Color(0xFF4CAF50))
+                                    .background(if (orderType.equals("ONLINE", ignoreCase = true)) AppPrimaryColor else Color(0xFF4CAF50))
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(

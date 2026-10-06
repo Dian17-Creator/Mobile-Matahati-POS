@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -98,7 +100,7 @@ fun OlseraDiscountDialog(
                         .padding(horizontal = 24.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF24BBCC),
+                        focusedBorderColor = AppPrimaryColor,
                         unfocusedBorderColor = Color.LightGray
                     )
                 )
@@ -149,7 +151,7 @@ fun OlseraDiscountDialog(
                                 Icon(
                                     imageVector = Icons.Default.ConfirmationNumber,
                                     contentDescription = null,
-                                    tint = if (isEligible) Color(0xFF24BBCC) else Color.Gray,
+                                    tint = if (isEligible) AppPrimaryColor else Color.Gray,
                                     modifier = Modifier.size(32.dp)
                                 )
                                 
@@ -216,7 +218,7 @@ fun OlseraDiscountDialog(
                         onManualDiscountApplied(manualDiscount)
                         onDismiss()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC)),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()

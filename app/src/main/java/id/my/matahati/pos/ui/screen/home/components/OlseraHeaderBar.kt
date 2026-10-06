@@ -34,8 +34,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-val OlseraBlueHeader = Color(0xFF24BBCC)
-val OlseraHeaderTabActive = Color(0xFF24BBCC)
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
+val OlseraBlueHeader = AppPrimaryColor
+val OlseraHeaderTabActive = AppPrimaryColor
 
 @Composable
 fun OlseraHeaderBar(

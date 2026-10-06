@@ -60,9 +60,12 @@ import id.my.matahati.pos.model.Customer
 import java.text.NumberFormat
 import java.util.Locale
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+import id.my.matahati.pos.ui.theme.AppPrimaryLight
+
 val OlseraGreenPay = Color(0xFF4CAF50)
-val OlseraHeaderBlue = Color(0xFF24BBCC)
-val OlseraLightBg = Color(0xFFE0F7FA)
+val OlseraHeaderBlue = AppPrimaryColor
+val OlseraLightBg = AppPrimaryLight
 
 @Composable
 fun OlseraCartPanel(
@@ -589,7 +592,7 @@ private fun QuickActionButton(
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(if (isDestructive) Color(0xFFE53935) else Color(0xFF24BBCC)),
+                .background(if (isDestructive) Color(0xFFE53935) else AppPrimaryColor),
             contentAlignment = Alignment.Center
         ) {
             Icon(

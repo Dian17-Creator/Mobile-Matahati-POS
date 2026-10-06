@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -45,7 +47,7 @@ fun CashierConfirmationDialog(
                 Text(
                     text = buildAnnotatedString {
                         append("Apakah kasir yang melayani sudah benar? ")
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color(0xFF24BBCC))) {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = AppPrimaryColor)) {
                             append(cashierName)
                         }
                     },
@@ -73,7 +75,7 @@ fun CashierConfirmationDialog(
 
                     Button(
                         onClick = onConfirm,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC)),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .weight(1f)

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.my.matahati.pos.model.Product
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
 
 @Composable
 fun BarcodeTabContent(
@@ -27,6 +28,7 @@ fun BarcodeTabContent(
 ) {
     var qtyText by remember { mutableStateOf("1") }
     var barcodeInput by remember { mutableStateOf("") }
+
 
     Column(
         modifier = modifier
@@ -47,13 +49,13 @@ fun BarcodeTabContent(
             OutlinedTextField(
                 value = qtyText,
                 onValueChange = { qtyText = it },
-                label = { Text("Qty", fontSize = 12.sp, color = Color(0xFF24BBCC)) },
+                label = { Text("Qty", fontSize = 12.sp, color = AppPrimaryColor) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF24BBCC),
-                    unfocusedBorderColor = Color(0xFF24BBCC)
+                    focusedBorderColor = AppPrimaryColor,
+                    unfocusedBorderColor = AppPrimaryColor
                 )
             )
 
@@ -63,7 +65,7 @@ fun BarcodeTabContent(
             Row(
                 modifier = Modifier
                     .height(56.dp)
-                    .border(BorderStroke(1.dp, Color(0xFF24BBCC)), RoundedCornerShape(4.dp)),
+                    .border(BorderStroke(1.dp, AppPrimaryColor), RoundedCornerShape(4.dp)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
@@ -76,11 +78,11 @@ fun BarcodeTabContent(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("-", color = Color(0xFF24BBCC), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("-", color = AppPrimaryColor, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
 
                 HorizontalDivider(
-                    color = Color(0xFF24BBCC),
+                    color = AppPrimaryColor,
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(1.dp)
@@ -96,7 +98,7 @@ fun BarcodeTabContent(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("+", color = Color(0xFF24BBCC), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("+", color = AppPrimaryColor, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
             }
         }
@@ -107,12 +109,12 @@ fun BarcodeTabContent(
         OutlinedTextField(
             value = barcodeInput,
             onValueChange = { barcodeInput = it },
-            placeholder = { Text("Pindai Barcode...", color = Color(0xFF24BBCC)) },
+            placeholder = { Text("Pindai Barcode...", color = AppPrimaryColor) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF24BBCC),
-                unfocusedBorderColor = Color(0xFF24BBCC)
+                focusedBorderColor = AppPrimaryColor,
+                unfocusedBorderColor = AppPrimaryColor
             )
         )
 
@@ -142,8 +144,8 @@ fun BarcodeTabContent(
                 .fillMaxWidth()
                 .height(48.dp),
             shape = RoundedCornerShape(4.dp),
-            border = BorderStroke(1.dp, Color(0xFF24BBCC)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF24BBCC))
+            border = BorderStroke(1.dp, AppPrimaryColor),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = AppPrimaryColor)
         ) {
             Text("Buka Pemindai Barcode", fontWeight = FontWeight.Medium, fontSize = 15.sp)
         }
@@ -176,12 +178,12 @@ fun CustomDepositTabContent(
             OutlinedTextField(
                 value = nameInput,
                 onValueChange = { nameInput = it },
-                placeholder = { Text("Nama", color = Color(0xFF24BBCC)) },
+                placeholder = { Text("Nama", color = AppPrimaryColor) },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF24BBCC),
-                    unfocusedBorderColor = Color(0xFF24BBCC)
+                    focusedBorderColor = AppPrimaryColor,
+                    unfocusedBorderColor = AppPrimaryColor
                 )
             )
 
@@ -189,14 +191,14 @@ fun CustomDepositTabContent(
 
             Surface(
                 shape = CircleShape,
-                border = BorderStroke(1.dp, Color(0xFF24BBCC)),
+                border = BorderStroke(1.dp, AppPrimaryColor),
                 color = Color.White,
                 modifier = Modifier
                     .size(44.dp)
                     .clickable { /* Extra options */ }
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text("...", color = Color(0xFF24BBCC), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("...", color = AppPrimaryColor, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
@@ -207,13 +209,13 @@ fun CustomDepositTabContent(
         OutlinedTextField(
             value = priceInput,
             onValueChange = { priceInput = it },
-            placeholder = { Text("Harga", color = Color(0xFF24BBCC)) },
+            placeholder = { Text("Harga", color = AppPrimaryColor) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF24BBCC),
-                unfocusedBorderColor = Color(0xFF24BBCC)
+                focusedBorderColor = AppPrimaryColor,
+                unfocusedBorderColor = AppPrimaryColor
             )
         )
 
@@ -241,7 +243,7 @@ fun CustomDepositTabContent(
                 .fillMaxWidth()
                 .height(48.dp),
             shape = RoundedCornerShape(4.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC))
+            colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor)
         ) {
             Text("Tambah Item", color = Color.White, fontWeight = FontWeight.Medium, fontSize = 15.sp)
         }

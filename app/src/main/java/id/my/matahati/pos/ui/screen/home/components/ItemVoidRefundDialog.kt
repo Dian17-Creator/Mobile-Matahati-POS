@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -75,7 +77,7 @@ fun ItemVoidRefundDialog(
                     text = "Void / Refund Per Item",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF24BBCC)
+                    color = AppPrimaryColor
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -339,7 +341,7 @@ fun ItemVoidRefundDialog(
                             onSubmit(selectedAction, selectedRequestItems, reasonText.trim())
                         },
                         enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC))
+                        colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(

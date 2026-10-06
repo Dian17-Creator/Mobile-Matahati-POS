@@ -21,7 +21,9 @@ import id.my.matahati.pos.model.ProductSalesSummaryHeader
 import id.my.matahati.pos.model.ProductSalesSummaryItem
 import id.my.matahati.pos.ui.screen.report.ReportViewModel
 
-private val OlseraBlueHeader = Color(0xFF24BBCC)
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
+private val OlseraBlueHeader = AppPrimaryColor
 private val OlseraGreenButton = Color(0xFF4CAF50)
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -155,7 +157,7 @@ fun TransactionItemCard(
                     Icon(
                         imageVector = if (isCancelled) Icons.Default.Block else Icons.Default.Receipt,
                         contentDescription = null,
-                        tint = if (isCancelled) Color.Red else Color(0xFF24BBCC),
+                        tint = if (isCancelled) Color.Red else AppPrimaryColor,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -208,7 +210,7 @@ fun TransactionItemCard(
                     text = if (isCancelled) "0 (Dibatalkan) - $paymentName" else "$amountStr - $paymentName$customerStr",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isCancelled) Color.Red else Color(0xFF24BBCC)
+                    color = if (isCancelled) Color.Red else AppPrimaryColor
                 )
             }
         }

@@ -40,6 +40,7 @@ import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.ui.screen.report.ProductSalesSummaryScreen
 import id.my.matahati.pos.ui.screen.home.components.*
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
 import id.my.matahati.pos.ui.theme.MobileMatahati_POSTheme
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -498,7 +499,7 @@ fun HomeScreen(
                                             } else {
                                                 Column(modifier = Modifier.fillMaxSize()) {
                                                     Surface(
-                                                        color = Color(0xFF24BBCC),
+                                                        color = AppPrimaryColor,
                                                         modifier = Modifier.fillMaxWidth()
                                                     ) {
                                                         Row(
@@ -716,13 +717,13 @@ fun HomeScreen(
                                                 modifier = Modifier
                                                     .weight(0.60f)
                                                     .fillMaxHeight()
-                                                    .background(Color(0xFF24BBCC)),
+                                                    .background(AppPrimaryColor),
                                             ) {
                                                 when (selectedRightTab) {
                                                     "Produk" -> {
                                                         // Top sub-bar for Search and Category Filter
                                                         Surface(
-                                                            color = Color(0xFF24BBCC),
+                                                            color = AppPrimaryColor,
                                                             modifier = Modifier.fillMaxWidth()
                                                         ) {
                                                             Row(
@@ -1093,7 +1094,7 @@ fun HomeScreen(
                                 .height(48.dp)
                                 .clickable { showNotificationPopup = false },
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFF24BBCC)
+                            color = AppPrimaryColor
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(
@@ -1309,7 +1310,7 @@ fun HomeScreen(
                         manualDiscountInput = ""
                         orderNote = ""
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC)),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
@@ -1343,7 +1344,7 @@ fun HomeScreen(
                         viewModel.showShiftNotStartedDialog = false
                         currentScreen = "shift"
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC))
+                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor)
                 ) {
                     Text("Buka Shift", color = Color.White, fontWeight = FontWeight.Bold)
                 }
