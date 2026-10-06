@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,7 +50,7 @@ fun VoidRefundDialog(
                     text = "Pengembalian / Pembatalan",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF24BBCC)
+                    color = AppPrimaryColor
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -167,7 +169,7 @@ fun VoidRefundDialog(
                             }
                         },
                         enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC))
+                        colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(

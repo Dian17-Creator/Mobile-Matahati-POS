@@ -34,8 +34,11 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-private val PanelBlueHeader = Color(0xFF24BBCC)
-private val PanelBgColor = Color(0xFFE0F7FA)
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+import id.my.matahati.pos.ui.theme.AppPrimaryLight
+
+private val PanelBlueHeader = AppPrimaryColor
+private val PanelBgColor = AppPrimaryLight
 
 @Composable
 fun AddCustomerPanel(

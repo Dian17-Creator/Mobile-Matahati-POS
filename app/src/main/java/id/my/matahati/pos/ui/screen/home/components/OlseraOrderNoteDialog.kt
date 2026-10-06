@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -97,7 +99,7 @@ fun OlseraOrderNoteDialog(
 
                     Button(
                         onClick = { onSave(noteText.trim()) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24BBCC)),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .weight(1f)

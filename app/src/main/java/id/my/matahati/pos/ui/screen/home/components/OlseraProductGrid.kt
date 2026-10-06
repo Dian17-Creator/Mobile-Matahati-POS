@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -91,7 +93,7 @@ fun OlseraProductCard(
 
     Card(
         shape = RoundedCornerShape(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF24BBCC)),
+        colors = CardDefaults.cardColors(containerColor = AppPrimaryColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = modifier
             .fillMaxWidth()
@@ -152,30 +154,25 @@ fun OlseraProductCard(
                     text = formatRawCurrency(displayPrice),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF24BBCC),
+                    color = AppPrimaryColor,
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                if (isOnline) {
-                    Text(
-                        text = "Toko: Rp ${formatRawCurrency(product.price)}",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.Gray,
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else if (product.onlinePrice > 0.0) {
-                    Text(
-                        text = "Online: Rp ${formatRawCurrency(product.onlinePrice)}",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.Gray,
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                val secondaryText = when {
+                    isOnline -> "Toko: Rp ${formatRawCurrency(product.price)}"
+                    product.onlinePrice > 0.0 -> "Online: Rp ${formatRawCurrency(product.onlinePrice)}"
+                    else -> " "
                 }
+
+                Text(
+                    text = secondaryText,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Gray,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

@@ -1,5 +1,9 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,7 +66,7 @@ fun SummarySection(
                 value = "${summary.totalTransactions} Pesanan",
                 icon = Icons.Default.ReceiptLong,
                 iconBgColor = Color(0xFFE0F7FA),
-                iconTint = Color(0xFF24BBCC),
+                iconTint = AppPrimaryColor,
                 modifier = Modifier.weight(1f)
             )
         }
