@@ -1,5 +1,6 @@
 package id.my.matahati.pos.ui.screen.shift
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import id.my.matahati.pos.model.ShiftResponse
 import id.my.matahati.pos.ui.screen.home.components.OlseraDateFilterDialog
 import id.my.matahati.pos.ui.screen.shift.components.ShiftCloseSalesReceiptDialog
@@ -468,11 +470,29 @@ fun ShiftScreen(
                                         )
                                         HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
+                                        val nonCashSalesVal = (totalSalesVal - cashSalesVal).coerceAtLeast(0.0)
+
                                         ShiftInfoRow(
                                             label = "Total Penjualan",
                                             value = formatNumberDisplay(totalSalesVal),
                                             startPadding = 32.dp,
                                             verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "  • Penjualan Tunai",
+                                            value = formatNumberDisplay(cashSalesVal),
+                                            startPadding = 48.dp,
+                                            verticalPadding = 12.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                                        ShiftInfoRow(
+                                            label = "  • Penjualan Non-Tunai (QRIS)",
+                                            value = formatNumberDisplay(nonCashSalesVal),
+                                            startPadding = 48.dp,
+                                            verticalPadding = 12.dp
                                         )
                                         HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
@@ -501,7 +521,7 @@ fun ShiftScreen(
                                         HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                                         ShiftInfoRow(
-                                            label = "Total Diharapkan",
+                                            label = "Total Kas Diharapkan (Laci)",
                                             value = formatNumberDisplay(expectedCashVal),
                                             isBold = true,
                                             verticalPadding = 16.dp
@@ -895,6 +915,8 @@ private fun ActiveShiftContent(
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
+                val nonCashSalesVal = (totalSalesVal - cashSalesVal).coerceAtLeast(0.0)
+
                 ShiftInfoRow(
                     label = "Total Penjualan",
                     value = formatNumberDisplay(totalSalesVal),
@@ -903,13 +925,21 @@ private fun ActiveShiftContent(
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
-//                ShiftInfoRow(
-//                    label = "Penjualan Tunai",
-//                    value = formatNumberDisplay(cashSalesVal),
-//                    startPadding = 32.dp,
-//                    verticalPadding = 18.dp
-//                )
-//                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+                ShiftInfoRow(
+                    label = "  • Penjualan Tunai",
+                    value = formatNumberDisplay(cashSalesVal),
+                    startPadding = 48.dp,
+                    verticalPadding = 14.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                ShiftInfoRow(
+                    label = "  • Penjualan Non-Tunai (QRIS)",
+                    value = formatNumberDisplay(nonCashSalesVal),
+                    startPadding = 48.dp,
+                    verticalPadding = 14.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
                     label = "Kas Pengembalian",
@@ -936,7 +966,7 @@ private fun ActiveShiftContent(
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
-                    label = "Total Diharapkan",
+                    label = "Total Kas Diharapkan (Laci)",
                     value = formatNumberDisplay(expectedCashVal),
                     isBold = true,
                     verticalPadding = 18.dp
@@ -1265,14 +1295,29 @@ private fun CashMovementDialog(
     var selectedType by remember { mutableStateOf("CASH_IN") }
     var amountInput by remember { mutableStateOf("") }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Catat Kas Masuk / Kas Keluar", fontWeight = FontWeight.Bold) },
-        text = {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            modifier = Modifier
+                .width(480.dp)
+                .padding(16.dp)
+        ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.Start
             ) {
+                Text(
+                    text = "Catat Kas Masuk / Kas Keluar",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.DarkGray
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1280,7 +1325,7 @@ private fun CashMovementDialog(
                     FilterChip(
                         selected = selectedType == "CASH_IN",
                         onClick = { selectedType = "CASH_IN" },
-                        label = { Text("Kas Masuk (+)") },
+                        label = { Text("Kas Masuk (+)", fontWeight = FontWeight.SemiBold) },
                         leadingIcon = {
                             Icon(Icons.Default.AddCircleOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                         },
@@ -1294,7 +1339,7 @@ private fun CashMovementDialog(
                     FilterChip(
                         selected = selectedType == "CASH_OUT",
                         onClick = { selectedType = "CASH_OUT" },
-                        label = { Text("Kas Keluar (-)") },
+                        label = { Text("Kas Keluar (-)", fontWeight = FontWeight.SemiBold) },
                         leadingIcon = {
                             Icon(Icons.Default.RemoveCircleOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                         },
@@ -1306,34 +1351,59 @@ private fun CashMovementDialog(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = amountInput,
                     onValueChange = { input -> amountInput = input.filter { it.isDigit() } },
                     label = { Text("Nominal (Rp)") },
+                    placeholder = { Text("0") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = OlseraBlueHeader,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val amount = amountInput.toDoubleOrNull() ?: 0.0
-                    onSubmit(selectedType, amount)
-                },
-                enabled = !isSubmitting && amountInput.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = OlseraBlueHeader)
-            ) {
-                Text("Simpan", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Batal")
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.DarkGray)
+                    ) {
+                        Text("BATAL", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            val amount = amountInput.toDoubleOrNull() ?: 0.0
+                            onSubmit(selectedType, amount)
+                        },
+                        enabled = !isSubmitting && amountInput.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = OlseraBlueHeader),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text("SIMPAN", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -1345,24 +1415,52 @@ private fun CloseShiftDialog(
 ) {
     var actualCashInput by remember { mutableStateOf("") }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Tutup Shift", fontWeight = FontWeight.Bold, color = Color(0xFFD32F2F)) },
-        text = {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            modifier = Modifier
+                .width(480.dp)
+                .padding(16.dp)
+        ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.Start
             ) {
+                Text(
+                    text = "Tutup Shift",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFD32F2F)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Surface(
-                    color = Color(0xFFF5F5F5),
-                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFF8FAFC),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Ekspektasi Kas di Laci:", fontSize = 12.sp, color = Color.Gray)
-                        Text(formatCurrency(expectedCash), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = OlseraBlueHeader)
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Ekspektasi Kas di Laci:",
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = formatCurrency(expectedCash),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OlseraBlueHeader
+                        )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 OutlinedTextField(
                     value = actualCashInput,
@@ -1370,28 +1468,50 @@ private fun CloseShiftDialog(
                     label = { Text("Nominal Kas Fisik Aktual (Rp)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = OlseraBlueHeader,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val actual = actualCashInput.toDoubleOrNull() ?: 0.0
-                    onSubmit(actual)
-                },
-                enabled = !isSubmitting && actualCashInput.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
-            ) {
-                Text("Tutup Shift", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Batal")
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.DarkGray)
+                    ) {
+                        Text("BATAL", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            val actual = actualCashInput.toDoubleOrNull() ?: 0.0
+                            onSubmit(actual)
+                        },
+                        enabled = !isSubmitting && actualCashInput.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text("TUTUP SHIFT", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
