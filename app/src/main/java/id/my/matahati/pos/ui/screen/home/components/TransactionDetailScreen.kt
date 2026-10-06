@@ -194,10 +194,12 @@ fun TransactionDetailScreen(
                     icon = Icons.Default.Person,
                     text = "($cashierName)"
                 )
-                InfoIconRow(
-                    icon = Icons.Default.Restaurant,
-                    text = "${transaction.orderType} (${transaction.visitorCount} Pax)"
-                )
+                if (!transaction.orderType.isNullOrBlank()) {
+                    InfoIconRow(
+                        icon = Icons.Default.Restaurant,
+                        text = "${transaction.orderType} (${transaction.visitorCount} Pax)"
+                    )
+                }
                 if (!transaction.orderNote.isNullOrBlank()) {
                     InfoIconRow(
                         icon = Icons.Default.ChatBubbleOutline,

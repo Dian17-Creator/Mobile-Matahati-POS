@@ -164,10 +164,6 @@ fun HomeScreen(
         if (cartItems.isNotEmpty()) {
             if (shiftViewModel.currentShift == null) {
                 validationWarningMessage = "Kasir belum memulai shift. Silakan buka shift terlebih dahulu di menu Shift."
-            } else if (orderType.isBlank()) {
-                validationWarningMessage = "Silahkan pilih tipe pesanan"
-            } else if (orderType == "DINE_IN" && viewModel.selectedTable.isBlank()) {
-                validationWarningMessage = "Silahkan isi nomor meja"
             } else if (selectedCustomer == null) {
                 validationWarningMessage = "Silahkan pilih customer"
             } else {
@@ -1571,6 +1567,7 @@ fun HomeScreen(
             cashierName = userName,
             savedOutletName = outletName,
             isPrinting = viewModel.isPrinting,
+            isOrderTypeSelected = viewModel.isOrderTypeSelectedByUser,
             onPrint = {
                 if (viewModel.selectedPrinterAddress == null) {
                     viewModel.openPrinterSelection(printerManager)

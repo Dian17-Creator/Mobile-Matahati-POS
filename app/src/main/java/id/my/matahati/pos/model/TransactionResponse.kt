@@ -25,7 +25,7 @@ data class TransactionModel(
     @SerializedName("dtransaction") val transactionDate: String,
     @SerializedName("nid_payment") val nidPayment: String? = null,
     @SerializedName("cname_customer") val customerName: String?,
-    @SerializedName("cordertype") val orderType: String,
+    @SerializedName("cordertype") val orderType: String?,
     @SerializedName("ctable") val tableName: String?,
     @SerializedName("nvisitor") val visitorCount: Int,
     @SerializedName("nsubtotal") val subtotal: String,

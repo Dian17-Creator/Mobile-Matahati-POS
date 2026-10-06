@@ -9,7 +9,7 @@ data class TransactionRequest(
     @SerializedName("nid_payment") val nidPayment: String?,
     @SerializedName("nid_voucher") val nidVoucher: Int?,
     @SerializedName("cname_customer") val customerName: String?,
-    @SerializedName("cordertype") val orderType: String,
+    @SerializedName("cordertype") val orderType: String?,
     @SerializedName("nvisitor") val visitorCount: Int = 1, // Default 1
     @SerializedName("ctable") val tableName: String?,
     @SerializedName("ndiscount") val discount: Double,

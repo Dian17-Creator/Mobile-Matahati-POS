@@ -25,7 +25,8 @@ class EscPosFormatter(private val cols: Int = 32) {
     fun formatReceipt(
         data: TransactionData,
         cashierName: String,
-        savedOutletName: String? = null
+        savedOutletName: String? = null,
+        isOrderTypeSelected: Boolean = true
     ): ByteArray {
         val trx = data.transaction ?: return byteArrayOf()
         val details = data.details ?: emptyList()
@@ -82,11 +83,13 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(formatLabelValue("No. Trx", trx.transactionNo).toList())
         out.addAll(formatLabelValue("Waktu", formatDateTime(trx.transactionDate)).toList())
         out.addAll(formatLabelValue("Kasir", finalCashierName).toList())
-        out.addAll(formatLabelValue("Order", trx.orderType).toList())
-        if (trx.customerName != null) {
+        if (isOrderTypeSelected && !trx.orderType.isNullOrBlank()) {
+            out.addAll(formatLabelValue("Order", trx.orderType).toList())
+        }
+        if (!trx.customerName.isNullOrBlank()) {
             out.addAll(formatLabelValue("Customer", trx.customerName).toList())
         }
-        if (trx.tableName != null) {
+        if (!trx.tableName.isNullOrBlank()) {
             out.addAll(formatLabelValue("Meja", trx.tableName).toList())
         }
         if (!trx.orderNote.isNullOrBlank()) {
@@ -204,12 +207,14 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(drawLine("-").toByteArray().toList())
 
         // 5. Order Type
-        out.addAll(ALIGN_CENTER.toList())
-        out.addAll(BOLD_ON.toList())
-        val displayOrderType = if (orderType.isNotBlank()) orderType.replace("_", "-").uppercase() else "DINE-IN"
-        out.addAll("$displayOrderType\n".toByteArray().toList())
-        out.addAll(BOLD_OFF.toList())
-        out.addAll(ALIGN_LEFT.toList())
+        if (orderType.isNotBlank()) {
+            out.addAll(ALIGN_CENTER.toList())
+            out.addAll(BOLD_ON.toList())
+            val displayOrderType = orderType.replace("_", "-").uppercase()
+            out.addAll("$displayOrderType\n".toByteArray().toList())
+            out.addAll(BOLD_OFF.toList())
+            out.addAll(ALIGN_LEFT.toList())
+        }
 
         // 6. Items
         cartItems.forEach { item ->
