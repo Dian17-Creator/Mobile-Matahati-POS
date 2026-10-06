@@ -286,6 +286,53 @@ fun SettingsScreen(
                         )
                     }
                 }
+
+                // Preview Cetak Option Card
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 16.dp)
+                        ) {
+                            Text(
+                                text = "Preview Cetak",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color(0xFF212121)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Tampilkan pop-up preview invoice dan pesanan sebelum mencetak ke printer",
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                lineHeight = 16.sp
+                            )
+                        }
+
+                        Switch(
+                            checked = viewModel.isShowPrintPreviewEnabled,
+                            onCheckedChange = { viewModel.updateShowPrintPreviewEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = SettingsBlue,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color.LightGray
+                            )
+                        )
+                    }
+                }
             }
         }
     }

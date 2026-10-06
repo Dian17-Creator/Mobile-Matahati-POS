@@ -687,8 +687,16 @@ fun ShiftScreen(
 
     // Dialog Pratinjau Penutupan Penjualan (Pop-up Struk)
     if (showCloseSalesReceiptDialog) {
+        val isPreviewEnabled = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+            .getBoolean("show_print_preview", true)
+
         val shiftToPreview = selectedShiftForDetail ?: shiftHistory.firstOrNull()
-        if (shiftToPreview != null) {
+        if (!isPreviewEnabled) {
+            showCloseSalesReceiptDialog = false
+            if (shiftToPreview != null) {
+                shiftViewModel.printShift(context, shiftToPreview, userName = userName)
+            }
+        } else if (shiftToPreview != null) {
             ShiftCloseSalesReceiptDialog(
                 shift = shiftToPreview,
                 userName = userName,
