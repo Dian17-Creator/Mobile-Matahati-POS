@@ -154,8 +154,9 @@ fun OlseraCartPanel(
                             )
                         } else {
                             if (orderType.isNotBlank()) {
+                                val orderTypeDisplay = if (orderType.uppercase() == "TAKE_AWAY" || orderType.uppercase() == "TAKEAWAY" || orderType.uppercase().contains("TAKE")) "TAKE-AWAY / OFFLINE" else orderType
                                 Text(
-                                    text = orderType,
+                                    text = orderTypeDisplay,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = OlseraHeaderBlue,
@@ -527,7 +528,7 @@ private fun OlseraCartItemRow(
 
             // Harga satuan
             Text(
-                text = formatRawCurrency(cartItem.product.price),
+                text = formatRawCurrency(cartItem.unitPrice),
                 fontSize = 11.sp,
                 color = Color.Gray,
                 textAlign = TextAlign.End

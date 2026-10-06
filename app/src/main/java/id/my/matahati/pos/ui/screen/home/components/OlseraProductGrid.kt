@@ -41,7 +41,8 @@ fun OlseraProductGrid(
     products: List<Product>,
     onAddToCart: (Product) -> Unit,
     modifier: Modifier = Modifier,
-    columnsCount: Int = 4
+    columnsCount: Int = 4,
+    orderType: String = ""
 ) {
     if (products.isEmpty()) {
         Box(
@@ -70,6 +71,7 @@ fun OlseraProductGrid(
             ) { product ->
                 OlseraProductCard(
                     product = product,
+                    orderType = orderType,
                     onClick = { onAddToCart(product) }
                 )
             }
@@ -81,8 +83,12 @@ fun OlseraProductGrid(
 fun OlseraProductCard(
     product: Product,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    orderType: String = ""
 ) {
+    val isOnline = orderType.equals("ONLINE", ignoreCase = true)
+    val displayPrice = product.getEffectivePrice(isOnline)
+
     Card(
         shape = RoundedCornerShape(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF24BBCC)),
@@ -143,7 +149,7 @@ fun OlseraProductCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = formatRawCurrency(product.price),
+                    text = formatRawCurrency(displayPrice),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF24BBCC),
@@ -151,7 +157,16 @@ fun OlseraProductCard(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                if (product.onlinePrice > 0.0) {
+                if (isOnline) {
+                    Text(
+                        text = "Toko: Rp ${formatRawCurrency(product.price)}",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Gray,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else if (product.onlinePrice > 0.0) {
                     Text(
                         text = "Online: Rp ${formatRawCurrency(product.onlinePrice)}",
                         fontSize = 9.sp,
