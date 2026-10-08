@@ -65,7 +65,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(ALIGN_CENTER.toList())
         
         // 2. Header Outlet (Bold & Double Size if <= 16 chars)
-        val outletName = (trx.outlet?.name ?: savedOutletName ?: "MATA HATI CAFE").uppercase()
+        val outletName = (trx.outlet?.name ?: savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
         out.addAll(BOLD_ON.toList())
         if (outletName.length <= 16) {
             out.addAll(SIZE_DOUBLE.toList())
@@ -454,7 +454,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(FONT_B.toList())
         out.addAll(ALIGN_CENTER.toList())
 
-        val outletName = "MATA HATI CAFE"
+        val outletName = (savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
         out.addAll(BOLD_ON.toList())
         out.addAll(SIZE_DOUBLE.toList())
         out.addAll("$outletName\n".toByteArray().toList())
@@ -524,7 +524,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         }
 
         val currentPrintedTime = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.forLanguageTag("id-ID")).format(java.util.Date())
-        val outletName = (savedOutletName ?: "MATA HATI CAFE").uppercase()
+        val outletName = (savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
 
         val cashierName = shift.user?.name ?: userName ?: "Kasir"
         val rawReceipts = shift.totalReceipts ?: 0
