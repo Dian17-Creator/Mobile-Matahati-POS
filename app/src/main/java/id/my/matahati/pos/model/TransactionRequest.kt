@@ -3,6 +3,7 @@ package id.my.matahati.pos.model
 import com.google.gson.annotations.SerializedName
 
 data class TransactionRequest(
+    @SerializedName("nid") val nid: Int? = null,
     @SerializedName("nid_customer") val nidCustomer: Int?,
     @SerializedName("nid_outlet") val nidOutlet: Int,
     @SerializedName("nid_user") val nidUser: Int? = null,

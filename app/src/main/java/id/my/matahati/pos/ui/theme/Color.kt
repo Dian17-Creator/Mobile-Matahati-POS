@@ -6,8 +6,8 @@ import androidx.compose.ui.graphics.Color
 // TERSENTRALISASI: KONTROL WARNA TEMA UTAMA APLIKASI POS
 // Ganti warna di bawah ini untuk mengubah warna seluruh aplikasi
 // =========================================================
-val AppPrimaryColor = Color(0xFF24BBCC)
-//val AppPrimaryColor = Color(0xFFB63352)  // Warna Utama Header, Button, Accent (IQOS Cyan)
+//val AppPrimaryColor = Color(0xFF24BBCC)
+val AppPrimaryColor = Color(0xFFB63352)  // Warna Utama Header, Button, Accent (IQOS Cyan)
 val AppPrimaryLight = Color(0xFFE0F7FA)       // Warna Latar Belakang Aksen (Light Cyan)
 val AppSuccessGreen = Color(0xFF4CAF50)       // Warna Bayar / Sukses
 val AppDangerRed = Color(0xFFD32F2F)          // Warna Hapus / Batal / Error
