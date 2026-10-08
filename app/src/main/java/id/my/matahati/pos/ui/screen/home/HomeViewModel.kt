@@ -96,6 +96,7 @@ class HomeViewModel : ViewModel() {
     // Held Orders States (Backend DRAFT Status)
     val heldOrders = mutableStateListOf<TransactionModel>()
     var showHeldOrdersDialog by mutableStateOf(false)
+    var currentDraftId by mutableStateOf<String?>(null)
     var showCashierConfirmDialog by mutableStateOf(false)
     var showPaymentScreen by mutableStateOf(false)
     var pendingShowReceipt by mutableStateOf(false)
@@ -152,11 +153,16 @@ class HomeViewModel : ViewModel() {
         heldOrders.removeAll { it.id == id }
     }
 
-    fun deleteHeldOrder(context: android.content.Context, id: String, nidOutlet: String?) {
+    fun deleteHeldOrder(context: android.content.Context? = null, id: String, nidOutlet: String?) {
         removeHeldOrderLocal(id)
         viewModelScope.launch {
             try {
-                RetrofitClient.apiService.deleteTransaction(id)
+                val response = RetrofitClient.apiService.deleteTransaction(id)
+                if (response.isSuccessful) {
+                    Log.d("HeldOrders", "Draft order $id successfully deleted.")
+                } else {
+                    Log.e("HeldOrders", "Failed to delete draft order $id: code=${response.code()} error=${response.errorBody()?.string()}")
+                }
                 fetchHeldOrders(nidOutlet)
             } catch (e: Exception) {
                 Log.e("HeldOrders", "Error deleting draft: ${e.message}", e)
@@ -370,7 +376,26 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun fetchData(nidOutlet: String? = null) {
+    fun fetchProducts(nidOutlet: String?, customerId: String? = null) {
+        viewModelScope.launch {
+            try {
+                val prodResponse = RetrofitClient.apiService.getProducts(
+                    outletId = nidOutlet,
+                    customerId = customerId
+                )
+                if (prodResponse.isSuccessful && prodResponse.body()?.success == true) {
+                    val dtos = prodResponse.body()?.data ?: emptyList()
+                    val fetchedProducts = dtos.map { it.toProduct() }
+                    products.clear()
+                    products.addAll(fetchedProducts)
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Gagal memuat produk: ${e.message}", e)
+            }
+        }
+    }
+
+    fun fetchData(nidOutlet: String? = null, customerId: String? = null) {
         products.clear()
         viewModelScope.launch {
             isLoading = true
@@ -391,10 +416,11 @@ class HomeViewModel : ViewModel() {
                 }
 
                 // Fetch Products per Outlet
-                val prodResponse = RetrofitClient.apiService.getProducts(outletId = nidOutlet)
+                val prodResponse = RetrofitClient.apiService.getProducts(outletId = nidOutlet, customerId = customerId)
                 if (prodResponse.isSuccessful && prodResponse.body()?.success == true) {
                     val dtos = prodResponse.body()?.data ?: emptyList()
                     val fetchedProducts = dtos.map { it.toProduct() }
+                    products.clear()
                     products.addAll(fetchedProducts)
                 }
 
@@ -1326,6 +1352,7 @@ class HomeViewModel : ViewModel() {
         val defaultOrderType = "ONLINE"
 
         val request = TransactionRequest(
+            nid = currentDraftId?.toIntOrNull(),
             nidCustomer = selectedCustomer?.id?.toIntOrNull(),
             nidOutlet = parsedOutlet,
             nidUser = selectedServedBy?.id,
@@ -1350,6 +1377,21 @@ class HomeViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.success == true && body.data != null) {
+                        val previousDraftId = currentDraftId
+                        if (previousDraftId != null) {
+                            currentDraftId = null
+                            removeHeldOrderLocal(previousDraftId)
+                            try {
+                                val delRes = RetrofitClient.apiService.deleteTransaction(previousDraftId)
+                                if (delRes.isSuccessful) {
+                                    Log.d("HeldOrders", "Old draft $previousDraftId successfully deleted from backend.")
+                                } else {
+                                    Log.e("HeldOrders", "Failed to delete old draft $previousDraftId: code=${delRes.code()} error=${delRes.errorBody()?.string()}")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("HeldOrders", "Error deleting old draft: ${e.message}", e)
+                            }
+                        }
                         if (status == "CANCELLED") {
                             closeReceiptDialog()
                             transactionSuccessMessage = "Pesanan berhasil dibatalkan dan dicatat."

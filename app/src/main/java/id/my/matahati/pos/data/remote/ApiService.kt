@@ -34,7 +34,8 @@ interface ApiService {
 
     @GET("api/products")
     suspend fun getProducts(
-        @Query("nid_outlet") outletId: String? = null
+        @Query("nid_outlet") outletId: String? = null,
+        @Query("nid_customer") customerId: String? = null
     ): Response<ProductResponse>
 
     @GET("api/customers")

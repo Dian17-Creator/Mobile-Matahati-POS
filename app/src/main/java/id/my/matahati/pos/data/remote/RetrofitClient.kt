@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     // Using localhost with adb reverse
-    //private const val BASE_URL = "http://localhost:8000/"
-    private const val BASE_URL = "http://192.168.1.54:8000/"
+    private const val BASE_URL = "http://localhost:8000/"
+    //private const val BASE_URL = "http://192.168.1.54:8000/"
     //private const val BASE_URL = "https://pos.matahaticafe.com/"
 
 

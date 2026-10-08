@@ -92,7 +92,8 @@ fun OlseraCartPanel(
     orderNote: String = "",
     onOrderNoteClick: () -> Unit = {},
     discountAmount: Double = 0.0,
-    grandTotal: Double = 0.0
+    grandTotal: Double = 0.0,
+    isSubmitting: Boolean = false
 ) {
     val subtotal = cartItems.sumOf { it.totalPrice }
     val totalAmount = if (grandTotal > 0) grandTotal else (subtotal - discountAmount).coerceAtLeast(0.0)
@@ -181,12 +182,14 @@ fun OlseraCartPanel(
                     Spacer(modifier = Modifier.width(12.dp))
 
                     // Right: Plus Button
+                    val isHoldEnabled = !isSubmitting && cartItems.isNotEmpty()
                     IconButton(
                         onClick = onHoldCart,
+                        enabled = isHoldEnabled,
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(OlseraHeaderBlue)
+                            .background(if (isHoldEnabled) OlseraHeaderBlue else Color.Gray)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,

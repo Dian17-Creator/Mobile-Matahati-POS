@@ -169,6 +169,7 @@ fun HomeScreen(
         selectedVoucher = null
         manualDiscountInput = ""
         orderNote = ""
+        viewModel.currentDraftId = null
         viewModel.showPaymentScreen = false
     }
 
@@ -201,6 +202,10 @@ fun HomeScreen(
         viewModel.loadServedByUsers(outletId, currentUserId = userId, currentUserName = userName)
         viewModel.fetchHeldOrders(nidOutlet)
         shiftViewModel.checkCurrentShift(nidOutlet)
+    }
+
+    LaunchedEffect(selectedCustomer?.id, nidOutlet) {
+        viewModel.fetchProducts(nidOutlet, selectedCustomer?.id)
     }
 
     LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType) {
@@ -658,6 +663,7 @@ fun HomeScreen(
                                                 cartItems = cartItems,
                                                 customers = viewModel.customers,
                                                 orderType = orderType,
+                                                isSubmitting = viewModel.isSubmitting,
                                                 onIncreaseQuantity = onIncreaseQuantity,
                                                 onDecreaseQuantity = onDecreaseQuantity,
                                                 onItemClick = { item ->
@@ -686,6 +692,7 @@ fun HomeScreen(
                                                                 selectedVoucher = null
                                                                 manualDiscountInput = ""
                                                                 orderNote = ""
+                                                                viewModel.currentDraftId = null
                                                             }
                                                         )
                                                     }
@@ -1328,6 +1335,7 @@ fun HomeScreen(
                 selectedVoucher = null
                 manualDiscountInput = ""
                 orderNote = ""
+                viewModel.currentDraftId = null
             },
             containerColor = Color.White,
             modifier = Modifier.width(480.dp).wrapContentHeight(),
@@ -1344,6 +1352,7 @@ fun HomeScreen(
                         selectedVoucher = null
                         manualDiscountInput = ""
                         orderNote = ""
+                        viewModel.currentDraftId = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
                     shape = RoundedCornerShape(8.dp),
@@ -1444,8 +1453,8 @@ fun HomeScreen(
                     manualDiscountInput = ""
                 }
                 selectedVoucher = null
+                viewModel.currentDraftId = heldOrder.id
                 viewModel.removeHeldOrderLocal(heldOrder.id)
-                viewModel.deleteHeldOrder(context, heldOrder.id, nidOutlet)
                 viewModel.showHeldOrdersDialog = false
             },
             onDismiss = { viewModel.showHeldOrdersDialog = false }
@@ -1657,6 +1666,7 @@ fun HomeScreen(
                     selectedVoucher = null
                     manualDiscountInput = ""
                     orderNote = ""
+                    viewModel.currentDraftId = null
                     viewModel.showPaymentScreen = false
                 }
             }
