@@ -57,6 +57,7 @@ fun ShiftScreen(
     shiftViewModel: ShiftViewModel,
     nidOutlet: String?,
     userName: String? = null,
+    savedOutletName: String? = null,
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -694,15 +695,16 @@ fun ShiftScreen(
         if (!isPreviewEnabled) {
             showCloseSalesReceiptDialog = false
             if (shiftToPreview != null) {
-                shiftViewModel.printShift(context, shiftToPreview, userName = userName)
+                shiftViewModel.printShift(context, shiftToPreview, savedOutletName = savedOutletName, userName = userName)
             }
         } else if (shiftToPreview != null) {
             ShiftCloseSalesReceiptDialog(
                 shift = shiftToPreview,
                 userName = userName,
+                savedOutletName = savedOutletName,
                 isPrinting = shiftViewModel.isPrinting,
                 onPrintToPhysicalPrinter = {
-                    shiftViewModel.printShift(context, shiftToPreview, userName = userName)
+                    shiftViewModel.printShift(context, shiftToPreview, savedOutletName = savedOutletName, userName = userName)
                 },
                 onDismiss = { showCloseSalesReceiptDialog = false }
             )

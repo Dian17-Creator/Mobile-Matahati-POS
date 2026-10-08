@@ -208,6 +208,18 @@ fun HomeScreen(
         viewModel.fetchProducts(nidOutlet, selectedCustomer?.id)
     }
 
+    LaunchedEffect(allProducts) {
+        if (cartItems.isNotEmpty() && allProducts.isNotEmpty()) {
+            for (i in cartItems.indices) {
+                val currentCartItem = cartItems[i]
+                val matchingProduct = allProducts.find { it.id == currentCartItem.product.id }
+                if (matchingProduct != null && matchingProduct.price != currentCartItem.product.price) {
+                    cartItems[i] = currentCartItem.copy(product = matchingProduct)
+                }
+            }
+        }
+    }
+
     LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType) {
         if (currentScreen == "transaksi") {
             val selectedPaymentMethod = viewModel.paymentMethods.find { 
@@ -596,6 +608,7 @@ fun HomeScreen(
                                     shiftViewModel = shiftViewModel,
                                     nidOutlet = nidOutlet,
                                     userName = userName,
+                                    savedOutletName = outletName,
                                     onMenuClick = {
                                         coroutineScope.launch {
                                             if (drawerState.isClosed) drawerState.open() else drawerState.close()

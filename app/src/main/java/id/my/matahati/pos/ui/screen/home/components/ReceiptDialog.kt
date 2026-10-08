@@ -72,7 +72,7 @@ fun ReceiptDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header (Fixed)
-                val outletHeader = (trx.outlet?.name ?: savedOutletName ?: "OUTLET MH").uppercase()
+                val outletHeader = (trx.outlet?.name ?: savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
                 Text(
                     text = outletHeader,
                     fontWeight = FontWeight.Bold,

@@ -58,7 +58,7 @@ fun ShiftCloseSalesReceiptDialog(
     }
 
     val currentPrintedTime = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.forLanguageTag("id-ID")).format(Date())
-    val outletHeader = (savedOutletName ?: "MATA HATI CAFE").uppercase()
+    val outletHeader = (savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
 
     val cashierName = shift.user?.name ?: userName ?: "Kasir"
     val rawReceipts = shift.totalReceipts ?: 0

@@ -59,7 +59,7 @@ fun ProductSalesReceiptDialog(
     }
 
     val currentPrintedTime = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.forLanguageTag("id-ID")).format(Date())
-    val outletHeader = "MATA HATI CAFE"
+    val outletHeader = (savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
