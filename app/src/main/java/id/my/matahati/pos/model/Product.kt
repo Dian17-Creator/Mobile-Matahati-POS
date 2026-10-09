@@ -22,6 +22,8 @@ data class ProductDto(
     val nprice: Double,
     @SerializedName("nprice_online")
     val npriceOnline: Double? = null,
+    @SerializedName("nqty")
+    val nqty: Int? = null,
     @SerializedName("cphotos")
     val cphotos: String?,
     @SerializedName("cstatus")
@@ -34,7 +36,7 @@ data class ProductDto(
             price = nprice,
             onlinePrice = npriceOnline ?: 0.0,
             categoryId = nidCategory?.toString() ?: "1",
-            stock = 99,
+            stock = nqty ?: 0,
             iconEmoji = "📦",
             imageUrl = cphotos,
             isAvailable = cstatus?.lowercase() != "inactive",
@@ -59,6 +61,8 @@ data class Product(
     val isAvailable: Boolean = true,
     val stationName: String = "DAPUR" // Default station
 ) {
+    val nqty: Int
+        get() = stock
     val formattedPrice: String
         get() {
             val formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("id-ID"))

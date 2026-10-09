@@ -1442,8 +1442,11 @@ class HomeViewModel : ViewModel() {
                                     parsedError = errorList.joinToString("\n")
                                 }
                             }
-                            if (parsedError.contains("belum memulai shift", ignoreCase = true) || response.code() == 422 && parsedError.contains("shift", ignoreCase = true)) {
+                            if (parsedError.contains("belum memulai shift", ignoreCase = true) || (response.code() == 422 && parsedError.contains("shift", ignoreCase = true))) {
                                 showShiftNotStartedDialog = true
+                            }
+                            if (response.code() == 422 || parsedError.contains("stok", ignoreCase = true)) {
+                                fetchProducts(nidOutlet, selectedCustomer?.id)
                             }
                             parsedError
                         } catch (e: Exception) {

@@ -77,6 +77,7 @@ fun OlseraEditItemPanel(
     onRemoveItem: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var quantity by remember(cartItem) { mutableIntStateOf(cartItem.quantity) }
     var note by remember(cartItem) { mutableStateOf(cartItem.note) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -358,7 +359,17 @@ fun OlseraEditItemPanel(
 
                             // Plus Button
                             IconButton(
-                                onClick = { quantity++ },
+                                onClick = {
+                                    if (quantity + 1 > cartItem.product.stock) {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "Stok tidak mencukupi. Sisa stok: ${cartItem.product.stock}",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        quantity++
+                                    }
+                                },
                                 modifier = Modifier.size(38.dp)
                             ) {
                                 Icon(
@@ -600,8 +611,16 @@ fun OlseraEditItemPanel(
                     // 7. SIMPAN BUTTON (Full-Width Blue)
                     Button(
                         onClick = {
-                            onConfirmUpdate(quantity, note)
-                            onDismiss()
+                            if (quantity > cartItem.product.stock) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    "Stok tidak mencukupi. Sisa stok: ${cartItem.product.stock}",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                onConfirmUpdate(quantity, note)
+                                onDismiss()
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
