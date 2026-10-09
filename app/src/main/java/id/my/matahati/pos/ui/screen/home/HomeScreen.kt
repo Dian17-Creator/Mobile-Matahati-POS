@@ -253,23 +253,36 @@ fun HomeScreen(
 
     // Cart Helper Functions
     val onAddToCart: (Product) -> Unit = { product ->
-        val isOnline = orderType.equals("ONLINE", ignoreCase = true)
-        val existingIndex = cartItems.indexOfFirst { it.product.id == product.id }
-        if (existingIndex >= 0) {
-            val item = cartItems[existingIndex]
-            cartItems[existingIndex] = item.copy(
-                quantity = item.quantity + 1,
-                isOnlineOrder = isOnline
-            )
+        if (product.stock <= 0) {
+            android.widget.Toast.makeText(context, "Stok produk ini sedang kosong!", android.widget.Toast.LENGTH_SHORT).show()
         } else {
-            cartItems.add(CartItem(product = product, quantity = 1, isOnlineOrder = isOnline))
+            val isOnline = orderType.equals("ONLINE", ignoreCase = true)
+            val existingIndex = cartItems.indexOfFirst { it.product.id == product.id }
+            if (existingIndex >= 0) {
+                val item = cartItems[existingIndex]
+                if (item.quantity + 1 > product.stock) {
+                    android.widget.Toast.makeText(context, "Stok tidak mencukupi. Sisa stok: ${product.stock}", android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    cartItems[existingIndex] = item.copy(
+                        quantity = item.quantity + 1,
+                        isOnlineOrder = isOnline
+                    )
+                }
+            } else {
+                cartItems.add(CartItem(product = product, quantity = 1, isOnlineOrder = isOnline))
+            }
         }
     }
 
     val onIncreaseQuantity: (CartItem) -> Unit = { item ->
         val index = cartItems.indexOfFirst { it.product.id == item.product.id }
         if (index >= 0) {
-            cartItems[index] = item.copy(quantity = item.quantity + 1)
+            val currentItem = cartItems[index]
+            if (currentItem.quantity + 1 > currentItem.product.stock) {
+                android.widget.Toast.makeText(context, "Stok tidak mencukupi. Sisa stok: ${currentItem.product.stock}", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                cartItems[index] = item.copy(quantity = item.quantity + 1)
+            }
         }
     }
 
@@ -293,11 +306,15 @@ fun HomeScreen(
         val index = cartItems.indexOfFirst { it.product.id == productId }
         if (index >= 0) {
             val currentItem = cartItems[index]
-            cartItems[index] = currentItem.copy(
-                quantity = newQty,
-                note = newNote,
-                sentQuantity = currentItem.sentQuantity.coerceAtMost(newQty)
-            )
+            if (newQty > currentItem.product.stock) {
+                android.widget.Toast.makeText(context, "Stok tidak mencukupi. Sisa stok: ${currentItem.product.stock}", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                cartItems[index] = currentItem.copy(
+                    quantity = newQty,
+                    note = newNote,
+                    sentQuantity = currentItem.sentQuantity.coerceAtMost(newQty)
+                )
+            }
         }
     }
 
@@ -1380,11 +1397,32 @@ fun HomeScreen(
     if (viewModel.transactionError != null) {
         AlertDialog(
             onDismissRequest = { viewModel.clearTransactionError() },
-            title = { Text("Transaksi Gagal") },
-            text = { Text(viewModel.transactionError ?: "") },
+            containerColor = Color.White,
+            modifier = Modifier.width(480.dp).wrapContentHeight(),
+            title = {
+                Text(
+                    text = "⚠️ Transaksi Gagal",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color(0xFFD32F2F)
+                )
+            },
+            text = {
+                Text(
+                    text = viewModel.transactionError ?: "",
+                    fontSize = 15.sp,
+                    color = Color(0xFF333333),
+                    lineHeight = 22.sp
+                )
+            },
             confirmButton = {
-                TextButton(onClick = { viewModel.clearTransactionError() }) {
-                    Text("OK")
+                Button(
+                    onClick = { viewModel.clearTransactionError() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                ) {
+                    Text("OK, SAYA MENGERTI", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
             }
         )

@@ -115,18 +115,19 @@ fun ProductCard(
                 )
 
                 // Stock Badge
+                val isOutOfStock = product.stock <= 0
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    color = if (isOutOfStock) Color(0xFFD32F2F) else MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(6.dp)
                 ) {
                     Text(
-                        text = "Stok ${product.stock}",
+                        text = if (isOutOfStock) "STOK HABIS" else "Stok: ${product.stock}",
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isOutOfStock) Color.White else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }

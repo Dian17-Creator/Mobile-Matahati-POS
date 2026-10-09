@@ -18,9 +18,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -90,6 +92,7 @@ fun OlseraProductCard(
 ) {
     val isOnline = orderType.equals("ONLINE", ignoreCase = true)
     val displayPrice = product.getEffectivePrice(isOnline)
+    val isOutOfStock = product.stock <= 0
 
     Card(
         shape = RoundedCornerShape(4.dp),
@@ -128,9 +131,32 @@ fun OlseraProductCard(
                         fontSize = 36.sp
                     )
                 }
+
+                // Overlay if out of stock
+                if (isOutOfStock) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.35f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            color = Color(0xFFD32F2F),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = "STOK HABIS",
+                                color = Color.White,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
             }
 
-            // Product Text Container (Name & Price)
+            // Product Text Container (Name, Stock & Price)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -150,14 +176,28 @@ fun OlseraProductCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = formatRawCurrency(displayPrice),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = AppPrimaryColor,
-                    textAlign = TextAlign.End,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Left: Stock info in bottom-left
+                    Text(
+                        text = "Stok: ${product.stock}",
+                        fontSize = 10.sp,
+                        fontWeight = if (isOutOfStock) FontWeight.ExtraBold else FontWeight.SemiBold,
+                        color = if (isOutOfStock) Color(0xFFD32F2F) else Color(0xFF555555)
+                    )
+
+                    // Right: Price
+                    Text(
+                        text = formatRawCurrency(displayPrice),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AppPrimaryColor,
+                        textAlign = TextAlign.End
+                    )
+                }
 
                 val secondaryText = when {
                     isOnline -> "Toko: Rp ${formatRawCurrency(product.price)}"
