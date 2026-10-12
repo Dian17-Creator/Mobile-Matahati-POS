@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import id.my.matahati.pos.model.CartMenuItem
 import id.my.matahati.pos.model.LocalPrinter
 import id.my.matahati.pos.model.PrinterRole
 import id.my.matahati.pos.model.PrinterType
@@ -331,6 +333,129 @@ fun SettingsScreen(
                                 uncheckedTrackColor = Color.LightGray
                             )
                         )
+                    }
+                }
+            }
+
+            // =========================================================
+            // SECTION 3: TAMPILAN MENU KERANJANG
+            // =========================================================
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Header Tampilan Menu Keranjang
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = SettingsBlue.copy(alpha = 0.1f),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                tint = SettingsBlue,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Column {
+                        Text(
+                            text = "Tampilan Menu Keranjang",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF212121)
+                        )
+                        Text(
+                            text = "Pilih menu tombol aksi cepat yang akan ditampilkan pada keranjang",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                // List of Cart Menu Options Card
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        CartMenuItem.entries.forEachIndexed { index, menuItem ->
+                            val isChecked = viewModel.cartMenuStates[menuItem] ?: menuItem.defaultEnabled
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (menuItem.isDestructive) Color(0xFFFFEBEE) else SettingsBlue.copy(alpha = 0.1f),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = menuItem.icon,
+                                            contentDescription = null,
+                                            tint = if (menuItem.isDestructive) Color(0xFFD32F2F) else SettingsBlue,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(14.dp))
+
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(end = 16.dp)
+                                ) {
+                                    Text(
+                                        text = menuItem.title,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = Color(0xFF212121)
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = menuItem.description,
+                                        fontSize = 12.sp,
+                                        color = Color.Gray,
+                                        lineHeight = 16.sp
+                                    )
+                                }
+
+                                Switch(
+                                    checked = isChecked,
+                                    onCheckedChange = { enabled ->
+                                        viewModel.updateCartMenuItemEnabled(menuItem, enabled)
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = SettingsBlue,
+                                        uncheckedThumbColor = Color.White,
+                                        uncheckedTrackColor = Color.LightGray
+                                    )
+                                )
+                            }
+
+                            if (index < CartMenuItem.entries.size - 1) {
+                                HorizontalDivider(
+                                    color = Color.LightGray.copy(alpha = 0.3f),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(horizontal = 20.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }

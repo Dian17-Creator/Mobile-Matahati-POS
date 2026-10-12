@@ -50,12 +50,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.my.matahati.pos.model.CartItem
+import id.my.matahati.pos.model.CartMenuItem
 import id.my.matahati.pos.model.Customer
 import java.text.NumberFormat
 import java.util.Locale
@@ -66,6 +68,11 @@ import id.my.matahati.pos.ui.theme.AppPrimaryLight
 val OlseraGreenPay = Color(0xFF4CAF50)
 val OlseraHeaderBlue = AppPrimaryColor
 val OlseraLightBg = AppPrimaryLight
+
+private data class QuickActionData(
+    val menuItem: CartMenuItem,
+    val onClick: () -> Unit
+)
 
 @Composable
 fun OlseraCartPanel(
@@ -406,57 +413,96 @@ fun OlseraCartPanel(
 
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
 
-            // Quick Action Buttons Bar
-            Surface(
-                color = OlseraLightBg,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        QuickActionButton(
-                            icon = if (showMore) Icons.Default.ExpandLess else Icons.Default.GridView,
-                            label = if (showMore) "Tutup" else "Lainnya",
-                            onClick = { showMore = !showMore }
-                        )
-                        QuickActionButton(icon = Icons.Default.LocalOffer, label = "Disc. Pesanan", onClick = onDiscountClick)
-                        QuickActionButton(icon = Icons.Default.LocalShipping, label = "Ongkos Kirim", onClick = {})
-                        QuickActionButton(icon = Icons.Default.ChatBubbleOutline, label = "Catatan Pesanan", onClick = onOrderNoteClick)
-                        QuickActionButton(icon = Icons.Default.Person, label = "Dilayani Oleh", onClick = onServedByClick)
-                        QuickActionButton(icon = Icons.Default.Restaurant, label = "Kirim ke Dapur", onClick = onSendToKitchenClick)
-                        QuickActionButton(
-                            icon = Icons.Default.Close,
-                            label = "Batal Pesanan",
-                            isDestructive = true,
-                            onClick = {
-                                if (cartItems.isNotEmpty() || orderType.isNotBlank() || selectedCustomerName.isNotBlank() || selectedTable.isNotBlank()) {
-                                    onClearCart()
-                                }
-                            }
-                        )
-                    }
+            // Quick Action Buttons Bar (Filtered dynamically by SharedPreferences)
+            val context = LocalContext.current
+            val prefs = remember(context) { context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE) }
 
-                    if (showMore) {
+            val activeActionItems = CartMenuItem.entries.filter { item ->
+                prefs.getBoolean(item.key, item.defaultEnabled)
+            }.map { item ->
+                val onClickAction: () -> Unit = when (item) {
+                    CartMenuItem.DISC_PESANAN -> onDiscountClick
+                    CartMenuItem.ONGKOS_KIRIM -> { {} }
+                    CartMenuItem.CATATAN_PESANAN -> onOrderNoteClick
+                    CartMenuItem.DILAYANI_OLEH -> onServedByClick
+                    CartMenuItem.KIRIM_KE_DAPUR -> onSendToKitchenClick
+                    CartMenuItem.BATAL_PESANAN -> {
+                        {
+                            if (cartItems.isNotEmpty() || orderType.isNotBlank() || selectedCustomerName.isNotBlank() || selectedTable.isNotBlank()) {
+                                onClearCart()
+                            }
+                        }
+                    }
+                    CartMenuItem.CETAK_PERIKSA -> onCheckPrintClick
+                    CartMenuItem.TEBUS_POINT -> { {} }
+                    CartMenuItem.SHARE_PESANAN -> { {} }
+                    CartMenuItem.REFERRAL_PELANGGAN -> { {} }
+                }
+                QuickActionData(item, onClickAction)
+            }
+
+            if (activeActionItems.isNotEmpty()) {
+                Surface(
+                    color = OlseraLightBg,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val hasSecondRow = activeActionItems.size > 7
+                        val row1Items = if (hasSecondRow) activeActionItems.take(6) else activeActionItems
+                        val row2Items = if (hasSecondRow) activeActionItems.drop(6) else emptyList()
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            QuickActionButton(icon = Icons.Default.Print, label = "Cetak Periksa", onClick = onCheckPrintClick)
-                            QuickActionButton(icon = Icons.Default.Redeem, label = "Tebus Point", onClick = {})
-                            QuickActionButton(icon = Icons.Default.Share, label = "Share Pesanan", onClick = {})
-                            QuickActionButton(icon = Icons.Default.GroupAdd, label = "Referral Pelanggan", onClick = {})
-                            Spacer(modifier = Modifier.width(50.dp))
-                            Spacer(modifier = Modifier.width(50.dp))
-                            Spacer(modifier = Modifier.width(50.dp))
+                            if (hasSecondRow) {
+                                QuickActionButton(
+                                    icon = if (showMore) Icons.Default.ExpandLess else Icons.Default.GridView,
+                                    label = if (showMore) "Tutup" else "Lainnya",
+                                    onClick = { showMore = !showMore }
+                                )
+                            }
+
+                            row1Items.forEach { action ->
+                                QuickActionButton(
+                                    icon = action.menuItem.icon,
+                                    label = action.menuItem.title,
+                                    isDestructive = action.menuItem.isDestructive,
+                                    onClick = action.onClick
+                                )
+                            }
+
+                            val totalRow1Slots = (if (hasSecondRow) 1 else 0) + row1Items.size
+                            repeat((7 - totalRow1Slots).coerceAtLeast(0)) {
+                                Spacer(modifier = Modifier.width(50.dp))
+                            }
+                        }
+
+                        if (hasSecondRow && showMore) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                row2Items.forEach { action ->
+                                    QuickActionButton(
+                                        icon = action.menuItem.icon,
+                                        label = action.menuItem.title,
+                                        isDestructive = action.menuItem.isDestructive,
+                                        onClick = action.onClick
+                                    )
+                                }
+
+                                repeat((7 - row2Items.size).coerceAtLeast(0)) {
+                                    Spacer(modifier = Modifier.width(50.dp))
+                                }
+                            }
                         }
                     }
                 }

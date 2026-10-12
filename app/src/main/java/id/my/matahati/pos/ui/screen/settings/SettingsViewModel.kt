@@ -9,9 +9,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.mutableStateMapOf
 import id.my.matahati.pos.data.printer.EscPosFormatter
 import id.my.matahati.pos.data.printer.PrinterConnectionManager
 import id.my.matahati.pos.data.repository.PrinterRepository
+import id.my.matahati.pos.model.CartMenuItem
 import id.my.matahati.pos.model.LocalPrinter
 import id.my.matahati.pos.model.PrinterRole
 import id.my.matahati.pos.model.PrinterType
@@ -37,9 +39,24 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     var isShowPrintPreviewEnabled by mutableStateOf(true)
         private set
 
+    var cartMenuStates = mutableStateMapOf<CartMenuItem, Boolean>()
+
     init {
         loadPrinters()
         loadPaymentSettings()
+        loadCartMenuSettings()
+    }
+
+    fun loadCartMenuSettings() {
+        cartMenuStates.clear()
+        CartMenuItem.entries.forEach { item ->
+            cartMenuStates[item] = prefs.getBoolean(item.key, item.defaultEnabled)
+        }
+    }
+
+    fun updateCartMenuItemEnabled(item: CartMenuItem, enabled: Boolean) {
+        cartMenuStates[item] = enabled
+        prefs.edit().putBoolean(item.key, enabled).apply()
     }
 
     fun loadPaymentSettings() {
