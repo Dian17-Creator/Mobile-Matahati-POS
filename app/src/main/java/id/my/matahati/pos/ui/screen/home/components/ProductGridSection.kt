@@ -34,11 +34,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import id.my.matahati.pos.model.Product
+import id.my.matahati.pos.ui.theme.AppPrimaryMuted
 
 @Composable
 fun ProductGridSection(
@@ -106,13 +110,31 @@ fun ProductCard(
                     .fillMaxWidth()
                     .aspectRatio(1.3f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
+                    .background(if (product.imageUrl.isNullOrBlank()) AppPrimaryMuted else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = product.iconEmoji,
-                    fontSize = 42.sp
-                )
+                if (!product.imageUrl.isNullOrBlank()) {
+                    val fullImageUrl = if (product.imageUrl.startsWith("http")) {
+                        product.imageUrl
+                    } else {
+                        "http://localhost:8000/${product.imageUrl.removePrefix("/")}"
+                    }
+                    AsyncImage(
+                        model = fullImageUrl,
+                        contentDescription = product.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    val abbreviation = getProductAbbreviation(product.name)
+                    Text(
+                        text = abbreviation.ifBlank { product.iconEmoji.ifBlank { "📦" } },
+                        fontSize = 42.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 // Stock Badge
                 val isOutOfStock = product.stock <= 0
