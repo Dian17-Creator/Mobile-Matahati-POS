@@ -1,6 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
 import id.my.matahati.pos.ui.theme.AppPrimaryColor
+import id.my.matahati.pos.ui.theme.AppPrimaryMuted
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -83,6 +84,30 @@ fun OlseraProductGrid(
     }
 }
 
+fun getProductAbbreviation(name: String): String {
+    val cleanName = name.trim()
+    if (cleanName.isBlank()) return ""
+
+    val words = cleanName.split(Regex("[\\s\\-_]+")).filter { it.isNotBlank() }
+
+    return when {
+        words.size >= 2 -> {
+            val char1 = words[0].firstOrNull { it.isLetterOrDigit() } ?: ""
+            val char2 = words[1].firstOrNull { it.isLetterOrDigit() } ?: ""
+            "$char1$char2".uppercase()
+        }
+        words.size == 1 -> {
+            val single = words[0].filter { it.isLetterOrDigit() }
+            if (single.length >= 2) {
+                single.substring(0, 2).uppercase()
+            } else {
+                single.uppercase()
+            }
+        }
+        else -> ""
+    }
+}
+
 @Composable
 fun OlseraProductCard(
     product: Product,
@@ -110,7 +135,7 @@ fun OlseraProductCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1.25f)
-                    .background(Color(0xFFFDFDFD)),
+                    .background(if (product.imageUrl.isNullOrBlank()) AppPrimaryMuted else Color(0xFFFDFDFD)),
                 contentAlignment = Alignment.Center
             ) {
                 if (!product.imageUrl.isNullOrBlank()) {
@@ -126,9 +151,13 @@ fun OlseraProductCard(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
+                    val abbreviation = getProductAbbreviation(product.name)
                     Text(
-                        text = product.iconEmoji,
-                        fontSize = 36.sp
+                        text = abbreviation.ifBlank { product.iconEmoji.ifBlank { "📦" } },
+                        fontSize = 44.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
                     )
                 }
 
