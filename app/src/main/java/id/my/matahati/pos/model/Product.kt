@@ -1,6 +1,7 @@
 package id.my.matahati.pos.model
 
 import com.google.gson.annotations.SerializedName
+import id.my.matahati.pos.data.remote.RetrofitClient
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -27,9 +28,13 @@ data class ProductDto(
     @SerializedName("cphotos")
     val cphotos: String?,
     @SerializedName("cstatus")
-    val cstatus: String?
+    val cstatus: String?,
+    @SerializedName("ftrack_stock")
+    val ftrackStock: Boolean? = true
 ) {
-    fun toProduct(): Product {
+    fun toProduct(categories: List<Category> = emptyList()): Product {
+        val matchedCategory = categories.find { it.id == nidCategory?.toString() }
+        val effectiveTrackStock = ftrackStock ?: matchedCategory?.ftrackStock ?: true
         return Product(
             id = nid.toString(),
             name = cname,
@@ -40,6 +45,8 @@ data class ProductDto(
             iconEmoji = "📦",
             imageUrl = cphotos,
             isAvailable = cstatus?.lowercase() != "inactive",
+            ftrackStock = effectiveTrackStock,
+            category = matchedCategory,
             stationName = when (nidCategory) {
                 2 -> "BAR"
                 1, 3 -> "DAPUR"
@@ -59,8 +66,13 @@ data class Product(
     val iconEmoji: String = "📦",
     val imageUrl: String? = null,
     val isAvailable: Boolean = true,
+    val ftrackStock: Boolean = true,
+    val category: Category? = null,
     val stationName: String = "DAPUR" // Default station
 ) {
+    val isTrackStock: Boolean
+        get() = ftrackStock && (category?.ftrackStock ?: true)
+
     val nqty: Int
         get() = stock
     val formattedPrice: String
@@ -80,4 +92,18 @@ data class Product(
     fun getEffectivePrice(isOnline: Boolean): Double {
         return if (isOnline && onlinePrice > 0.0) onlinePrice else price
     }
+
+    val fullImageUrl: String?
+        get() {
+            val url = imageUrl?.trim() ?: return null
+            if (url.isBlank()) return null
+            return when {
+                url.startsWith("http://", ignoreCase = true) || url.startsWith("https://", ignoreCase = true) -> url
+                else -> {
+                    val baseUrl = RetrofitClient.BASE_URL.removeSuffix("/")
+                    val path = url.removePrefix("/")
+                    "$baseUrl/$path"
+                }
+            }
+        }
 }

@@ -15,13 +15,16 @@ data class CategoryDto(
     @SerializedName("cname")
     val cname: String,
     @SerializedName("nid_outlet")
-    val nidOutlet: Int? = null
+    val nidOutlet: Int? = null,
+    @SerializedName("ftrack_stock")
+    val ftrackStock: Boolean? = true
 ) {
     fun toCategory(): Category {
         return Category(
             id = nid.toString(),
             name = cname,
-            iconEmoji = getEmojiForCategory(cname)
+            iconEmoji = getEmojiForCategory(cname),
+            ftrackStock = ftrackStock ?: true
         )
     }
 }
@@ -40,5 +43,6 @@ private fun getEmojiForCategory(name: String): String {
 data class Category(
     val id: String,
     val name: String,
-    val iconEmoji: String = "🏷️"
+    val iconEmoji: String = "🏷️",
+    val ftrackStock: Boolean = true
 )

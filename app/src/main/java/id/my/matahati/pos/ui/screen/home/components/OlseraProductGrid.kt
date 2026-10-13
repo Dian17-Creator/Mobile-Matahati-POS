@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import id.my.matahati.pos.model.Product
 import java.text.NumberFormat
 import java.util.Locale
@@ -117,7 +119,8 @@ fun OlseraProductCard(
 ) {
     val isOnline = orderType.equals("ONLINE", ignoreCase = true)
     val displayPrice = product.getEffectivePrice(isOnline)
-    val isOutOfStock = product.stock <= 0
+    val isTrackStock = product.isTrackStock
+    val isOutOfStock = isTrackStock && product.stock <= 0
 
     Card(
         shape = RoundedCornerShape(4.dp),
@@ -125,30 +128,44 @@ fun OlseraProductCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .alpha(if (isOutOfStock) 0.5f else 1.0f)
+            .clickable(enabled = !isOutOfStock) { onClick() }
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
             // Product Image Container (Square)
+            val fullUrl = product.fullImageUrl
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1.25f)
-                    .background(if (product.imageUrl.isNullOrBlank()) AppPrimaryMuted else Color(0xFFFDFDFD)),
+                    .background(if (fullUrl.isNullOrBlank()) AppPrimaryMuted else Color(0xFFFDFDFD)),
                 contentAlignment = Alignment.Center
             ) {
-                if (!product.imageUrl.isNullOrBlank()) {
-                    val fullImageUrl = if (product.imageUrl.startsWith("http")) {
-                        product.imageUrl
-                    } else {
-                        "http://localhost:8000/${product.imageUrl.removePrefix("/")}"
-                    }
-                    AsyncImage(
-                        model = fullImageUrl,
+                if (!fullUrl.isNullOrBlank()) {
+                    SubcomposeAsyncImage(
+                        model = fullUrl,
                         contentDescription = product.name,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        error = {
+                            val abbreviation = getProductAbbreviation(product.name)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(AppPrimaryMuted),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = abbreviation.ifBlank { product.iconEmoji.ifBlank { "📦" } },
+                                    fontSize = 44.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     )
                 } else {
                     val abbreviation = getProductAbbreviation(product.name)
@@ -212,10 +229,14 @@ fun OlseraProductCard(
                 ) {
                     // Left: Stock info in bottom-left
                     Text(
-                        text = "Stok: ${product.stock}",
+                        text = if (!isTrackStock) "Tersedia" else "Stok: ${product.stock}",
                         fontSize = 10.sp,
                         fontWeight = if (isOutOfStock) FontWeight.ExtraBold else FontWeight.SemiBold,
-                        color = if (isOutOfStock) Color(0xFFD32F2F) else Color(0xFF555555)
+                        color = when {
+                            isOutOfStock -> Color(0xFFD32F2F)
+                            !isTrackStock -> Color(0xFF2E7D32)
+                            else -> Color(0xFF555555)
+                        }
                     )
 
                     // Right: Price

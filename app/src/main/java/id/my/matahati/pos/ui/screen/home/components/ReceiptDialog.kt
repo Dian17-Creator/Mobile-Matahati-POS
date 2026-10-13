@@ -1,14 +1,17 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -16,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import id.my.matahati.pos.model.TransactionData
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -28,10 +32,15 @@ fun ReceiptDialog(
     onPrint: () -> Unit = {},
     isPrinting: Boolean = false,
     isOrderTypeSelected: Boolean = true,
+    isPrintPreviewEnabled: Boolean = true,
     onDismiss: () -> Unit
 ) {
     val trx = transactionData.transaction ?: return
     val details = transactionData.details ?: emptyList()
+    val context = LocalContext.current
+
+    var showPreviewModal by remember { mutableStateOf(isPrintPreviewEnabled) }
+    var showPdfConfirm by remember { mutableStateOf(!isPrintPreviewEnabled) }
     
     // Prioritize cashier name from transaction data if available
     val finalCashierName = trx.posUser?.user?.name ?: cashierName
@@ -59,151 +68,221 @@ fun ReceiptDialog(
         }
     }
 
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = Color.White,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+    if (showPreviewModal) {
+        Dialog(onDismissRequest = {
+            showPreviewModal = false
+            showPdfConfirm = true
+        }) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                // Header (Fixed)
-                val outletHeader = (trx.outlet?.name ?: savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
-                Text(
-                    text = outletHeader,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    fontFamily = FontFamily.Monospace,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Header (Fixed)
+                    val outletHeader = (trx.outlet?.name ?: savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
+                    Text(
+                        text = outletHeader,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        fontFamily = FontFamily.Monospace,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                // Scrollable Content Area
-                Box(modifier = Modifier.weight(1f, fill = false)) {
-                    val scrollState = rememberScrollState()
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(scrollState)
-                    ) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            TextRow("No. Trx", trx.transactionNo)
-                            TextRow("Waktu", formatDateTime(trx.transactionDate))
-                            TextRow("Kasir", finalCashierName)
-                            if (isOrderTypeSelected && !trx.orderType.isNullOrBlank()) {
-                                TextRow("Order", trx.orderType)
-                            }
-                            if (!trx.customerName.isNullOrBlank()) {
-                                TextRow("Customer", trx.customerName)
-                            }
-                            if (!trx.tableName.isNullOrBlank()) {
-                                TextRow("Meja", trx.tableName)
-                            }
-                            if (!trx.orderNote.isNullOrBlank()) {
-                                TextRow("Catatan", trx.orderNote)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        HorizontalDivider(color = Color.Black, thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        details.forEach { item ->
-                            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                                Text(text = item.productName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(
-                                        text = "${item.quantity} x ${formatStringNum(item.price)}",
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 12.sp
-                                    )
-                                    Text(
-                                        text = formatStringNum(item.subtotal),
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 12.sp
-                                    )
+                    // Scrollable Content Area
+                    Box(modifier = Modifier.weight(1f, fill = false)) {
+                        val scrollState = rememberScrollState()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(scrollState)
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                TextRow("No. Trx", trx.transactionNo)
+                                TextRow("Waktu", formatDateTime(trx.transactionDate))
+                                TextRow("Kasir", finalCashierName)
+                                if (isOrderTypeSelected && !trx.orderType.isNullOrBlank()) {
+                                    TextRow("Order", trx.orderType)
                                 }
-                                if (!item.note.isNullOrBlank()) {
-                                    val (cleanNote, _) = id.my.matahati.pos.model.CartItem.parseNoteAndSentQty(item.note)
-                                    if (cleanNote.isNotBlank()) {
+                                if (!trx.customerName.isNullOrBlank()) {
+                                    TextRow("Customer", trx.customerName)
+                                }
+                                if (!trx.tableName.isNullOrBlank()) {
+                                    TextRow("Meja", trx.tableName)
+                                }
+                                if (!trx.orderNote.isNullOrBlank()) {
+                                    TextRow("Catatan", trx.orderNote)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider(color = Color.Black, thickness = 1.dp)
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            details.forEach { item ->
+                                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                                    Text(text = item.productName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text(
-                                            text = "Note: $cleanNote",
+                                            text = "${item.quantity} x ${formatStringNum(item.price)}",
                                             fontFamily = FontFamily.Monospace,
-                                            fontSize = 11.sp,
-                                            color = Color.DarkGray
+                                            fontSize = 12.sp
                                         )
+                                        Text(
+                                            text = formatStringNum(item.subtotal),
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    if (!item.note.isNullOrBlank()) {
+                                        val (cleanNote, _) = id.my.matahati.pos.model.CartItem.parseNoteAndSentQty(item.note)
+                                        if (cleanNote.isNotBlank()) {
+                                            Text(
+                                                text = "Note: $cleanNote",
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 11.sp,
+                                                color = Color.DarkGray
+                                            )
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-                        HorizontalDivider(color = Color.Black, thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            RowAmount("Subtotal", formatStringNum(trx.subtotal))
-                            RowAmount("Discount", formatStringNum(trx.discount))
-                            RowAmount("Tax", formatStringNum(trx.tax))
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             HorizontalDivider(color = Color.Black, thickness = 1.dp)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            RowAmount("GRAND TOTAL", formatStringNum(trx.grandTotal), true)
-                            RowAmount("Paid", formatStringNum(trx.paidAmount))
-                            RowAmount("Change", formatStringNum(trx.changeAmount))
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                RowAmount("Subtotal", formatStringNum(trx.subtotal))
+                                RowAmount("Discount", formatStringNum(trx.discount))
+                                RowAmount("Tax", formatStringNum(trx.tax))
+                                Spacer(modifier = Modifier.height(4.dp))
+                                HorizontalDivider(color = Color.Black, thickness = 1.dp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                RowAmount("GRAND TOTAL", formatStringNum(trx.grandTotal), true)
+                                RowAmount("Paid", formatStringNum(trx.paidAmount))
+                                RowAmount("Change", formatStringNum(trx.changeAmount))
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Status: ${trx.status}",
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Status: ${trx.status}",
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                // Action Buttons (Fixed at bottom)
-                Button(
-                    onClick = onPrint,
-                    enabled = !isPrinting,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), // Green
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    if (isPrinting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("MENCETAK...", color = Color.White)
-                    } else {
-                        Text("CETAK KE PRINTER FISIK", color = Color.White, fontWeight = FontWeight.Bold)
+                    // Action Buttons (Fixed at bottom: CETAK & BATAL)
+                    Button(
+                        onClick = {
+                            onPrint()
+                            showPreviewModal = false
+                            showPdfConfirm = true
+                        },
+                        enabled = !isPrinting,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), // Green
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        if (isPrinting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("MENCETAK...", color = Color.White)
+                        } else {
+                            Text("CETAK KE PRINTER FISIK", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text("TUTUP", color = Color.White)
+                    Button(
+                        onClick = {
+                            showPreviewModal = false
+                            showPdfConfirm = true
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text("BATAL", color = Color.White)
+                    }
                 }
             }
         }
+    }
+
+    if (showPdfConfirm) {
+        AlertDialog(
+            onDismissRequest = {
+                showPdfConfirm = false
+                onDismiss()
+            },
+            shape = RoundedCornerShape(12.dp),
+            containerColor = Color.White,
+            title = {
+                Text(
+                    text = "Cetak PDF",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color(0xFF212121)
+                )
+            },
+            text = {
+                Text(
+                    text = "Apakah anda ingin cetak PDF?",
+                    fontSize = 15.sp,
+                    color = Color.DarkGray
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val pdfUrl = trx.pdfUrl
+                        if (!pdfUrl.isNullOrBlank()) {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(pdfUrl))
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                            }
+                        }
+                        showPdfConfirm = false
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("YA", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showPdfConfirm = false
+                        onDismiss()
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.DarkGray)
+                ) {
+                    Text("TIDAK", fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }
 

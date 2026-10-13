@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.ui.theme.AppPrimaryMuted
 
@@ -105,25 +106,38 @@ fun ProductCard(
                 .padding(12.dp)
         ) {
             // Product Image/Emoji Box
+            val fullUrl = product.fullImageUrl
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1.3f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (product.imageUrl.isNullOrBlank()) AppPrimaryMuted else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
+                    .background(if (fullUrl.isNullOrBlank()) AppPrimaryMuted else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (!product.imageUrl.isNullOrBlank()) {
-                    val fullImageUrl = if (product.imageUrl.startsWith("http")) {
-                        product.imageUrl
-                    } else {
-                        "http://localhost:8000/${product.imageUrl.removePrefix("/")}"
-                    }
-                    AsyncImage(
-                        model = fullImageUrl,
+                if (!fullUrl.isNullOrBlank()) {
+                    SubcomposeAsyncImage(
+                        model = fullUrl,
                         contentDescription = product.name,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        error = {
+                            val abbreviation = getProductAbbreviation(product.name)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(AppPrimaryMuted),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = abbreviation.ifBlank { product.iconEmoji.ifBlank { "📦" } },
+                                    fontSize = 42.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     )
                 } else {
                     val abbreviation = getProductAbbreviation(product.name)
@@ -137,21 +151,25 @@ fun ProductCard(
                 }
 
                 // Stock Badge
-                val isOutOfStock = product.stock <= 0
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isOutOfStock) Color(0xFFD32F2F) else MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(6.dp)
-                ) {
-                    Text(
-                        text = if (isOutOfStock) "STOK HABIS" else "Stok: ${product.stock}",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isOutOfStock) Color.White else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                val isTrackStock = product.isTrackStock
+                val isOutOfStock = isTrackStock && product.stock <= 0
+
+                if (isTrackStock) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isOutOfStock) Color(0xFFD32F2F) else MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                    ) {
+                        Text(
+                            text = if (isOutOfStock) "STOK HABIS" else "Stok: ${product.stock}",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isOutOfStock) Color.White else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
 

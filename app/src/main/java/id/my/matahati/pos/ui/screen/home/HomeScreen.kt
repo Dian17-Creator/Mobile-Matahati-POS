@@ -8,6 +8,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -253,14 +255,15 @@ fun HomeScreen(
 
     // Cart Helper Functions
     val onAddToCart: (Product) -> Unit = { product ->
-        if (product.stock <= 0) {
+        val isTrackStock = product.isTrackStock
+        if (isTrackStock && product.stock <= 0) {
             android.widget.Toast.makeText(context, "Stok produk ini sedang kosong!", android.widget.Toast.LENGTH_SHORT).show()
         } else {
             val isOnline = orderType.equals("ONLINE", ignoreCase = true)
             val existingIndex = cartItems.indexOfFirst { it.product.id == product.id }
             if (existingIndex >= 0) {
                 val item = cartItems[existingIndex]
-                if (item.quantity + 1 > product.stock) {
+                if (isTrackStock && item.quantity + 1 > product.stock) {
                     android.widget.Toast.makeText(context, "Stok tidak mencukupi. Sisa stok: ${product.stock}", android.widget.Toast.LENGTH_SHORT).show()
                 } else {
                     cartItems[existingIndex] = item.copy(
@@ -278,7 +281,8 @@ fun HomeScreen(
         val index = cartItems.indexOfFirst { it.product.id == item.product.id }
         if (index >= 0) {
             val currentItem = cartItems[index]
-            if (currentItem.quantity + 1 > currentItem.product.stock) {
+            val isTrackStock = currentItem.product.isTrackStock
+            if (isTrackStock && currentItem.quantity + 1 > currentItem.product.stock) {
                 android.widget.Toast.makeText(context, "Stok tidak mencukupi. Sisa stok: ${currentItem.product.stock}", android.widget.Toast.LENGTH_SHORT).show()
             } else {
                 cartItems[index] = item.copy(quantity = item.quantity + 1)
@@ -306,7 +310,8 @@ fun HomeScreen(
         val index = cartItems.indexOfFirst { it.product.id == productId }
         if (index >= 0) {
             val currentItem = cartItems[index]
-            if (newQty > currentItem.product.stock) {
+            val isTrackStock = currentItem.product.isTrackStock
+            if (isTrackStock && newQty > currentItem.product.stock) {
                 android.widget.Toast.makeText(context, "Stok tidak mencukupi. Sisa stok: ${currentItem.product.stock}", android.widget.Toast.LENGTH_SHORT).show()
             } else {
                 cartItems[index] = currentItem.copy(
@@ -328,8 +333,19 @@ fun HomeScreen(
     // Filtered Products Calculation
     val filteredProducts by remember {
         derivedStateOf {
+            val selectedCat = categories.find { it.id == selectedCategoryId }
             allProducts.filter { product ->
-                val matchesCategory = (selectedCategoryId == "all") || (product.categoryId == selectedCategoryId)
+                val matchesCategory = if (selectedCategoryId == "all") {
+                    true
+                } else {
+                    val catName = selectedCat?.name
+                    val productCatName = categories.find { it.id == product.categoryId }?.name
+                        ?: product.category?.name
+
+                    (product.categoryId == selectedCategoryId) ||
+                    (!catName.isNullOrBlank() && catName.equals(productCatName, ignoreCase = true))
+                }
+
                 val matchesSearch = product.name.contains(searchQuery, ignoreCase = true)
                 matchesCategory && matchesSearch
             }
@@ -1408,12 +1424,19 @@ fun HomeScreen(
                 )
             },
             text = {
-                Text(
-                    text = viewModel.transactionError ?: "",
-                    fontSize = 15.sp,
-                    color = Color(0xFF333333),
-                    lineHeight = 22.sp
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 280.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = viewModel.transactionError ?: "",
+                        fontSize = 15.sp,
+                        color = Color(0xFF333333),
+                        lineHeight = 22.sp
+                    )
+                }
             },
             confirmButton = {
                 Button(
@@ -1699,6 +1722,7 @@ fun HomeScreen(
             savedOutletName = outletName,
             isPrinting = viewModel.isPrinting,
             isOrderTypeSelected = viewModel.isOrderTypeSelectedByUser,
+            isPrintPreviewEnabled = viewModel.isShowPrintPreviewEnabled(context),
             onPrint = {
                 if (viewModel.selectedPrinterAddress == null) {
                     viewModel.openPrinterSelection(printerManager)

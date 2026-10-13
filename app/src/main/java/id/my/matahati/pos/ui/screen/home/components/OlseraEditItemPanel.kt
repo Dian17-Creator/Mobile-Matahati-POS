@@ -199,6 +199,7 @@ fun OlseraEditItemPanel(
                         modifier = Modifier.weight(1f)
                     ) {
                         // Product Image Avatar
+                        val fullUrl = cartItem.product.fullImageUrl
                         Box(
                             modifier = Modifier
                                 .size(52.dp)
@@ -206,14 +207,9 @@ fun OlseraEditItemPanel(
                                 .background(Color.White.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (!cartItem.product.imageUrl.isNullOrBlank()) {
-                                val fullImageUrl = if (cartItem.product.imageUrl.startsWith("http")) {
-                                    cartItem.product.imageUrl
-                                } else {
-                                    "http://localhost:8000/${cartItem.product.imageUrl.removePrefix("/")}"
-                                }
+                            if (!fullUrl.isNullOrBlank()) {
                                 AsyncImage(
-                                    model = fullImageUrl,
+                                    model = fullUrl,
                                     contentDescription = cartItem.product.name,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
@@ -360,7 +356,8 @@ fun OlseraEditItemPanel(
                             // Plus Button
                             IconButton(
                                 onClick = {
-                                    if (quantity + 1 > cartItem.product.stock) {
+                                    val isTrackStock = cartItem.product.isTrackStock
+                                    if (isTrackStock && quantity + 1 > cartItem.product.stock) {
                                         android.widget.Toast.makeText(
                                             context,
                                             "Stok tidak mencukupi. Sisa stok: ${cartItem.product.stock}",
@@ -611,7 +608,8 @@ fun OlseraEditItemPanel(
                     // 7. SIMPAN BUTTON (Full-Width Blue)
                     Button(
                         onClick = {
-                            if (quantity > cartItem.product.stock) {
+                            val isTrackStock = cartItem.product.isTrackStock
+                            if (isTrackStock && quantity > cartItem.product.stock) {
                                 android.widget.Toast.makeText(
                                     context,
                                     "Stok tidak mencukupi. Sisa stok: ${cartItem.product.stock}",
