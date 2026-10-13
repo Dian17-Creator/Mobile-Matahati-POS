@@ -1,5 +1,7 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import android.content.Intent
+import android.net.Uri
 import id.my.matahati.pos.ui.theme.AppPrimaryColor
 
 import androidx.compose.foundation.background
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,6 +42,7 @@ fun TransactionDetailScreen(
     onItemVoidRefundClick: ((TransactionDetailModel?) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
         maximumFractionDigits = 0
     }
@@ -544,6 +548,62 @@ fun TransactionDetailScreen(
                                     onSendToKitchen()
                                 }
                             )
+
+                            val pdfUrl = transaction.pdfUrl
+                            if (!pdfUrl.isNullOrBlank()) {
+                                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.PictureAsPdf,
+                                                contentDescription = null,
+                                                tint = AppPrimaryColor,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text("Buka Invoice Digital", color = Color.DarkGray)
+                                        }
+                                    },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(pdfUrl))
+                                            context.startActivity(intent)
+                                        } catch (_: Exception) {
+                                        }
+                                    }
+                                )
+
+                                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Share,
+                                                contentDescription = null,
+                                                tint = AppPrimaryColor,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text("Bagikan Invoice Digital", color = Color.DarkGray)
+                                        }
+                                    },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        try {
+                                            val shareText = "Halo, berikut link invoice digital transaksi ${transaction.transactionNo}:\n$pdfUrl"
+                                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                                type = "text/plain"
+                                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                            }
+                                            val chooser = Intent.createChooser(intent, "Bagikan Invoice Digital")
+                                            context.startActivity(chooser)
+                                        } catch (_: Exception) {
+                                        }
+                                    }
+                                )
+                            }
 
                             val canVoidRefund = statusUpper !in listOf("VOID", "REFUND", "CANCELLED", "CANCEL", "VOIDED", "REFUNDED")
 

@@ -385,7 +385,7 @@ class HomeViewModel : ViewModel() {
                 )
                 if (prodResponse.isSuccessful && prodResponse.body()?.success == true) {
                     val dtos = prodResponse.body()?.data ?: emptyList()
-                    val fetchedProducts = dtos.map { it.toProduct() }
+                    val fetchedProducts = dtos.map { it.toProduct(categories) }
                     products.clear()
                     products.addAll(fetchedProducts)
                 }
@@ -419,7 +419,7 @@ class HomeViewModel : ViewModel() {
                 val prodResponse = RetrofitClient.apiService.getProducts(outletId = nidOutlet, customerId = customerId)
                 if (prodResponse.isSuccessful && prodResponse.body()?.success == true) {
                     val dtos = prodResponse.body()?.data ?: emptyList()
-                    val fetchedProducts = dtos.map { it.toProduct() }
+                    val fetchedProducts = dtos.map { it.toProduct(categories) }
                     products.clear()
                     products.addAll(fetchedProducts)
                 }
@@ -1325,6 +1325,8 @@ class HomeViewModel : ViewModel() {
         outletName: String = "",
         onSuccess: (() -> Unit)? = null
     ) {
+        if (isSubmitting) return
+
         if (status != "CANCELLED" && cartItems.isEmpty()) {
             transactionError = "Cart kosong."
             return
@@ -1381,16 +1383,6 @@ class HomeViewModel : ViewModel() {
                         if (previousDraftId != null) {
                             currentDraftId = null
                             removeHeldOrderLocal(previousDraftId)
-                            try {
-                                val delRes = RetrofitClient.apiService.deleteTransaction(previousDraftId)
-                                if (delRes.isSuccessful) {
-                                    Log.d("HeldOrders", "Old draft $previousDraftId successfully deleted from backend.")
-                                } else {
-                                    Log.e("HeldOrders", "Failed to delete old draft $previousDraftId: code=${delRes.code()} error=${delRes.errorBody()?.string()}")
-                                }
-                            } catch (e: Exception) {
-                                Log.e("HeldOrders", "Error deleting old draft: ${e.message}", e)
-                            }
                         }
                         if (status == "CANCELLED") {
                             closeReceiptDialog()
@@ -1450,10 +1442,10 @@ class HomeViewModel : ViewModel() {
                             }
                             parsedError
                         } catch (e: Exception) {
-                            "Error: ${response.code()}\nRaw: $errorBody"
+                            "Error Code: ${response.code()}\n${errorBody}"
                         }
                     } else {
-                        "Error: ${response.code()}"
+                        "Error Code: ${response.code()}"
                     }
                 }
             } catch (e: Exception) {
@@ -1491,15 +1483,12 @@ class HomeViewModel : ViewModel() {
     ) {
         if (pendingShowReceipt) {
             pendingShowReceipt = false
-            if (isShowPrintPreviewEnabled(context)) {
-                showReceiptDialog = true
-            } else {
+            if (!isShowPrintPreviewEnabled(context)) {
                 lastTransaction?.let { trx ->
                     printReceipt(context, trx, userName, outletName)
                 }
-                closeReceiptDialog()
-                onAutoFinishCheckout?.invoke()
             }
+            showReceiptDialog = true
         }
     }
 

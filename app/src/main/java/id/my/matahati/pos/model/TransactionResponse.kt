@@ -41,7 +41,8 @@ data class TransactionModel(
     @SerializedName("details") val details: List<TransactionDetailModel>? = null,
     @SerializedName("pos_user") val posUser: PosUserModel? = null,
     @SerializedName("payment") val payment: PaymentMethodDto? = null,
-    @SerializedName("outlet") val outlet: OutletModel? = null
+    @SerializedName("outlet") val outlet: OutletModel? = null,
+    @SerializedName("cpdf_url") val pdfUrl: String? = null
 )
 
 data class OutletModel(
