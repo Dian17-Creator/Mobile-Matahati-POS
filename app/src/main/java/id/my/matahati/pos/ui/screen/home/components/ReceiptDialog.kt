@@ -1,7 +1,5 @@
 package id.my.matahati.pos.ui.screen.home.components
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -228,61 +226,80 @@ fun ReceiptDialog(
     }
 
     if (showPdfConfirm) {
-        AlertDialog(
-            onDismissRequest = {
-                showPdfConfirm = false
-                onDismiss()
-            },
-            shape = RoundedCornerShape(12.dp),
-            containerColor = Color.White,
-            title = {
-                Text(
-                    text = "Cetak PDF",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = Color(0xFF212121)
-                )
-            },
-            text = {
-                Text(
-                    text = "Apakah anda ingin cetak PDF?",
-                    fontSize = 15.sp,
-                    color = Color.DarkGray
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val pdfUrl = trx.pdfUrl
-                        if (!pdfUrl.isNullOrBlank()) {
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(pdfUrl))
-                                context.startActivity(intent)
-                            } catch (_: Exception) {
-                            }
+        Dialog(onDismissRequest = {
+            showPdfConfirm = false
+            onDismiss()
+        }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White,
+                modifier = Modifier
+                    .width(480.dp)
+                    .padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = "Cetak PDF",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF212121)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Apakah anda ingin cetak PDF?",
+                        fontSize = 15.sp,
+                        color = Color.DarkGray
+                    )
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                showPdfConfirm = false
+                                onDismiss()
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.DarkGray)
+                        ) {
+                            Text("TIDAK", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
-                        showPdfConfirm = false
-                        onDismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("YA", fontWeight = FontWeight.Bold, color = Color.White)
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = {
-                        showPdfConfirm = false
-                        onDismiss()
-                    },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.DarkGray)
-                ) {
-                    Text("TIDAK", fontWeight = FontWeight.Bold)
+
+                        Button(
+                            onClick = {
+                                val pdfUrl = trx.pdfUrl
+                                if (!pdfUrl.isNullOrBlank()) {
+                                    android.widget.Toast.makeText(context, "Invoice PDF tersimpan di server", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                                showPdfConfirm = false
+                                onDismiss()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                        ) {
+                            Text("YA", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
                 }
             }
-        )
+        }
     }
 }
 
