@@ -388,9 +388,22 @@ class HomeViewModel : ViewModel() {
                     val fetchedProducts = dtos.map { it.toProduct(categories) }
                     products.clear()
                     products.addAll(fetchedProducts)
+                    remapProductsWithCategories()
                 }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "Gagal memuat produk: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun remapProductsWithCategories() {
+        if (products.isNotEmpty() && categories.isNotEmpty()) {
+            for (i in products.indices) {
+                val prod = products[i]
+                val matchedCategory = categories.find { it.id == prod.categoryId }
+                if (matchedCategory != null && prod.category != matchedCategory) {
+                    products[i] = prod.copy(category = matchedCategory)
+                }
             }
         }
     }
@@ -413,6 +426,7 @@ class HomeViewModel : ViewModel() {
                     fetchedCategories.addAll(dtos.map { it.toCategory() })
                     categories.clear()
                     categories.addAll(fetchedCategories)
+                    remapProductsWithCategories()
                 }
 
                 // Fetch Products per Outlet
@@ -422,6 +436,7 @@ class HomeViewModel : ViewModel() {
                     val fetchedProducts = dtos.map { it.toProduct(categories) }
                     products.clear()
                     products.addAll(fetchedProducts)
+                    remapProductsWithCategories()
                 }
 
                 // Fetch Customers
