@@ -39,6 +39,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.data.printer.BluetoothPrinterManager
 import id.my.matahati.pos.model.CartItem
+import id.my.matahati.pos.model.Category
 import id.my.matahati.pos.model.Product
 import id.my.matahati.pos.ui.screen.report.ProductSalesSummaryScreen
 import id.my.matahati.pos.ui.screen.home.components.*
@@ -333,19 +334,8 @@ fun HomeScreen(
     // Filtered Products Calculation
     val filteredProducts by remember {
         derivedStateOf {
-            val selectedCat = categories.find { it.id == selectedCategoryId }
             allProducts.filter { product ->
-                val matchesCategory = if (selectedCategoryId == "all") {
-                    true
-                } else {
-                    val catName = selectedCat?.name
-                    val productCatName = categories.find { it.id == product.categoryId }?.name
-                        ?: product.category?.name
-
-                    (product.categoryId == selectedCategoryId) ||
-                    (!catName.isNullOrBlank() && catName.equals(productCatName, ignoreCase = true))
-                }
-
+                val matchesCategory = isProductMatchingCategory(product, selectedCategoryId, categories)
                 val matchesSearch = product.name.contains(searchQuery, ignoreCase = true)
                 matchesCategory && matchesSearch
             }
@@ -1948,6 +1938,53 @@ fun HomeScreen(
             }
         }
     }
+}
+
+private fun isProductMatchingCategory(
+    product: Product,
+    selectedCategoryId: String,
+    categories: List<Category>
+): Boolean {
+    if (selectedCategoryId == "all") return true
+
+    val selectedCat = categories.find { it.id == selectedCategoryId }
+    val selectedCatName = selectedCat?.name?.trim()?.uppercase() ?: ""
+
+    // 1. Direct ID match
+    if (product.categoryId == selectedCategoryId) return true
+
+    // 2. Direct category object ID match
+    if (product.category?.id == selectedCategoryId) return true
+
+    // 3. Category Name match
+    val productCatName = (categories.find { it.id == product.categoryId }?.name
+        ?: product.category?.name)?.trim()?.uppercase() ?: ""
+
+    if (selectedCatName.isNotBlank() && selectedCatName == productCatName) return true
+
+    // 4. Normalized category group matching (handles duplicated IDs across outlets and legacy/dummy IDs)
+    fun getNormalizedCategoryGroup(id: String, name: String): String {
+        val cleanName = name.trim().uppercase()
+        val cleanId = id.trim().lowercase()
+
+        return when {
+            cleanName.contains("MAKANAN") || cleanName.contains("FOOD") ||
+            cleanId in listOf("food", "1", "6", "7", "8", "9") -> "MAKANAN"
+
+            cleanName.contains("MINUMAN") || cleanName.contains("DRINK") || cleanName.contains("KOPI") || cleanName.contains("COFFEE") ||
+            cleanId in listOf("drink", "2", "10", "11", "12", "13") -> "MINUMAN"
+
+            cleanName.contains("SNACK") || cleanName.contains("CAMILAN") || cleanName.contains("CEMILAN") ||
+            cleanId in listOf("snack", "camilan", "3", "14", "15", "16", "17") -> "SNACK"
+
+            else -> cleanName.ifBlank { cleanId }
+        }
+    }
+
+    val selectedGroup = getNormalizedCategoryGroup(selectedCategoryId, selectedCatName)
+    val productGroup = getNormalizedCategoryGroup(product.categoryId, productCatName)
+
+    return selectedGroup.isNotBlank() && selectedGroup == productGroup
 }
 
 private fun parseManualDiscount(input: String, subtotal: Double): Double {

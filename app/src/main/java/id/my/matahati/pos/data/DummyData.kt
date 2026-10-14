@@ -16,7 +16,7 @@ object DummyData {
         Category(id = "all", name = "Semua Kategori"),
         Category(id = "food", name = "Makanan"),
         Category(id = "drink", name = "Minuman"),
-        Category(id = "snack", name = "Camilan"),
+        Category(id = "snack", name = "Snack"),
         Category(id = "package", name = "Paket Hemat")
     )
 
