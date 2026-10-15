@@ -204,6 +204,7 @@ fun HomeScreen(
         viewModel.fetchData(nidOutlet)
         viewModel.loadServedByUsers(outletId, currentUserId = userId, currentUserName = userName)
         viewModel.fetchHeldOrders(nidOutlet)
+        viewModel.startBackgroundPesananSync(context, nidOutlet)
         shiftViewModel.checkCurrentShift(nidOutlet)
     }
 
@@ -436,6 +437,8 @@ fun HomeScreen(
                             onInAwayClick = { showOrderTypeDialog = true },
                             selectedTable = viewModel.selectedTable,
                             onTableClick = { showTableInputDialog = true },
+                            onPesananClick = { viewModel.showPesananDialog = true },
+                            hasActivePesanan = viewModel.activeRealtimePesanan.isNotEmpty(),
                             selectedRightTab = selectedRightTab,
                             onRightTabSelected = { selectedRightTab = it },
                             heldOrdersCount = viewModel.heldOrders.size,
@@ -1576,6 +1579,27 @@ fun HomeScreen(
                     outletName = outletName ?: "",
                     onAutoFinishCheckout = autoFinishCheckout
                 )
+            }
+        )
+    }
+
+    if (viewModel.showPesananDialog) {
+        LaunchedEffect(Unit) {
+            viewModel.startRealtimePesananPolling(context, nidOutlet)
+        }
+        PesananRealtimeDialog(
+            activeOrders = viewModel.activeRealtimePesanan,
+            completedOrders = viewModel.completedRealtimePesanan,
+            isLoading = viewModel.isRealtimePesananLoading,
+            onRefresh = {
+                viewModel.fetchRealtimePesananManual(context, nidOutlet)
+            },
+            onMarkDone = { orderId ->
+                viewModel.markPesananDone(orderId, context)
+            },
+            onDismiss = {
+                viewModel.stopRealtimePesananPolling()
+                viewModel.showPesananDialog = false
             }
         )
     }

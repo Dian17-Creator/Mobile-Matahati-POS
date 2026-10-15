@@ -1902,4 +1902,124 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
+
+    // Real-Time Pesanan Dialog States & Logic
+    var showPesananDialog by mutableStateOf(false)
+    val activeRealtimePesanan = mutableStateListOf<TransactionModel>()
+    val completedRealtimePesanan = mutableStateListOf<TransactionModel>()
+    val completedPesananIds = mutableSetOf<String>()
+    var isRealtimePesananLoading by mutableStateOf(false)
+        private set
+    private var realtimePollJob: kotlinx.coroutines.Job? = null
+
+    fun loadCompletedPesananIds(context: android.content.Context) {
+        val prefs = context.getSharedPreferences("pesanan_prefs", android.content.Context.MODE_PRIVATE)
+        val set = prefs.getStringSet("completed_ids", emptySet()) ?: emptySet()
+        completedPesananIds.clear()
+        completedPesananIds.addAll(set)
+    }
+
+    fun saveCompletedPesananIds(context: android.content.Context) {
+        val prefs = context.getSharedPreferences("pesanan_prefs", android.content.Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("completed_ids", completedPesananIds).apply()
+    }
+
+    fun markPesananDone(transactionId: String, context: android.content.Context) {
+        completedPesananIds.add(transactionId)
+        saveCompletedPesananIds(context)
+
+        val orderToMove = activeRealtimePesanan.find { it.id == transactionId }
+        if (orderToMove != null) {
+            activeRealtimePesanan.remove(orderToMove)
+            if (completedRealtimePesanan.none { it.id == transactionId }) {
+                completedRealtimePesanan.add(0, orderToMove)
+            }
+        }
+
+        // Call Backend API to update status to COMPLETED so all other devices receive the update
+        viewModelScope.launch {
+            try {
+                RetrofitClient.apiService.markTransactionFinished(transactionId)
+            } catch (e: Exception) {
+                Log.e("RealtimePesanan", "Gagal update status finished ke server: ${e.message}")
+            }
+        }
+    }
+
+    private var backgroundSyncJob: kotlinx.coroutines.Job? = null
+
+    fun startBackgroundPesananSync(context: android.content.Context, nidOutlet: String?) {
+        if (backgroundSyncJob?.isActive == true) return
+        loadCompletedPesananIds(context)
+        backgroundSyncJob = viewModelScope.launch {
+            while (true) {
+                fetchRealtimePesananInternal(nidOutlet)
+                kotlinx.coroutines.delay(10000)
+            }
+        }
+    }
+
+    fun startRealtimePesananPolling(context: android.content.Context, nidOutlet: String?) {
+        realtimePollJob?.cancel()
+        loadCompletedPesananIds(context)
+        realtimePollJob = viewModelScope.launch {
+            while (showPesananDialog) {
+                fetchRealtimePesananInternal(nidOutlet)
+                kotlinx.coroutines.delay(5000)
+            }
+        }
+    }
+
+    fun stopRealtimePesananPolling() {
+        realtimePollJob?.cancel()
+        realtimePollJob = null
+    }
+
+    fun fetchRealtimePesananManual(context: android.content.Context, nidOutlet: String?) {
+        loadCompletedPesananIds(context)
+        viewModelScope.launch {
+            isRealtimePesananLoading = true
+            fetchRealtimePesananInternal(nidOutlet)
+            isRealtimePesananLoading = false
+        }
+    }
+
+    private suspend fun fetchRealtimePesananInternal(nidOutlet: String?) {
+        try {
+            val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+            val response = RetrofitClient.apiService.getTransactions(
+                startDate = todayStr,
+                endDate = todayStr,
+                outletId = nidOutlet
+            )
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data ?: emptyList()
+                val paidOrders = data.filter {
+                    val st = it.status.uppercase()
+                    st == "PAID" || st == "SUCCESS" || st == "COMPLETED" || st == "SERVED" || st == "FINISHED"
+                }
+
+                val activeList = mutableListOf<TransactionModel>()
+                val completedList = mutableListOf<TransactionModel>()
+
+                paidOrders.forEach { order ->
+                    val st = order.status.uppercase()
+                    val isFinishedOnServer = st == "COMPLETED" || st == "SERVED" || st == "FINISHED"
+                    if (isFinishedOnServer || completedPesananIds.contains(order.id)) {
+                        completedList.add(order)
+                    } else {
+                        activeList.add(order)
+                    }
+                }
+
+                activeRealtimePesanan.clear()
+                activeRealtimePesanan.addAll(activeList)
+
+                completedRealtimePesanan.clear()
+                completedRealtimePesanan.addAll(completedList)
+            }
+        } catch (e: Exception) {
+            Log.e("RealtimePesanan", "Gagal fetch realtime pesanan: ${e.message}")
+        }
+    }
 }

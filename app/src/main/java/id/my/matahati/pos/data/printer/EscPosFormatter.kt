@@ -12,7 +12,8 @@ class EscPosFormatter(private val cols: Int = 32) {
     private val GS: Byte = 0x1D
     
     private val INIT = byteArrayOf(ESC, 0x40)
-    private val FONT_B = byteArrayOf(ESC, 0x4D, 0x01) // Smaller font (Font B)
+    private val FONT_A = byteArrayOf(ESC, 0x4D, 0x00) // Standard font (Font A - 12x24)
+    private val FONT_B = byteArrayOf(ESC, 0x4D, 0x01) // Smaller font (Font B - 9x17)
     private val ALIGN_LEFT = byteArrayOf(ESC, 0x61, 0x00)
     private val ALIGN_CENTER = byteArrayOf(ESC, 0x61, 0x01)
     
@@ -61,7 +62,7 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         // 1. Initialize & Center Alignment
         out.addAll(INIT.toList())
-        out.addAll(FONT_B.toList())
+        out.addAll(FONT_A.toList())
         out.addAll(ALIGN_CENTER.toList())
         
         // 2. Header Outlet (Bold & Double Size if <= 16 chars)
@@ -181,7 +182,7 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         // 1. Initialize & Center Alignment
         out.addAll(INIT.toList())
-        out.addAll(FONT_B.toList())
+        out.addAll(FONT_A.toList())
         out.addAll(ALIGN_CENTER.toList())
 
         // 2. Title: BUKAN RESI PEMBAYARAN
@@ -275,7 +276,7 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         // Initialize
         out.addAll(INIT.toList())
-        out.addAll(FONT_B.toList())
+        out.addAll(FONT_A.toList())
         
         tickets.forEach { (station, items) ->
             if (items.isEmpty()) return@forEach
@@ -342,7 +343,7 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         // Initialize
         out.addAll(INIT.toList())
-        out.addAll(FONT_B.toList())
+        out.addAll(FONT_A.toList())
         out.addAll(ALIGN_LEFT.toList())
 
         // 1. Transaction / Order No (e.g. No: 001)
@@ -450,7 +451,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         val nowStr = SimpleDateFormat("dd MMM yyyy HH:mm", Locale("id", "ID")).format(java.util.Date())
         val out = mutableListOf<Byte>()
         out.addAll(INIT.toList())
-        out.addAll(FONT_B.toList())
+        out.addAll(FONT_A.toList())
         out.addAll(ALIGN_CENTER.toList())
         out.addAll(BOLD_ON.toList())
         out.addAll(SIZE_DOUBLE.toList())
@@ -501,7 +502,7 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         val out = mutableListOf<Byte>()
         out.addAll(INIT.toList())
-        out.addAll(FONT_B.toList())
+        out.addAll(FONT_A.toList())
         out.addAll(ALIGN_CENTER.toList())
 
         val outletName = (savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
@@ -593,7 +594,7 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         val out = mutableListOf<Byte>()
         out.addAll(INIT.toList())
-        out.addAll(FONT_B.toList())
+        out.addAll(FONT_A.toList())
         out.addAll(ALIGN_CENTER.toList())
 
         // Outlet Name & Title
