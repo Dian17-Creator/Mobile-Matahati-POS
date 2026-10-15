@@ -1564,6 +1564,7 @@ fun HomeScreen(
     if (viewModel.showSimulatedReceipt) {
         SimulatedReceiptDialog(
             tickets = viewModel.receiptTickets,
+            transactionNo = viewModel.currentPrintTransactionNo ?: viewModel.lastTransaction?.transaction?.transactionNo ?: "001",
             isPrinting = viewModel.isPrinting,
             onPrint = {
                 viewModel.printKitchenTickets(context, viewModel.receiptTickets)

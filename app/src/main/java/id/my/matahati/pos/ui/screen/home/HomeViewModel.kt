@@ -78,6 +78,7 @@ class HomeViewModel : ViewModel() {
     var receiptTickets = mutableMapOf<String, List<id.my.matahati.pos.model.CartItem>>()
     var currentPrintType by mutableStateOf("")
     var isPrintingFromHistory by mutableStateOf(false)
+    var currentPrintTransactionNo by mutableStateOf<String?>(null)
     private var itemsToPrint: List<id.my.matahati.pos.model.CartItem> = emptyList()
 
     // History States
@@ -350,17 +351,35 @@ class HomeViewModel : ViewModel() {
 
             var anyFailure = false
             val errors = mutableListOf<String>()
+            val trxNo = currentPrintTransactionNo ?: lastTransaction?.transaction?.transactionNo ?: "001"
 
             tickets.forEach { (station, items) ->
                 if (items.isNotEmpty()) {
                     val targetPrinter = if (station.uppercase() == "BAR") barPrinter else kitchenPrinter
                     if (targetPrinter != null) {
-                        val singleStationTicket = mapOf(station to items)
-                        val bytes = formatter.formatKitchenTicket(singleStationTicket)
-                        val result = connectionManager.printData(targetPrinter, bytes)
-                        if (result.isFailure) {
-                            anyFailure = true
-                            errors.add("Station $station: ${result.exceptionOrNull()?.message}")
+                        if (station.uppercase() == "BAR") {
+                            items.forEach { item ->
+                                val repeatCount = item.quantity.coerceAtLeast(1)
+                                repeat(repeatCount) {
+                                    val labelBytes = formatter.formatBarItemLabel(
+                                        item = item,
+                                        transactionNo = trxNo
+                                    )
+                                    val result = connectionManager.printData(targetPrinter, labelBytes)
+                                    if (result.isFailure) {
+                                        anyFailure = true
+                                        errors.add("BAR (${item.product.name}): ${result.exceptionOrNull()?.message}")
+                                    }
+                                }
+                            }
+                        } else {
+                            val singleStationTicket = mapOf(station to items)
+                            val bytes = formatter.formatKitchenTicket(singleStationTicket)
+                            val result = connectionManager.printData(targetPrinter, bytes)
+                            if (result.isFailure) {
+                                anyFailure = true
+                                errors.add("Station $station: ${result.exceptionOrNull()?.message}")
+                            }
                         }
                     } else {
                         anyFailure = true
@@ -401,8 +420,40 @@ class HomeViewModel : ViewModel() {
             for (i in products.indices) {
                 val prod = products[i]
                 val matchedCategory = categories.find { it.id == prod.categoryId }
-                if (matchedCategory != null && prod.category != matchedCategory) {
-                    products[i] = prod.copy(category = matchedCategory)
+                if (matchedCategory != null) {
+                    val catNameUpper = matchedCategory.name.trim().uppercase()
+                    val prodNameUpper = prod.name.trim().uppercase()
+
+                    val isDrink = catNameUpper.contains("MINUM") ||
+                            catNameUpper.contains("DRINK") ||
+                            catNameUpper.contains("BEVERAGE") ||
+                            catNameUpper.contains("BAR") ||
+                            catNameUpper.contains("KOPI") ||
+                            catNameUpper.contains("TEA") ||
+                            prod.categoryId == "2" ||
+                            prod.categoryId == "10" || prod.categoryId == "11" || prod.categoryId == "12" || prod.categoryId == "13" ||
+                            prodNameUpper.contains("TEA") ||
+                            prodNameUpper.contains("KOPI") ||
+                            prodNameUpper.contains("COFFEE") ||
+                            prodNameUpper.contains("ICE") ||
+                            prodNameUpper.contains("ES ") ||
+                            prodNameUpper.startsWith("ES ") ||
+                            prodNameUpper.contains("JUS") ||
+                            prodNameUpper.contains("JUICE") ||
+                            prodNameUpper.contains("LATTE") ||
+                            prodNameUpper.contains("MILK") ||
+                            prodNameUpper.contains("BOBA") ||
+                            prodNameUpper.contains("SQUASH") ||
+                            prodNameUpper.contains("DRINK")
+
+                    val newStation = if (isDrink) "BAR" else "DAPUR"
+
+                    if (prod.category != matchedCategory || prod.stationName != newStation) {
+                        products[i] = prod.copy(
+                            category = matchedCategory,
+                            stationName = newStation
+                        )
+                    }
                 }
             }
         }
@@ -1531,6 +1582,9 @@ class HomeViewModel : ViewModel() {
 
         itemsToPrint = items
         isPrintingFromHistory = isHistory
+        if (!isHistory && currentPrintTransactionNo == null) {
+            currentPrintTransactionNo = lastTransaction?.transaction?.transactionNo
+        }
         
         var totalChanges = 0
         val stations = mutableSetOf<String>()
@@ -1551,12 +1605,28 @@ class HomeViewModel : ViewModel() {
     }
 
     fun openKitchenPrintDialogFromHistory(context: android.content.Context, transaction: TransactionModel) {
+        currentPrintTransactionNo = transaction.transactionNo
         val items = transaction.details?.map { detail ->
             // Try to find the original product to get the correct station name
             val originalProduct = products.find { it.id == detail.productId }
-            val station = originalProduct?.stationName ?: if (detail.productName.lowercase().contains("tea") || 
-                                     detail.productName.lowercase().contains("kopi") || 
-                                     detail.productName.lowercase().contains("ice")) "BAR" else "DAPUR"
+            val nameUpper = detail.productName.uppercase()
+            val isDrink = nameUpper.contains("TEA") ||
+                    nameUpper.contains("KOPI") ||
+                    nameUpper.contains("COFFEE") ||
+                    nameUpper.contains("ICE") ||
+                    nameUpper.contains("ES ") ||
+                    nameUpper.startsWith("ES ") ||
+                    nameUpper.contains("JUS") ||
+                    nameUpper.contains("JUICE") ||
+                    nameUpper.contains("LATTE") ||
+                    nameUpper.contains("MILK") ||
+                    nameUpper.contains("BOBA") ||
+                    nameUpper.contains("MINUMAN") ||
+                    nameUpper.contains("DRINK") ||
+                    nameUpper.contains("BEVERAGE") ||
+                    nameUpper.contains("SQUASH")
+
+            val station = originalProduct?.stationName ?: if (isDrink) "BAR" else "DAPUR"
 
             val (cleanNote, sentQty) = id.my.matahati.pos.model.CartItem.parseNoteAndSentQty(detail.note)
 
