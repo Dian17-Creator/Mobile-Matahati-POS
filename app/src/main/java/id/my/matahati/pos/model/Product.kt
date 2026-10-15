@@ -35,6 +35,34 @@ data class ProductDto(
     fun toProduct(categories: List<Category> = emptyList()): Product {
         val matchedCategory = categories.find { it.id == nidCategory?.toString() }
         val effectiveTrackStock = ftrackStock ?: matchedCategory?.ftrackStock ?: true
+
+        val catNameUpper = matchedCategory?.name?.trim()?.uppercase() ?: ""
+        val prodNameUpper = cname.trim().uppercase()
+
+        val isDrink = catNameUpper.contains("MINUM") ||
+                catNameUpper.contains("DRINK") ||
+                catNameUpper.contains("BEVERAGE") ||
+                catNameUpper.contains("BAR") ||
+                catNameUpper.contains("KOPI") ||
+                catNameUpper.contains("TEA") ||
+                nidCategory == 2 ||
+                nidCategory == 10 || nidCategory == 11 || nidCategory == 12 || nidCategory == 13 ||
+                prodNameUpper.contains("TEA") ||
+                prodNameUpper.contains("KOPI") ||
+                prodNameUpper.contains("COFFEE") ||
+                prodNameUpper.contains("ICE") ||
+                prodNameUpper.contains("ES ") ||
+                prodNameUpper.startsWith("ES ") ||
+                prodNameUpper.contains("JUS") ||
+                prodNameUpper.contains("JUICE") ||
+                prodNameUpper.contains("LATTE") ||
+                prodNameUpper.contains("MILK") ||
+                prodNameUpper.contains("BOBA") ||
+                prodNameUpper.contains("SQUASH") ||
+                prodNameUpper.contains("DRINK")
+
+        val station = if (isDrink) "BAR" else "DAPUR"
+
         return Product(
             id = nid.toString(),
             name = cname,
@@ -47,11 +75,7 @@ data class ProductDto(
             isAvailable = cstatus?.lowercase() != "inactive",
             ftrackStock = effectiveTrackStock,
             category = matchedCategory,
-            stationName = when (nidCategory) {
-                2 -> "BAR"
-                1, 3 -> "DAPUR"
-                else -> "DAPUR"
-            }
+            stationName = station
         )
     }
 }

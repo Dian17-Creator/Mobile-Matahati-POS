@@ -331,6 +331,56 @@ class EscPosFormatter(private val cols: Int = 32) {
         return out.toByteArray()
     }
 
+    fun formatBarItemLabel(
+        item: CartItem,
+        transactionNo: String,
+        dateTimeStr: String? = null
+    ): ByteArray {
+        val out = mutableListOf<Byte>()
+        val now = dateTimeStr ?: SimpleDateFormat("dd MMM yyyy HH:mm", Locale("id", "ID")).format(java.util.Date())
+        val cleanTrxNo = if (transactionNo.isNotBlank()) transactionNo else "001"
+
+        // Initialize
+        out.addAll(INIT.toList())
+        out.addAll(FONT_B.toList())
+        out.addAll(ALIGN_LEFT.toList())
+
+        // 1. Transaction / Order No (e.g. No: 001)
+        out.addAll(BOLD_ON.toList())
+        out.addAll("No: $cleanTrxNo\n".toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+
+        // 2. Product Name (Upcase / Bold)
+        out.addAll(BOLD_ON.toList())
+        val uppercaseName = item.product.name.uppercase()
+        val nameLines = wrapText(uppercaseName, cols)
+        nameLines.forEach { line ->
+            out.addAll("$line\n".toByteArray().toList())
+        }
+        out.addAll(BOLD_OFF.toList())
+
+        // 3. Note (if any)
+        if (!item.note.isNullOrBlank()) {
+            val (cleanNote, _) = CartItem.parseNoteAndSentQty(item.note)
+            if (cleanNote.isNotBlank()) {
+                val wrappedNote = wrapText("Note: $cleanNote", cols)
+                wrappedNote.forEach { line ->
+                    out.addAll("$line\n".toByteArray().toList())
+                }
+            }
+        }
+
+        out.addAll("\n".toByteArray().toList())
+
+        // 4. Date & Time
+        out.addAll("$now\n".toByteArray().toList())
+
+        // 5. Paper Feed
+        out.addAll("\n\n\n\n".toByteArray().toList())
+
+        return out.toByteArray()
+    }
+
     private fun formatLabelValue(label: String, value: String): ByteArray {
         val labelPart = "$label: "
         val availableForValue = cols - labelPart.length
