@@ -125,6 +125,11 @@ interface ApiService {
         @Path("id") id: String
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 
+    @POST("api/pos/transactions/{id}/finish")
+    suspend fun markTransactionFinished(
+        @Path("id") id: String
+    ): Response<id.my.matahati.pos.model.TransactionResponse>
+
     @POST("api/pos/transactions/{id}/void")
     suspend fun voidTransaction(
         @Path("id") id: String,

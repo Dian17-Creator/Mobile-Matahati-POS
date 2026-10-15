@@ -49,6 +49,8 @@ fun OlseraHeaderBar(
     onInAwayClick: () -> Unit = {},
     selectedTable: String = "",
     onTableClick: () -> Unit = {},
+    onPesananClick: () -> Unit = {},
+    hasActivePesanan: Boolean = false,
     selectedRightTab: String = "Produk",
     onRightTabSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
@@ -94,7 +96,12 @@ fun OlseraHeaderBar(
                     isSelected = selectedOrderType.isNotBlank(),
                     onClick = onInAwayClick
                 )
-                HeaderTabItem(label = "Pesanan", isSelected = false, onClick = {})
+                HeaderTabItem(
+                    label = "Pesanan",
+                    isSelected = false,
+                    showRedDot = hasActivePesanan,
+                    onClick = onPesananClick
+                )
                 HeaderTabItem(label = "Remark", isSelected = false, onClick = {})
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -416,27 +423,46 @@ fun PengaturanHeaderBar(
 }
 
 @Composable
-private fun HeaderTabItem(label: String, isSelected: Boolean, onClick: () -> Unit) {
+private fun HeaderTabItem(
+    label: String,
+    isSelected: Boolean,
+    showRedDot: Boolean = false,
+    onClick: () -> Unit
+) {
+    val isActive = isSelected || showRedDot
     Box(
-        modifier = Modifier
-            .padding(horizontal = 2.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) Color.White else Color.Transparent)
-            .border(
-                width = 1.dp,
-                color = if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.padding(horizontal = 2.dp)
     ) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) OlseraBlueHeader else Color.White
-        )
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (isActive) Color.White else Color.Transparent)
+                .border(
+                    width = 1.dp,
+                    color = if (isActive) Color.Transparent else Color.White.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .clickable { onClick() }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+                color = if (isActive) OlseraBlueHeader else Color.White
+            )
+        }
+
+        if (showRedDot) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 3.dp, y = (-3).dp)
+                    .size(11.dp)
+                    .background(Color.Red, CircleShape)
+            )
+        }
     }
 }
 
