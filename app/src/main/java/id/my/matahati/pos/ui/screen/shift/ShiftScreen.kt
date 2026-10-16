@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -515,6 +516,16 @@ fun ShiftScreen(
                                         )
                                         HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
+                                        val netSalesVal = maxOf(0.0, totalSalesVal - cashCanceledVal)
+                                        ShiftInfoRow(
+                                            label = "Penjualan nett",
+                                            value = formatNumberDisplay(netSalesVal),
+                                            isItalic = true,
+                                            startPadding = 32.dp,
+                                            verticalPadding = 16.dp
+                                        )
+                                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
                                         ShiftInfoRow(
                                             label = "Kas Masuk-Keluar",
                                             value = formatNumberDisplay(netCashMovement),
@@ -969,6 +980,16 @@ private fun ActiveShiftContent(
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
+                val netSalesVal = maxOf(0.0, totalSalesVal - cashCanceledVal)
+                ShiftInfoRow(
+                    label = "Penjualan nett",
+                    value = formatNumberDisplay(netSalesVal),
+                    isItalic = true,
+                    startPadding = 32.dp,
+                    verticalPadding = 18.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
                 ShiftInfoRow(
                     label = "Kas Masuk-Keluar",
                     value = formatNumberDisplay(netCashMovement),
@@ -1150,6 +1171,7 @@ private fun ShiftInfoRow(
     label: String,
     value: String,
     isBold: Boolean = false,
+    isItalic: Boolean = false,
     valueColor: Color = Color(0xFF333333),
     startPadding: Dp = 16.dp,
     verticalPadding: Dp = 18.dp
@@ -1165,12 +1187,14 @@ private fun ShiftInfoRow(
             text = label,
             fontSize = 14.sp,
             fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium,
+            fontStyle = if (isItalic) FontStyle.Italic else FontStyle.Normal,
             color = if (isBold) Color.Black else Color(0xFF555555)
         )
         Text(
             text = value,
             fontSize = 14.sp,
             fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium,
+            fontStyle = if (isItalic) FontStyle.Italic else FontStyle.Normal,
             color = valueColor,
             textAlign = TextAlign.End
         )
