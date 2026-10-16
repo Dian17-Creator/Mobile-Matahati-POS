@@ -13,6 +13,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -184,6 +185,8 @@ fun ShiftCloseSalesReceiptDialog(
                         ReceiptRow(label = "  Kas Penjualan", value = formatNum(cashSalesVal))
                         ReceiptRow(label = "  Kas Pengembalian", value = formatNum(refundCashVal))
                         ReceiptRow(label = "  Kas Pembatalan", value = formatNum(cancellationCashVal))
+                        val netSalesVal = maxOf(0.0, totalSales - cancellationCashVal)
+                        ReceiptRow(label = "  Penjualan nett", value = formatNum(netSalesVal), isItalic = true)
                         ReceiptRow(label = "  Kas Masuk-Keluar", value = formatNum(netCashMovement))
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -238,7 +241,8 @@ fun ShiftCloseSalesReceiptDialog(
 private fun ReceiptRow(
     label: String,
     value: String,
-    isBold: Boolean = false
+    isBold: Boolean = false,
+    isItalic: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -251,13 +255,15 @@ private fun ReceiptRow(
             text = label,
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
-            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
+            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+            fontStyle = if (isItalic) FontStyle.Italic else FontStyle.Normal
         )
         Text(
             text = value,
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
-            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
+            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+            fontStyle = if (isItalic) FontStyle.Italic else FontStyle.Normal
         )
     }
 }

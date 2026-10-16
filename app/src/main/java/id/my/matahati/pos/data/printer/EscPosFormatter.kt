@@ -644,6 +644,8 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(drawTwoColumns("  Kas Penjualan", formatNum(cashSalesVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Pengembalian", formatNum(refundCashVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Pembatalan", formatNum(cancellationCashVal)).toByteArray().toList())
+        val netSalesVal = maxOf(0.0, totalSales - cancellationCashVal)
+        out.addAll(drawTwoColumns("  Penjualan nett", formatNum(netSalesVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Masuk-Keluar", formatNum(netCashMovement)).toByteArray().toList())
         out.addAll(drawLine("-").toByteArray().toList())
 
