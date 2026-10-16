@@ -199,6 +199,40 @@ fun HomeScreen(
         viewModel.loadPrinterSettings(context)
     }
 
+    fun findDefaultCustomerForOutlet(customers: List<id.my.matahati.pos.model.Customer>, outletName: String?): id.my.matahati.pos.model.Customer? {
+        if (customers.isEmpty()) return null
+        val cleanOutlet = outletName?.trim() ?: ""
+        if (cleanOutlet.isBlank()) return customers.firstOrNull()
+
+        // 1. Exact match (case-insensitive)
+        customers.find { it.name.trim().equals(cleanOutlet, ignoreCase = true) }?.let { return it }
+
+        // 2. Word-by-word match (reverse order to prioritize specific outlet keywords like "Event" over "Matahati")
+        val words = cleanOutlet.split(Regex("\\s+")).filter { it.length > 1 }
+        for (word in words.reversed()) {
+            customers.find { it.name.trim().equals(word, ignoreCase = true) }?.let { return it }
+            customers.find { 
+                it.name.contains(word, ignoreCase = true) || word.contains(it.name.trim(), ignoreCase = true) 
+            }?.let { return it }
+        }
+
+        // 3. Substring match on full outlet name
+        customers.find { 
+            cleanOutlet.contains(it.name.trim(), ignoreCase = true) || it.name.trim().contains(cleanOutlet, ignoreCase = true) 
+        }?.let { return it }
+
+        return customers.firstOrNull()
+    }
+
+    LaunchedEffect(selectedCustomer, viewModel.customers.toList(), outletName) {
+        if (selectedCustomer == null && viewModel.customers.isNotEmpty()) {
+            val defaultCust = findDefaultCustomerForOutlet(viewModel.customers, outletName)
+            if (defaultCust != null) {
+                selectedCustomer = defaultCust
+            }
+        }
+    }
+
     LaunchedEffect(nidOutlet, userId, userName) {
         val outletId = nidOutlet?.toIntOrNull() ?: 1
         viewModel.fetchData(nidOutlet)
@@ -541,6 +575,9 @@ fun HomeScreen(
                                                     onSendToKitchen = {
                                                         viewModel.openKitchenPrintDialogFromHistory(context, selectedHistoryTransaction!!)
                                                     },
+                                                    onPrintReceipt = {
+                                                        viewModel.openReceiptDialogFromHistory(context, selectedHistoryTransaction!!, userName, outletName)
+                                                    },
                                                     onVoidRefundClick = {
                                                         showVoidRefundDialog = true
                                                     },
@@ -617,6 +654,9 @@ fun HomeScreen(
                                         onBack = { currentScreen = "transaksi" },
                                         onSendToKitchen = {
                                             viewModel.openKitchenPrintDialogFromHistory(context, selectedHistoryTransaction!!)
+                                        },
+                                        onPrintReceipt = {
+                                            viewModel.openReceiptDialogFromHistory(context, selectedHistoryTransaction!!, userName, outletName)
                                         },
                                         onVoidRefundClick = {
                                             showVoidRefundDialog = true
