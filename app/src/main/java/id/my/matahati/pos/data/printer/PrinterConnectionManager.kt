@@ -20,6 +20,25 @@ class PrinterConnectionManager(private val context: Context) {
     private val SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
     @SuppressLint("MissingPermission")
+    private fun connectBluetoothSocket(device: BluetoothDevice): BluetoothSocket {
+        return try {
+            val socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
+            socket.connect()
+            socket
+        } catch (e1: IOException) {
+            Log.w("PrinterConnection", "Standard SPP connection failed, attempting reflection fallback to port 1: ${e1.message}")
+            try {
+                val fallbackSocket = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                    .invoke(device, 1) as BluetoothSocket
+                fallbackSocket.connect()
+                fallbackSocket
+            } catch (e2: Exception) {
+                throw e1
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
     suspend fun testConnection(printer: LocalPrinter): Result<String> = withContext(Dispatchers.IO) {
         if (printer.type == PrinterType.TCP_IP) {
             try {
@@ -43,13 +62,11 @@ class PrinterConnectionManager(private val context: Context) {
                 }
 
                 val device = bluetoothAdapter.getRemoteDevice(printer.address)
-                socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
-                // Timeout untuk bluetooth sering kali dikendalikan oleh OS, tapi kita coba connect
-                socket.connect()
+                socket = connectBluetoothSocket(device)
                 Result.success("Printer ${printer.name} (Bluetooth) berhasil terhubung.")
             } catch (e: IOException) {
                 Log.e("PrinterConnection", "Bluetooth connection failed: ${e.message}", e)
-                Result.failure(Exception("Koneksi Bluetooth gagal. Pastikan printer nyala dan sudah di-pair."))
+                Result.failure(Exception("Koneksi Bluetooth gagal. Pastikan printer nyala, sudah di-pair, dan tidak terkunci aplikasi lain."))
             } catch (e: IllegalArgumentException) {
                 Result.failure(Exception("Alamat Bluetooth tidak valid."))
             } finally {
@@ -80,6 +97,7 @@ class PrinterConnectionManager(private val context: Context) {
                         kotlinx.coroutines.delay(500)
                     }
                 }
+                kotlinx.coroutines.delay(100)
                 Result.success(Unit)
             } catch (e: Exception) {
                 Log.e("PrinterConnection", "TCP/IP print failed: ${e.message}", e)
@@ -97,8 +115,7 @@ class PrinterConnectionManager(private val context: Context) {
                     return@withContext Result.failure(Exception("Bluetooth tidak aktif atau tidak didukung."))
                 }
                 val device = bluetoothAdapter.getRemoteDevice(printer.address)
-                socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
-                socket.connect()
+                socket = connectBluetoothSocket(device)
                 val out = socket.outputStream
                 repeat(copies) { i ->
                     out.write(data)
@@ -107,10 +124,11 @@ class PrinterConnectionManager(private val context: Context) {
                         kotlinx.coroutines.delay(500)
                     }
                 }
+                kotlinx.coroutines.delay(100)
                 Result.success(Unit)
             } catch (e: Exception) {
                 Log.e("PrinterConnection", "Bluetooth print failed: ${e.message}", e)
-                Result.failure(Exception("Gagal mencetak ke printer Bluetooth."))
+                Result.failure(Exception("Gagal mencetak ke printer Bluetooth (${printer.name}). Pastikan printer nyala, di-pair, dan tidak terkunci aplikasi lain."))
             } finally {
                 try {
                     socket?.close()

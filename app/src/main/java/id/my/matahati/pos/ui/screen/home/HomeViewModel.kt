@@ -352,12 +352,19 @@ class HomeViewModel : ViewModel() {
             var anyFailure = false
             val errors = mutableListOf<String>()
             val trxNo = currentPrintTransactionNo ?: lastTransaction?.transaction?.transactionNo ?: "001"
+            var isFirstStation = true
 
             tickets.forEach { (station, items) ->
                 if (items.isNotEmpty()) {
                     val targetPrinter = if (station.uppercase() == "BAR") barPrinter else kitchenPrinter
                     if (targetPrinter != null) {
+                        if (!isFirstStation) {
+                            kotlinx.coroutines.delay(1000)
+                        }
+                        isFirstStation = false
+
                         if (station.uppercase() == "BAR") {
+                            val combinedBarBytes = mutableListOf<Byte>()
                             items.forEach { item ->
                                 val repeatCount = item.quantity.coerceAtLeast(1)
                                 repeat(repeatCount) {
@@ -365,11 +372,14 @@ class HomeViewModel : ViewModel() {
                                         item = item,
                                         transactionNo = trxNo
                                     )
-                                    val result = connectionManager.printData(targetPrinter, labelBytes)
-                                    if (result.isFailure) {
-                                        anyFailure = true
-                                        errors.add("BAR (${item.product.name}): ${result.exceptionOrNull()?.message}")
-                                    }
+                                    combinedBarBytes.addAll(labelBytes.toList())
+                                }
+                            }
+                            if (combinedBarBytes.isNotEmpty()) {
+                                val result = connectionManager.printData(targetPrinter, combinedBarBytes.toByteArray())
+                                if (result.isFailure) {
+                                    anyFailure = true
+                                    errors.add("BAR: ${result.exceptionOrNull()?.message}")
                                 }
                             }
                         } else {
@@ -1648,6 +1658,23 @@ class HomeViewModel : ViewModel() {
         openKitchenPrintDialog(context, items, isHistory = true)
     }
 
+    fun openReceiptDialogFromHistory(
+        context: android.content.Context,
+        transaction: TransactionModel,
+        cashierName: String = "",
+        outletName: String? = null
+    ) {
+        val data = TransactionData(
+            transaction = transaction,
+            details = transaction.details ?: emptyList()
+        )
+        lastTransaction = data
+        if (!isShowPrintPreviewEnabled(context)) {
+            printReceipt(context, data, cashierName, outletName)
+        }
+        showReceiptDialog = true
+    }
+
     fun onConfirmKitchenPrint(
         type: String,
         context: android.content.Context? = null,
@@ -1727,7 +1754,10 @@ class HomeViewModel : ViewModel() {
         showSimulatedReceipt = false
         receiptTickets.clear()
         if (context != null) {
-            handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(1000) // Safe inter-print delay for printer socket reset
+                handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
+            }
         } else if (pendingShowReceipt) {
             pendingShowReceipt = false
             showReceiptDialog = true
@@ -1742,7 +1772,10 @@ class HomeViewModel : ViewModel() {
     ) {
         showKitchenPrintDialog = false
         if (context != null) {
-            handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(1000) // Safe inter-print delay for printer socket reset
+                handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
+            }
         } else if (pendingShowReceipt) {
             pendingShowReceipt = false
             showReceiptDialog = true

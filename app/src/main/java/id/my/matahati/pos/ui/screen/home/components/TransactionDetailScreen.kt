@@ -38,6 +38,7 @@ fun TransactionDetailScreen(
     currentDate: String = "",
     onDateClick: (() -> Unit)? = null,
     onSendToKitchen: () -> Unit = {},
+    onPrintReceipt: (() -> Unit)? = null,
     onVoidRefundClick: () -> Unit = {},
     onItemVoidRefundClick: ((TransactionDetailModel?) -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -548,6 +549,28 @@ fun TransactionDetailScreen(
                                     onSendToKitchen()
                                 }
                             )
+
+                            if (onPrintReceipt != null) {
+                                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Print,
+                                                contentDescription = null,
+                                                tint = AppPrimaryColor,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text("Cetak Struk", color = Color.DarkGray)
+                                        }
+                                    },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        onPrintReceipt()
+                                    }
+                                )
+                            }
 
                             val pdfUrl = transaction.pdfUrl
                             if (!pdfUrl.isNullOrBlank()) {
