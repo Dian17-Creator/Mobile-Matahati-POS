@@ -938,7 +938,9 @@ private fun ActiveShiftContent(
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
-                val nonCashSalesVal = (totalSalesVal - cashSalesVal).coerceAtLeast(0.0)
+                val subtotalVal = shift.subtotal ?: (totalSalesVal + (shift.discountAmount ?: 0.0))
+                val discountVal = shift.discountAmount ?: 0.0
+                val netSalesVal = maxOf(0.0, totalSalesVal - cashCanceledVal)
 
                 ShiftInfoRow(
                     label = "Total Penjualan",
@@ -949,54 +951,111 @@ private fun ActiveShiftContent(
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
-                    label = "  • Penjualan Tunai",
-                    value = formatNumberDisplay(cashSalesVal),
+                    label = "  • Subtotal",
+                    value = formatNumberDisplay(subtotalVal),
                     startPadding = 48.dp,
                     verticalPadding = 14.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
-                ShiftInfoRow(
-                    label = "  • Penjualan Non-Tunai (QRIS)",
-                    value = formatNumberDisplay(nonCashSalesVal),
-                    startPadding = 48.dp,
-                    verticalPadding = 14.dp
-                )
-                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+                if (discountVal != 0.0) {
+                    val discText = if (discountVal > 0) "-${formatNumberDisplay(discountVal)}" else formatNumberDisplay(discountVal)
+                    ShiftInfoRow(
+                        label = "  • Diskon Bill",
+                        value = discText,
+                        startPadding = 48.dp,
+                        verticalPadding = 14.dp
+                    )
+                    HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+                }
 
                 ShiftInfoRow(
-                    label = "Kas Pengembalian",
-                    value = formatNumberDisplay(cashRefundVal),
-                    startPadding = 32.dp,
-                    verticalPadding = 18.dp
-                )
-                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                ShiftInfoRow(
-                    label = "Kas Pembatalan",
-                    value = formatNumberDisplay(cashCanceledVal),
-                    startPadding = 32.dp,
-                    verticalPadding = 18.dp
-                )
-                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                val netSalesVal = maxOf(0.0, totalSalesVal - cashCanceledVal)
-                ShiftInfoRow(
-                    label = "Penjualan nett",
+                    label = "  • Penjualan nett",
                     value = formatNumberDisplay(netSalesVal),
                     isItalic = true,
-                    startPadding = 32.dp,
+                    startPadding = 48.dp,
+                    verticalPadding = 14.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                // Kas Section
+                ShiftInfoRow(
+                    label = "Kas",
+                    value = formatNumberDisplay(expectedCashVal),
+                    isBold = true,
                     verticalPadding = 18.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
-                    label = "Kas Masuk-Keluar",
-                    value = formatNumberDisplay(netCashMovement),
+                    label = "  Kas Penjualan",
+                    value = formatNumberDisplay(cashSalesVal),
                     startPadding = 32.dp,
-                    verticalPadding = 18.dp
+                    verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                ShiftInfoRow(
+                    label = "  Kas Pengembalian",
+                    value = formatNumberDisplay(cashRefundVal),
+                    startPadding = 32.dp,
+                    verticalPadding = 16.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                ShiftInfoRow(
+                    label = "  Kas Pembatalan",
+                    value = formatNumberDisplay(cashCanceledVal),
+                    startPadding = 32.dp,
+                    verticalPadding = 16.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                ShiftInfoRow(
+                    label = "  Kas Masuk-Keluar",
+                    value = formatNumberDisplay(netCashMovement),
+                    startPadding = 32.dp,
+                    verticalPadding = 16.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                // Non-Cash Payment Methods Breakdown
+                shift.paymentBreakdown?.forEach { pm ->
+                    val nameUpper = pm.name.trim().uppercase()
+                    if (nameUpper != "CASH" && nameUpper != "TUNAI" && nameUpper != "KAS") {
+                        ShiftInfoRow(
+                            label = pm.name,
+                            value = formatNumberDisplay(pm.net),
+                            isBold = true,
+                            verticalPadding = 18.dp
+                        )
+                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                        ShiftInfoRow(
+                            label = "  Penjualan",
+                            value = formatNumberDisplay(pm.sales),
+                            startPadding = 32.dp,
+                            verticalPadding = 14.dp
+                        )
+                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                        ShiftInfoRow(
+                            label = "  Pengembalian",
+                            value = formatNumberDisplay(pm.refund),
+                            startPadding = 32.dp,
+                            verticalPadding = 14.dp
+                        )
+                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                        ShiftInfoRow(
+                            label = "  Batal",
+                            value = formatNumberDisplay(pm.voidAmount),
+                            startPadding = 32.dp,
+                            verticalPadding = 14.dp
+                        )
+                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+                    }
+                }
 
                 ShiftInfoRow(
                     label = "Total Kas Diharapkan (Laci)",

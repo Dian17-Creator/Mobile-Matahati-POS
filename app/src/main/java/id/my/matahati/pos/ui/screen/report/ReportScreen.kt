@@ -46,6 +46,7 @@ fun ReportScreen(
     onMenuClick: () -> Unit = {},
     onNavigateToTransaksi: () -> Unit = {},
     onNavigateToProductSalesSummary: () -> Unit = {},
+    onNavigateToPenutupanPenjualan: () -> Unit = {},
     viewModel: ReportViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -308,6 +309,8 @@ fun ReportScreen(
                     onNavigateToTransaksi()
                 } else if (selection == "Ringkasan Penjualan Produk") {
                     onNavigateToProductSalesSummary()
+                } else if (selection == "Penutupan Penjualan") {
+                    onNavigateToPenutupanPenjualan()
                 }
             }
         )
