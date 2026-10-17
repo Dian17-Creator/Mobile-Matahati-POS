@@ -646,12 +646,133 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(drawTwoColumns("  Kas Penjualan", formatNum(cashSalesVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Pengembalian", formatNum(refundCashVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Pembatalan", formatNum(cancellationCashVal)).toByteArray().toList())
-        out.addAll(drawTwoColumns("  Penjualan nett", formatNum(netSalesVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Masuk-Keluar", formatNum(netCashMovement)).toByteArray().toList())
         out.addAll(drawLine("-").toByteArray().toList())
 
+        // Non-Cash Payment Methods Breakdown
+        shift.paymentBreakdown?.forEach { pm ->
+            val nameUpper = pm.name.trim().uppercase()
+            if (nameUpper != "CASH" && nameUpper != "TUNAI" && nameUpper != "KAS") {
+                out.addAll(BOLD_ON.toList())
+                out.addAll(drawTwoColumns(pm.name, formatNum(pm.net)).toByteArray().toList())
+                out.addAll(BOLD_OFF.toList())
+                out.addAll(drawLine("-").toByteArray().toList())
+
+                out.addAll(drawTwoColumns("  Penjualan", formatNum(pm.sales)).toByteArray().toList())
+                out.addAll(drawTwoColumns("  Pengembalian", formatNum(pm.refund)).toByteArray().toList())
+                out.addAll(drawTwoColumns("  Batal", formatNum(pm.voidAmount)).toByteArray().toList())
+                out.addAll(drawLine("-").toByteArray().toList())
+            }
+        }
+
         out.addAll(BOLD_ON.toList())
         out.addAll(drawTwoColumns("Total Diharapkan", formatNum(expectedCashVal)).toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+
+        out.addAll("\n\n\n\n\n".toByteArray().toList())
+
+        return out.toByteArray()
+    }
+
+    fun formatDailySalesClosureReceipt(
+        data: id.my.matahati.pos.ui.screen.report.DailySalesClosureData,
+        savedOutletName: String? = null,
+        userName: String? = null
+    ): ByteArray {
+        val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
+            maximumFractionDigits = 0
+        }
+        fun formatNum(num: Double): String {
+            return formatter.format(num)
+        }
+
+        fun formatDayText(dateStr: String): String {
+            if (dateStr.isBlank()) return "-"
+            return try {
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                val outputFormat = SimpleDateFormat("EEE, dd MMM yyyy", Locale("id", "ID"))
+                val date = inputFormat.parse(dateStr)
+                if (date != null) outputFormat.format(date) else dateStr
+            } catch (e: Exception) {
+                dateStr
+            }
+        }
+
+        val currentPrintedTime = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.forLanguageTag("id-ID")).format(java.util.Date())
+        val outletName = (savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
+        val cashierName = userName ?: data.cashierNames.ifBlank { "Kasir" }
+
+        val out = mutableListOf<Byte>()
+        out.addAll(INIT.toList())
+        out.addAll(FONT_A.toList())
+        out.addAll(ALIGN_CENTER.toList())
+
+        // Outlet Name & Title
+        out.addAll(BOLD_ON.toList())
+        out.addAll(SIZE_DOUBLE.toList())
+        out.addAll("$outletName\n".toByteArray().toList())
+        out.addAll(SIZE_NORMAL.toList())
+        out.addAll("Penutupan Penjualan Harian\n\n".toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+
+        // Header Metadata
+        out.addAll(ALIGN_LEFT.toList())
+        out.addAll("Tercetak     : $currentPrintedTime\n".toByteArray().toList())
+        out.addAll("Kasir        : $cashierName\n".toByteArray().toList())
+        out.addAll("Tanggal      : ${formatDayText(data.dateApi)}\n\n".toByteArray().toList())
+
+        // Tamu & Resi
+        out.addAll(drawTwoColumns("Jumlah Tamu", "${data.totalPaxs}").toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+        out.addAll(drawTwoColumns("Resi", "${data.totalReceipts}").toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+        out.addAll(drawTwoColumns("Pengembalian", formatNum(data.refundCash)).toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        // Penjualan & Subtotal
+        out.addAll(BOLD_ON.toList())
+        out.addAll(drawTwoColumns("Total Penjualan", formatNum(data.totalSales)).toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        val subtotalVal = if (data.subtotal > 0) data.subtotal else data.totalSales
+        out.addAll(drawTwoColumns("  Subtotal", formatNum(subtotalVal)).toByteArray().toList())
+        if (data.discountAmount > 0) {
+            out.addAll(drawTwoColumns("  Diskon Bill", "-${formatNum(data.discountAmount)}").toByteArray().toList())
+        }
+        out.addAll(drawTwoColumns("  Penjualan nett", formatNum(data.netSales)).toByteArray().toList())
+        out.addAll("\n".toByteArray().toList())
+
+        // Kas Section
+        out.addAll(BOLD_ON.toList())
+        out.addAll(drawTwoColumns("Kas", formatNum(data.expectedCash)).toByteArray().toList())
+        out.addAll(BOLD_OFF.toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        out.addAll(drawTwoColumns("  Kas Penjualan", formatNum(data.cashSales)).toByteArray().toList())
+        out.addAll(drawTwoColumns("  Kas Pengembalian", formatNum(data.refundCash)).toByteArray().toList())
+        out.addAll(drawTwoColumns("  Kas Pembatalan", formatNum(data.cancellationCash)).toByteArray().toList())
+        out.addAll(drawTwoColumns("  Kas Masuk-Keluar", formatNum(data.netCashMovement)).toByteArray().toList())
+        out.addAll(drawLine("-").toByteArray().toList())
+
+        // Non-Cash Payment Methods Breakdown
+        data.paymentBreakdownList.forEach { pm ->
+            val nameUpper = pm.name.trim().uppercase()
+            if (nameUpper != "CASH" && nameUpper != "TUNAI" && nameUpper != "KAS") {
+                out.addAll(BOLD_ON.toList())
+                out.addAll(drawTwoColumns(pm.name, formatNum(pm.net)).toByteArray().toList())
+                out.addAll(BOLD_OFF.toList())
+                out.addAll(drawLine("-").toByteArray().toList())
+
+                out.addAll(drawTwoColumns("  Penjualan", formatNum(pm.sales)).toByteArray().toList())
+                out.addAll(drawTwoColumns("  Pengembalian", formatNum(pm.refund)).toByteArray().toList())
+                out.addAll(drawTwoColumns("  Batal", formatNum(pm.voidAmount)).toByteArray().toList())
+                out.addAll(drawLine("-").toByteArray().toList())
+            }
+        }
+
+        out.addAll(BOLD_ON.toList())
+        out.addAll(drawTwoColumns("Total Diharapkan", formatNum(data.expectedCash)).toByteArray().toList())
         out.addAll(BOLD_OFF.toList())
 
         out.addAll("\n\n\n\n\n".toByteArray().toList())

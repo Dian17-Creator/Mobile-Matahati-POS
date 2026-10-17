@@ -188,8 +188,23 @@ fun ShiftCloseSalesReceiptDialog(
                         ReceiptRow(label = "  Kas Penjualan", value = formatNum(cashSalesVal))
                         ReceiptRow(label = "  Kas Pengembalian", value = formatNum(refundCashVal))
                         ReceiptRow(label = "  Kas Pembatalan", value = formatNum(cancellationCashVal))
-                        ReceiptRow(label = "  Penjualan nett", value = formatNum(netSalesVal), isItalic = true)
                         ReceiptRow(label = "  Kas Masuk-Keluar", value = formatNum(netCashMovement))
+
+                        // Rincian Metode Pembayaran Non-Tunai
+                        shift.paymentBreakdown?.forEach { pm ->
+                            val nameUpper = pm.name.trim().uppercase()
+                            if (nameUpper != "CASH" && nameUpper != "TUNAI" && nameUpper != "KAS") {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                ReceiptRow(label = pm.name, value = formatNum(pm.net), isBold = true)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                DashedDivider()
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                ReceiptRow(label = "  Penjualan", value = formatNum(pm.sales))
+                                ReceiptRow(label = "  Pengembalian", value = formatNum(pm.refund))
+                                ReceiptRow(label = "  Batal", value = formatNum(pm.voidAmount))
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(6.dp))
                         DashedDivider()

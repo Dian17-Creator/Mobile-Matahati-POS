@@ -700,6 +700,20 @@ fun HomeScreen(
                                     onNavigateToProductSalesSummary = {
                                         currentScreen = "ringkasan_penjualan_produk"
                                     },
+                                    onNavigateToPenutupanPenjualan = {
+                                        currentScreen = "penutupan_penjualan"
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            "penutupan_penjualan" -> {
+                                id.my.matahati.pos.ui.screen.report.SalesClosureReportScreen(
+                                    nidOutlet = nidOutlet,
+                                    savedOutletName = outletName,
+                                    userName = userName,
+                                    onBack = {
+                                        currentScreen = "laporan"
+                                    },
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
