@@ -35,6 +35,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import id.my.matahati.pos.data.printer.BluetoothPrinterManager
@@ -117,6 +119,7 @@ fun HomeScreen(
     var showEditCustomerPanel by remember { mutableStateOf(false) }
     var selectedVoucher by remember { mutableStateOf<id.my.matahati.pos.model.Voucher?>(null) }
     var manualDiscountInput by remember { mutableStateOf("") }
+    var showPdfConfirmDialog by remember { mutableStateOf(false) }
     
     val cartItems = remember { mutableStateListOf<CartItem>() }
 
@@ -1770,6 +1773,40 @@ fun HomeScreen(
         )
     }
 
+    // 1. Transaction Success Popup
+    if (viewModel.showSuccessDialog && viewModel.lastTransaction != null) {
+        TransactionSuccessDialog(
+            transactionData = viewModel.lastTransaction!!,
+            onSendToKitchen = {
+                viewModel.openKitchenPrintDialogFromHistory(context, viewModel.lastTransaction!!.transaction!!)
+            },
+            onPrintReceipt = {
+                if (viewModel.isShowPrintPreviewEnabled(context)) {
+                    viewModel.showReceiptDialog = true
+                } else {
+                    viewModel.printReceipt(context, viewModel.lastTransaction!!, userName, outletName)
+                }
+            },
+            onNewTransaction = {
+                viewModel.showSuccessDialog = false
+                if (viewModel.isShowPdfDialogEnabled(context)) {
+                    showPdfConfirmDialog = true
+                } else {
+                    autoFinishCheckout()
+                }
+            },
+            onDismiss = {
+                viewModel.showSuccessDialog = false
+                if (viewModel.isShowPdfDialogEnabled(context)) {
+                    showPdfConfirmDialog = true
+                } else {
+                    autoFinishCheckout()
+                }
+            }
+        )
+    }
+
+    // 2. Receipt Modal Preview
     if (viewModel.showReceiptDialog && viewModel.lastTransaction != null) {
         ReceiptDialog(
             transactionData = viewModel.lastTransaction!!,
@@ -1778,6 +1815,7 @@ fun HomeScreen(
             isPrinting = viewModel.isPrinting,
             isOrderTypeSelected = viewModel.isOrderTypeSelectedByUser,
             isPrintPreviewEnabled = viewModel.isShowPrintPreviewEnabled(context),
+            isPdfDialogEnabled = viewModel.isShowPdfDialogEnabled(context),
             onPrint = {
                 if (viewModel.selectedPrinterAddress == null) {
                     viewModel.openPrinterSelection(printerManager)
@@ -1787,20 +1825,104 @@ fun HomeScreen(
             },
             onDismiss = {
                 viewModel.closeReceiptDialog()
-                // Jika ini adalah akhir dari transaksi yang baru saja disubmit
                 if (currentScreen == "pos") {
-                    cartItems.clear()
-                    orderType = ""
-                    viewModel.selectedTable = ""
-                    selectedCustomer = null
-                    selectedVoucher = null
-                    manualDiscountInput = ""
-                    orderNote = ""
-                    viewModel.currentDraftId = null
-                    viewModel.showPaymentScreen = false
+                    if (viewModel.isShowPdfDialogEnabled(context)) {
+                        showPdfConfirmDialog = true
+                    } else {
+                        autoFinishCheckout()
+                    }
                 }
             }
         )
+    }
+
+    // 3. Optional PDF Confirmation Dialog
+    if (showPdfConfirmDialog && viewModel.lastTransaction?.transaction != null) {
+        val trx = viewModel.lastTransaction!!.transaction!!
+        Dialog(
+            onDismissRequest = {
+                showPdfConfirmDialog = false
+                autoFinishCheckout()
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.85f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    modifier = Modifier
+                        .width(480.dp)
+                        .padding(16.dp)
+                ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = "Cetak PDF",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF212121)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Apakah anda ingin cetak PDF?",
+                        fontSize = 15.sp,
+                        color = Color.DarkGray
+                    )
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                showPdfConfirmDialog = false
+                                autoFinishCheckout()
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.DarkGray)
+                        ) {
+                            Text("TIDAK", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+
+                        Button(
+                            onClick = {
+                                val pdfUrl = trx.pdfUrl
+                                if (!pdfUrl.isNullOrBlank()) {
+                                    android.widget.Toast.makeText(context, "Invoice PDF tersimpan di server", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                                showPdfConfirmDialog = false
+                                autoFinishCheckout()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                        ) {
+                            Text("YA", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
     }
 
     if (viewModel.isSubmitting) {

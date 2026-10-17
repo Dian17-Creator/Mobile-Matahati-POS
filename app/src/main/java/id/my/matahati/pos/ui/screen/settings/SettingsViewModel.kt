@@ -39,6 +39,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     var isShowPrintPreviewEnabled by mutableStateOf(true)
         private set
 
+    var isShowPdfDialogEnabled by mutableStateOf(true)
+        private set
+
     var cartMenuStates = mutableStateMapOf<CartMenuItem, Boolean>()
 
     init {
@@ -62,6 +65,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun loadPaymentSettings() {
         isConfirmOrderEnabled = prefs.getBoolean("confirm_order_before_payment", true)
         isShowPrintPreviewEnabled = prefs.getBoolean("show_print_preview", true)
+        isShowPdfDialogEnabled = prefs.getBoolean("show_pdf_dialog", true)
     }
 
     fun updateConfirmOrderEnabled(enabled: Boolean) {
@@ -72,6 +76,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun updateShowPrintPreviewEnabled(enabled: Boolean) {
         isShowPrintPreviewEnabled = enabled
         prefs.edit().putBoolean("show_print_preview", enabled).apply()
+    }
+
+    fun updateShowPdfDialogEnabled(enabled: Boolean) {
+        isShowPdfDialogEnabled = enabled
+        prefs.edit().putBoolean("show_pdf_dialog", enabled).apply()
     }
 
     fun loadPrinters() {
