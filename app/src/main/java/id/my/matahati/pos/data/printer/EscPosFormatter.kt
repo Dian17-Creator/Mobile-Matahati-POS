@@ -608,7 +608,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         // Header Metadata
         out.addAll(ALIGN_LEFT.toList())
         out.addAll("Tercetak     : $currentPrintedTime\n".toByteArray().toList())
-        out.addAll("Dicetak Oleh : $cashierName\n\n".toByteArray().toList())
+        out.addAll("Dicetak Oleh : $cashierName\n".toByteArray().toList())
         out.addAll("Tanggal      : ${formatShiftDay(shift.openedAt)}\n\n".toByteArray().toList())
 
         // Tamu & Resi
@@ -620,6 +620,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(drawLine("-").toByteArray().toList())
 
         // Penjualan & Subtotal
+        val netSalesVal = maxOf(0.0, totalSales - cancellationCashVal)
         out.addAll(BOLD_ON.toList())
         out.addAll(drawTwoColumns("Total Penjualan", formatNum(totalSales)).toByteArray().toList())
         out.addAll(BOLD_OFF.toList())
@@ -633,6 +634,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         } else {
             out.addAll(drawTwoColumns("  Subtotal", formatNum(totalSales)).toByteArray().toList())
         }
+        out.addAll(drawTwoColumns("  Penjualan nett", formatNum(netSalesVal)).toByteArray().toList())
         out.addAll("\n".toByteArray().toList())
 
         // Kas Section
@@ -644,7 +646,6 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(drawTwoColumns("  Kas Penjualan", formatNum(cashSalesVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Pengembalian", formatNum(refundCashVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Pembatalan", formatNum(cancellationCashVal)).toByteArray().toList())
-        val netSalesVal = maxOf(0.0, totalSales - cancellationCashVal)
         out.addAll(drawTwoColumns("  Penjualan nett", formatNum(netSalesVal)).toByteArray().toList())
         out.addAll(drawTwoColumns("  Kas Masuk-Keluar", formatNum(netCashMovement)).toByteArray().toList())
         out.addAll(drawLine("-").toByteArray().toList())

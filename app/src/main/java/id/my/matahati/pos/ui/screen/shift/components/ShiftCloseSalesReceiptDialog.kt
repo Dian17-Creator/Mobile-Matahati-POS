@@ -130,7 +130,7 @@ fun ShiftCloseSalesReceiptDialog(
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 12.sp
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Tanggal      : ${formatShiftDay(shift.openedAt)}",
                                 fontFamily = FontFamily.Monospace,
@@ -164,6 +164,8 @@ fun ShiftCloseSalesReceiptDialog(
                         DashedDivider()
                         Spacer(modifier = Modifier.height(6.dp))
 
+                        val netSalesVal = maxOf(0.0, totalSales - cancellationCashVal)
+
                         // Subtotal & Diskon
                         if (discountVal != 0.0) {
                             ReceiptRow(label = "  Subtotal", value = formatNum(subtotalVal))
@@ -173,6 +175,7 @@ fun ShiftCloseSalesReceiptDialog(
                         } else {
                             ReceiptRow(label = "  Subtotal", value = formatNum(totalSales))
                         }
+                        ReceiptRow(label = "  Penjualan nett", value = formatNum(netSalesVal), isItalic = true)
 
                         Spacer(modifier = Modifier.height(10.dp))
 
@@ -185,7 +188,6 @@ fun ShiftCloseSalesReceiptDialog(
                         ReceiptRow(label = "  Kas Penjualan", value = formatNum(cashSalesVal))
                         ReceiptRow(label = "  Kas Pengembalian", value = formatNum(refundCashVal))
                         ReceiptRow(label = "  Kas Pembatalan", value = formatNum(cancellationCashVal))
-                        val netSalesVal = maxOf(0.0, totalSales - cancellationCashVal)
                         ReceiptRow(label = "  Penjualan nett", value = formatNum(netSalesVal), isItalic = true)
                         ReceiptRow(label = "  Kas Masuk-Keluar", value = formatNum(netCashMovement))
 
