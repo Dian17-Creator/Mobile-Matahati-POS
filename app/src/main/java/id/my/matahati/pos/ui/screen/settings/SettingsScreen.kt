@@ -334,6 +334,48 @@ fun SettingsScreen(
                             )
                         )
                     }
+
+                    HorizontalDivider(color = Color(0xFFEEEEEE))
+
+                    // Setting 3: Tampilkan Dialog Cetak PDF
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 16.dp)
+                        ) {
+                            Text(
+                                text = "Tampilkan Dialog Cetak PDF",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color(0xFF212121)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Tampilkan pop-up konfirmasi cetak PDF setelah transaksi diselesaikan",
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                lineHeight = 16.sp
+                            )
+                        }
+
+                        Switch(
+                            checked = viewModel.isShowPdfDialogEnabled,
+                            onCheckedChange = { viewModel.updateShowPdfDialogEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = SettingsBlue,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color.LightGray
+                            )
+                        )
+                    }
                 }
             }
 

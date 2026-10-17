@@ -1551,6 +1551,13 @@ class HomeViewModel : ViewModel() {
         return prefs.getBoolean("show_print_preview", true)
     }
 
+    var showSuccessDialog by mutableStateOf(false)
+
+    fun isShowPdfDialogEnabled(context: android.content.Context): Boolean {
+        val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+        return prefs.getBoolean("show_pdf_dialog", true)
+    }
+
     fun handlePendingReceipt(
         context: android.content.Context,
         userName: String = "",
@@ -1564,7 +1571,7 @@ class HomeViewModel : ViewModel() {
                     printReceipt(context, trx, userName, outletName)
                 }
             }
-            showReceiptDialog = true
+            showSuccessDialog = true
         }
     }
 
