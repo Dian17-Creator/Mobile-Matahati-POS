@@ -412,7 +412,7 @@ private fun SummaryCardsSection(
                     modifier = Modifier.weight(1f)
                 )
                 SummaryCardItem(
-                    title = "Total Pengembalian",
+                    title = "Total Pengembalian / Pembatalan",
                     amount = totalRefund,
                     backgroundColor = OrangeRefundCard,
                     modifier = Modifier.weight(1f)
@@ -430,7 +430,7 @@ private fun SummaryCardsSection(
                     modifier = Modifier.fillMaxWidth()
                 )
                 SummaryCardItem(
-                    title = "Total Pengembalian",
+                    title = "Total Pengembalian / Pembatalan",
                     amount = totalRefund,
                     backgroundColor = OrangeRefundCard,
                     modifier = Modifier.fillMaxWidth()

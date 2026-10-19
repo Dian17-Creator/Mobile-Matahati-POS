@@ -54,17 +54,21 @@ fun TransactionDetailScreen(
 
     val statusUpper = transaction.status.uppercase()
     val isCancelled = statusUpper in listOf("CANCELLED", "CANCEL", "VOID", "VOIDED", "REFUND", "REFUNDED")
+    val isReversalChild = !transaction.nidParentTransaction.isNullOrBlank()
     val cashierName = transaction.posUser?.user?.name ?: "Unknown"
     val hasPartialHistory = transaction.details?.any { it.qtyVoid > 0 || it.qtyRefund > 0 } == true
 
     val detailsList = transaction.details ?: emptyList()
     val activeItemsTotal = detailsList.sumOf { item ->
         val unitPrice = item.price.toDoubleOrNull() ?: 0.0
-        unitPrice * item.qtyAvailable
+        val effectiveQty = if (isReversalChild) item.quantity else item.qtyAvailable
+        unitPrice * effectiveQty
     }
     val taxVal = transaction.tax.toDoubleOrNull() ?: 0.0
     val discountVal = transaction.discount.toDoubleOrNull() ?: 0.0
-    val displayGrandTotal = if (detailsList.isNotEmpty()) {
+    val displayGrandTotal = if (isReversalChild || isCancelled) {
+        transaction.grandTotal.toDoubleOrNull() ?: 0.0
+    } else if (detailsList.isNotEmpty()) {
         maxOf(0.0, activeItemsTotal - discountVal + taxVal)
     } else {
         transaction.grandTotal.toDoubleOrNull() ?: 0.0
@@ -213,9 +217,10 @@ fun TransactionDetailScreen(
                         text = "Catatan: ${transaction.orderNote}"
                     )
                 }
+                val paymentName = transaction.payment?.cname?.uppercase() ?: "CASH"
                 InfoIconRow(
                     icon = Icons.Default.AttachMoney,
-                    text = if (isCancelled) "null (VOIDED)" else "Rp ${formatStringNum(displayGrandTotal.toString())}",
+                    text = if (isCancelled) "Rp ${formatStringNum(displayGrandTotal.toString())} - $paymentName (${transaction.status})" else "Rp ${formatStringNum(displayGrandTotal.toString())} - $paymentName",
                     textColor = if (isCancelled) Color.Red else Color.Black
                 )
             }
@@ -323,7 +328,8 @@ fun TransactionDetailScreen(
                                 horizontalArrangement = Arrangement.End,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val activeSubtotal = (item.price.toDoubleOrNull() ?: 0.0) * item.qtyAvailable
+                                val effectiveItemQty = if (isReversalChild) item.quantity else item.qtyAvailable
+                                val activeSubtotal = (item.price.toDoubleOrNull() ?: 0.0) * effectiveItemQty
                                 Text(
                                     text = formatStringNum(activeSubtotal.toString()),
                                     fontSize = 14.sp,
@@ -433,15 +439,17 @@ fun TransactionDetailScreen(
                         }
 
                         // Catatan Batal
-                        if (isCancelled && !transaction.cancelNote.isNullOrBlank()) {
+                        val noteToShow = transaction.voidNote ?: transaction.refundNote ?: transaction.cancelNote
+                        if (isCancelled && !noteToShow.isNullOrBlank()) {
                             Surface(
-                                color = Color.White,
+                                color = Color(0xFFFFEBEE),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = "Catatan: ${transaction.cancelNote}",
+                                    text = "Alasan Pembatalan: $noteToShow",
                                     fontSize = 12.sp,
-                                    color = Color.Black,
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
