@@ -2,6 +2,8 @@ package id.my.matahati.pos.data.printer
 
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.TransactionData
+import id.my.matahati.pos.model.getCashCancellationAmount
+import id.my.matahati.pos.model.getExpectedCashAmount
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -140,6 +142,8 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(BOLD_OFF.toList())
         
         out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
+        val paymentName = (trx.payment?.cname?.takeIf { it.isNotBlank() } ?: "CASH").uppercase()
+        out.addAll(drawTwoColumns(paymentName, "").toByteArray().toList())
         out.addAll(drawTwoColumns("Change", formatNum(trx.changeAmount)).toByteArray().toList())
 
         // 9. Status & Footer (Center)
@@ -586,11 +590,12 @@ class EscPosFormatter(private val cols: Int = 32) {
         val discountVal = shift.discountAmount ?: 0.0
         val subtotalVal = shift.subtotal ?: (totalSales + discountVal)
 
-        val cashSalesVal = shift.cashSales ?: totalSales
-        val refundCashVal = shift.refundCash
-        val cancellationCashVal = shift.cancellationCash
+        val cashSalesVal = shift.cashSales ?: 0.0
+        val refundCashVal = shift.cashRefund ?: shift.refundCash
+        val cancellationCashVal = shift.getCashCancellationAmount()
+        val totalCancellationVal = shift.totalCancellation ?: shift.cancellationCash
         val netCashMovement = shift.cashIn - shift.cashOut
-        val expectedCashVal = shift.expectedCash ?: (shift.openingCash + cashSalesVal + netCashMovement - refundCashVal - cancellationCashVal)
+        val expectedCashVal = shift.getExpectedCashAmount()
 
         val out = mutableListOf<Byte>()
         out.addAll(INIT.toList())
@@ -620,7 +625,7 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(drawLine("-").toByteArray().toList())
 
         // Penjualan & Subtotal
-        val netSalesVal = maxOf(0.0, totalSales - cancellationCashVal)
+        val netSalesVal = maxOf(0.0, totalSales - totalCancellationVal)
         out.addAll(BOLD_ON.toList())
         out.addAll(drawTwoColumns("Total Penjualan", formatNum(totalSales)).toByteArray().toList())
         out.addAll(BOLD_OFF.toList())

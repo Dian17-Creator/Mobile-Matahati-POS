@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import id.my.matahati.pos.model.ShiftResponse
+import id.my.matahati.pos.model.getCashCancellationAmount
+import id.my.matahati.pos.model.getExpectedCashAmount
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -70,11 +72,12 @@ fun ShiftCloseSalesReceiptDialog(
     val discountVal = shift.discountAmount ?: 0.0
     val subtotalVal = shift.subtotal ?: (totalSales + discountVal)
 
-    val cashSalesVal = shift.cashSales ?: totalSales
-    val refundCashVal = shift.refundCash
-    val cancellationCashVal = shift.cancellationCash
+    val cashSalesVal = shift.cashSales ?: 0.0
+    val refundCashVal = shift.cashRefund ?: shift.refundCash
+    val cancellationCashVal = shift.getCashCancellationAmount()
+    val totalCancellationVal = shift.totalCancellation ?: shift.cancellationCash
     val netCashMovement = shift.cashIn - shift.cashOut
-    val expectedCashVal = shift.expectedCash ?: (shift.openingCash + cashSalesVal + netCashMovement - refundCashVal - cancellationCashVal)
+    val expectedCashVal = shift.getExpectedCashAmount()
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -164,7 +167,7 @@ fun ShiftCloseSalesReceiptDialog(
                         DashedDivider()
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        val netSalesVal = maxOf(0.0, totalSales - cancellationCashVal)
+                        val netSalesVal = maxOf(0.0, totalSales - totalCancellationVal)
 
                         // Subtotal & Diskon
                         if (discountVal != 0.0) {
