@@ -11,7 +11,6 @@ object RetrofitClient {
     //const val BASE_URL = "http://localhost:8000/"
     const val BASE_URL = "http://192.168.1.36:8000/"
 
-
     //const val BASE_URL = "https://pos.matahaticafe.com/"
 
 
