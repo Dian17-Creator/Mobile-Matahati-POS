@@ -196,14 +196,14 @@ fun TransactionSuccessDialog(
                                 imageVector = Icons.Default.Print,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Cetak Resi",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
+                                fontSize = 12.sp
                             )
                         }
 
