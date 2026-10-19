@@ -111,7 +111,15 @@ fun TransactionItemCard(
     isSelected: Boolean = false
 ) {
     val statusUpper = transaction.status.uppercase()
-    val isCancelled = statusUpper in listOf("CANCELLED", "CANCEL", "VOID", "VOIDED", "REFUND", "REFUNDED")
+    val hasReversals = !transaction.reversals.isNullOrEmpty()
+    val isReversalChild = !transaction.nidParentTransaction.isNullOrBlank()
+    val isSelfCancelled = statusUpper in listOf("CANCELLED", "CANCEL", "VOID", "VOIDED", "REFUND", "REFUNDED")
+
+    val reversalsTotal = transaction.reversals?.sumOf { it.grandTotal.toDoubleOrNull() ?: 0.0 } ?: 0.0
+    val originalAmountNum = transaction.grandTotal.toDoubleOrNull() ?: 0.0
+    val netRemainingAmount = originalAmountNum + reversalsTotal
+
+    val isFullyCancelled = isSelfCancelled || (hasReversals && netRemainingAmount <= 0)
 
     val timeStr = try {
         val dateTime = transaction.transactionDate.replace("T", " ")
@@ -148,16 +156,17 @@ fun TransactionItemCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon
+            val showRedIcon = isFullyCancelled || isReversalChild
             Surface(
                 shape = CircleShape,
-                color = if (isCancelled) Color(0xFFFEEBEE) else Color(0xFFE0F7FA),
+                color = if (showRedIcon) Color(0xFFFEEBEE) else Color(0xFFE0F7FA),
                 modifier = Modifier.size(38.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = if (isCancelled) Icons.Default.Block else Icons.Default.Receipt,
+                        imageVector = if (showRedIcon) Icons.Default.Block else Icons.Default.Receipt,
                         contentDescription = null,
-                        tint = if (isCancelled) Color.Red else AppPrimaryColor,
+                        tint = if (showRedIcon) Color.Red else AppPrimaryColor,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -204,13 +213,40 @@ fun TransactionItemCard(
                     )
                 }
 
+                if (hasReversals) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "• Ada Transaksi Pembatalan (Reversal)",
+                        fontSize = 11.sp,
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (isReversalChild) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "• Transaksi Reversal Pembatalan",
+                        fontSize = 11.sp,
+                        color = Color(0xFFD32F2F),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(2.dp))
 
+                val displayAmountText = when {
+                    isReversalChild -> "$amountStr - $paymentName (REVERSAL)"
+                    isFullyCancelled -> "0 (Dibatalkan) - $paymentName"
+                    hasReversals -> "${formatter.format(netRemainingAmount)} - $paymentName$customerStr"
+                    else -> "$amountStr - $paymentName$customerStr"
+                }
+
                 Text(
-                    text = if (isCancelled) "0 (Dibatalkan) - $paymentName" else "$amountStr - $paymentName$customerStr",
+                    text = displayAmountText,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isCancelled) Color.Red else AppPrimaryColor
+                    color = if (showRedIcon) Color.Red else AppPrimaryColor
                 )
             }
         }

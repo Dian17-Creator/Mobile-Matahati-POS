@@ -76,24 +76,25 @@ data class PaymentBreakdownItem(
 typealias Shift = ShiftResponse
 
 fun ShiftResponse.getTotalCancellationAmount(): Double {
-    return this.totalCancellation ?: this.cancellationCash
+    return kotlin.math.abs(this.totalCancellation ?: this.cancellationCash)
 }
 
 fun ShiftResponse.getCashCancellationAmount(): Double {
-    if (this.cashCancellation != null) return this.cashCancellation
+    if (this.cashCancellation != null) return kotlin.math.abs(this.cashCancellation)
     val cashPm = this.paymentBreakdown?.find { it.name.trim().uppercase() in listOf("CASH", "TUNAI", "KAS") }
-    if (cashPm != null) return cashPm.voidAmount
+    if (cashPm != null) return kotlin.math.abs(cashPm.voidAmount)
     val nonCashCancellationSum = this.paymentBreakdown
         ?.filter { pm -> pm.name.trim().uppercase() !in listOf("CASH", "TUNAI", "KAS") }
-        ?.sumOf { it.voidAmount } ?: 0.0
-    val totalCancel = this.totalCancellation ?: this.cancellationCash
+        ?.sumOf { kotlin.math.abs(it.voidAmount) } ?: 0.0
+    val totalCancel = kotlin.math.abs(this.totalCancellation ?: this.cancellationCash)
     return (totalCancel - nonCashCancellationSum).coerceAtLeast(0.0)
 }
 
 fun ShiftResponse.getExpectedCashAmount(): Double {
+    if (this.expectedCash != null) return this.expectedCash
     val cashSalesVal = this.cashSales ?: 0.0
-    val refundCashVal = this.cashRefund ?: this.refundCash
-    val cancellationCashVal = this.getCashCancellationAmount()
+    val refundCashVal = kotlin.math.abs(this.cashRefund ?: this.refundCash)
+    val cancellationCashVal = kotlin.math.abs(this.getCashCancellationAmount())
     val netCashMovement = this.cashIn - this.cashOut
     return this.openingCash + cashSalesVal + netCashMovement - refundCashVal - cancellationCashVal
 }

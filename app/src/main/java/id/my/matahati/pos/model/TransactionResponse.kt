@@ -37,12 +37,17 @@ data class TransactionModel(
     @SerializedName("cstatus") val status: String,
     @SerializedName("nitem") val itemCount: Int,
     @SerializedName("ccancel_note") val cancelNote: String? = null,
+    @SerializedName("cvoid_note") val voidNote: String? = null,
+    @SerializedName("crefund_note") val refundNote: String? = null,
     @SerializedName("cnote") val orderNote: String? = null,
     @SerializedName("details") val details: List<TransactionDetailModel>? = null,
     @SerializedName("pos_user") val posUser: PosUserModel? = null,
     @SerializedName("payment") val payment: PaymentMethodDto? = null,
     @SerializedName("outlet") val outlet: OutletModel? = null,
-    @SerializedName("cpdf_url") val pdfUrl: String? = null
+    @SerializedName("cpdf_url") val pdfUrl: String? = null,
+    @SerializedName("nid_parent_transaction") val nidParentTransaction: String? = null,
+    @SerializedName("reversals") val reversals: List<TransactionModel>? = null,
+    @SerializedName("parent_transaction") val parentTransaction: TransactionModel? = null
 )
 
 data class OutletModel(

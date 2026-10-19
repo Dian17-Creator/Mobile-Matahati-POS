@@ -401,8 +401,8 @@ fun ShiftScreen(
                                     val cashSalesVal = shiftToShow.cashSales ?: 0.0
                                     val cashInVal = shiftToShow.cashIn
                                     val cashOutVal = shiftToShow.cashOut
-                                    val cashRefundVal = shiftToShow.refundCash
-                                    val totalCanceledVal = shiftToShow.getTotalCancellationAmount()
+                                    val cashRefundVal = kotlin.math.abs(shiftToShow.refundCash)
+                                    val totalCanceledVal = kotlin.math.abs(shiftToShow.getTotalCancellationAmount())
                                     val netCashMovement = cashInVal - cashOutVal
 
                                     val expectedCashVal = shiftToShow.getExpectedCashAmount()
@@ -884,8 +884,8 @@ private fun ActiveShiftContent(
     val nonCashSalesVal = (totalSalesVal - cashSalesVal).coerceAtLeast(0.0)
     val cashInVal = shift.cashIn
     val cashOutVal = shift.cashOut
-    val cashRefundVal = shift.refundCash
-    val totalCanceledVal = shift.getTotalCancellationAmount()
+    val cashRefundVal = kotlin.math.abs(shift.refundCash)
+    val totalCanceledVal = kotlin.math.abs(shift.getTotalCancellationAmount())
     val netCashMovement = cashInVal - cashOutVal
 
     val expectedCashVal = shift.getExpectedCashAmount()
