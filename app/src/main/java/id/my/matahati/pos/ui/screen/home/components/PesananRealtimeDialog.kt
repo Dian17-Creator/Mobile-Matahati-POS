@@ -16,11 +16,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.TransactionModel
 import id.my.matahati.pos.ui.theme.AppPrimaryColor
@@ -38,6 +41,9 @@ fun PesananRealtimeDialog(
     onDismiss: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Pesanan Sekarang, 1 = Riwayat
+
+    val configuration = LocalConfiguration.current
+    val isPhone = configuration.screenWidthDp < 600
 
     val numberFormatter = remember {
         NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
@@ -66,14 +72,24 @@ fun PesananRealtimeDialog(
         }
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = !isPhone)
+    ) {
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = Color.White,
-            modifier = Modifier
-                .width(520.dp)
-                .heightIn(max = 680.dp)
-                .padding(12.dp)
+            modifier = if (isPhone) {
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 680.dp)
+                    .padding(16.dp)
+            } else {
+                Modifier
+                    .width(520.dp)
+                    .heightIn(max = 680.dp)
+                    .padding(12.dp)
+            }
         ) {
             Column(
                 modifier = Modifier
@@ -88,7 +104,7 @@ fun PesananRealtimeDialog(
                 ) {
                     Text(
                         text = "Detail Pesanan Real-Time",
-                        fontSize = 18.sp,
+                        fontSize = if (isPhone) 16.sp else 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.DarkGray
                     )
@@ -144,10 +160,12 @@ fun PesananRealtimeDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Pesanan Sekarang (${activeOrders.size})",
-                            fontSize = 13.sp,
+                            text = if (isPhone) "Pesanan (${activeOrders.size})" else "Pesanan Sekarang (${activeOrders.size})",
+                            fontSize = if (isPhone) 12.sp else 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (selectedTab == 0) Color.White else Color.DarkGray
+                            color = if (selectedTab == 0) Color.White else Color.DarkGray,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -164,9 +182,11 @@ fun PesananRealtimeDialog(
                     ) {
                         Text(
                             text = "Riwayat (${completedOrders.size})",
-                            fontSize = 13.sp,
+                            fontSize = if (isPhone) 12.sp else 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (selectedTab == 1) Color.White else Color.DarkGray
+                            color = if (selectedTab == 1) Color.White else Color.DarkGray,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }

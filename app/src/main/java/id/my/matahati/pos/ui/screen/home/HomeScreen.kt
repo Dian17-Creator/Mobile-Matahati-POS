@@ -14,12 +14,16 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import id.my.matahati.pos.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -84,6 +91,7 @@ fun HomeScreen(
     var orderType by remember { mutableStateOf("") }
     var showOrderTypeDialog by remember { mutableStateOf(false) }
     var selectedRightTab by remember { mutableStateOf("Produk") }
+    var isPhoneCartView by remember { mutableStateOf(false) }
     var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
     var showNotificationPopup by remember { mutableStateOf(false) }
     
@@ -470,23 +478,25 @@ fun HomeScreen(
             Scaffold(
                 topBar = {
                     if (currentScreen == "pos") {
-                        OlseraHeaderBar(
-                            selectedOrderType = orderType,
-                            onInAwayClick = { showOrderTypeDialog = true },
-                            selectedTable = viewModel.selectedTable,
-                            onTableClick = { showTableInputDialog = true },
-                            onPesananClick = { viewModel.showPesananDialog = true },
-                            hasActivePesanan = viewModel.activeRealtimePesanan.isNotEmpty(),
-                            selectedRightTab = selectedRightTab,
-                            onRightTabSelected = { selectedRightTab = it },
-                            heldOrdersCount = viewModel.heldOrders.size,
-                            onHeldOrdersClick = { viewModel.showHeldOrdersDialog = true },
-                            onMenuClick = {
-                                coroutineScope.launch {
-                                    if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                        if (isTablet) {
+                            OlseraHeaderBar(
+                                selectedOrderType = orderType,
+                                onInAwayClick = { showOrderTypeDialog = true },
+                                selectedTable = viewModel.selectedTable,
+                                onTableClick = { showTableInputDialog = true },
+                                onPesananClick = { viewModel.showPesananDialog = true },
+                                hasActivePesanan = viewModel.activeRealtimePesanan.isNotEmpty(),
+                                selectedRightTab = selectedRightTab,
+                                onRightTabSelected = { selectedRightTab = it },
+                                heldOrdersCount = viewModel.heldOrders.size,
+                                onHeldOrdersClick = { viewModel.showHeldOrdersDialog = true },
+                                onMenuClick = {
+                                    coroutineScope.launch {
+                                        if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     } else if (currentScreen == "transaksi") {
                         TransaksiHeaderBar(
                             currentDate = selectedDateRange,
@@ -994,63 +1004,543 @@ fun HomeScreen(
                                         }
                                     } else {
                                         // ==========================================
-                                        // PHONE PORTRAIT / SINGLE COLUMN LAYOUT
+                                        // PHONE PORTRAIT LAYOUT (MENU & CART SEPARATED)
                                         // ==========================================
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(innerPadding)
-                                                .background(Color.White)
-                                        ) {
+                                        if (!isPhoneCartView) {
+                                            // ------------------------------------------
+                                            // HALAMAN MENU (PHONE)
+                                            // ------------------------------------------
                                             Column(
-                                                modifier = Modifier.fillMaxSize()
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(Color.White)
                                             ) {
-                                                when (selectedRightTab) {
-                                                    "Produk" -> {
-                                                        OlseraProductGrid(
-                                                            products = filteredProducts,
-                                                            onAddToCart = onAddToCart,
-                                                            columnsCount = 2,
-                                                            orderType = orderType,
-                                                            modifier = Modifier.weight(1f)
-                                                        )
-                                                    }
-                                                    "Barcode" -> {
-                                                        BarcodeTabContent(
-                                                            products = allProducts,
-                                                            onAddToCart = onAddToCart,
-                                                            modifier = Modifier.weight(1f).fillMaxWidth()
-                                                        )
-                                                    }
-                                                    "Custom" -> {
-                                                        CustomDepositTabContent(
-                                                            onAddToCart = onAddToCart,
-                                                            modifier = Modifier.weight(1f).fillMaxWidth()
-                                                        )
-                                                    }
-                                                }
-
-                                                // Bottom Green Pay Bar
+                                                // 1. Header Bar Top: Sidebar Button & Remark + Held Orders (Darker shade)
                                                 Surface(
-                                                    color = OlseraGreenPay,
-                                                    shape = RoundedCornerShape(0.dp),
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    onClick = triggerCheckout
+                                                    color = AppPrimaryColor,
+                                                    modifier = Modifier.fillMaxWidth()
                                                 ) {
                                                     Box(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
-                                                            .padding(vertical = 14.dp),
-                                                        contentAlignment = Alignment.Center
+                                                            .background(Color.Black.copy(alpha = 0.18f))
                                                     ) {
-                                                        Text(
-                                                            text = "Rp ${formatRawCurrency(cartGrandTotal)}",
-                                                            fontSize = 18.sp,
-                                                            fontWeight = FontWeight.ExtraBold,
-                                                            color = Color.White
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .statusBarsPadding()
+                                                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                IconButton(
+                                                                    onClick = {
+                                                                        coroutineScope.launch {
+                                                                            if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                                                        }
+                                                                    }
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Menu,
+                                                                        contentDescription = "Menu",
+                                                                        tint = Color.White
+                                                                    )
+                                                                }
+
+                                                                Spacer(modifier = Modifier.width(4.dp))
+
+                                                                // Remark Button
+                                                                Surface(
+                                                                    shape = RoundedCornerShape(16.dp),
+                                                                    color = Color.White.copy(alpha = 0.2f),
+                                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
+                                                                    modifier = Modifier.clickable { showOrderNoteDialog = true }
+                                                                ) {
+                                                                    Text(
+                                                                        text = if (orderNote.isNotBlank()) "Remark ($orderNote)" else "Remark",
+                                                                        color = Color.White,
+                                                                        fontSize = 12.sp,
+                                                                        fontWeight = FontWeight.SemiBold,
+                                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                                                    )
+                                                                }
+                                                            }
+
+                                                            // Sandwatch / Held Orders Button (Right)
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .padding(end = 4.dp)
+                                                                    .graphicsLayer(clip = false)
+                                                            ) {
+                                                                IconButton(
+                                                                    onClick = { viewModel.showHeldOrdersDialog = true },
+                                                                    modifier = Modifier.size(40.dp)
+                                                                ) {
+                                                                    Box(
+                                                                        modifier = Modifier.graphicsLayer(clip = false),
+                                                                        contentAlignment = Alignment.TopEnd
+                                                                    ) {
+                                                                        Icon(
+                                                                            painter = painterResource(id = R.drawable.sandwatch2),
+                                                                            contentDescription = "Pesanan Menggantung",
+                                                                            tint = Color.White,
+                                                                            modifier = Modifier.size(20.dp)
+                                                                        )
+                                                                        if (viewModel.heldOrders.size > 0) {
+                                                                            Surface(
+                                                                                shape = CircleShape,
+                                                                                color = Color.Red,
+                                                                                modifier = Modifier
+                                                                                    .offset(x = 6.dp, y = (-6).dp)
+                                                                                    .size(16.dp)
+                                                                            ) {
+                                                                                Box(
+                                                                                    modifier = Modifier.fillMaxSize(),
+                                                                                    contentAlignment = Alignment.Center
+                                                                                ) {
+                                                                                    Text(
+                                                                                        text = viewModel.heldOrders.size.toString(),
+                                                                                        color = Color.White,
+                                                                                        fontSize = 9.sp,
+                                                                                        fontWeight = FontWeight.Bold,
+                                                                                        textAlign = TextAlign.Center
+                                                                                    )
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // 2. Header Tabs (Produk, Barcode, Custom)
+                                                Surface(
+                                                    color = AppPrimaryColor,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .height(44.dp)
+                                                            .padding(horizontal = 16.dp),
+                                                        verticalAlignment = Alignment.Bottom
+                                                    ) {
+                                                        RightHeaderTabItem(
+                                                            label = "Produk",
+                                                            isSelected = selectedRightTab == "Produk",
+                                                            onClick = { selectedRightTab = "Produk" },
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                        RightHeaderTabItem(
+                                                            label = "Barcode",
+                                                            isSelected = selectedRightTab == "Barcode",
+                                                            onClick = { selectedRightTab = "Barcode" },
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                        RightHeaderTabItem(
+                                                            label = "Custom",
+                                                            isSelected = selectedRightTab == "Custom",
+                                                            onClick = { selectedRightTab = "Custom" },
+                                                            modifier = Modifier.weight(1f)
                                                         )
                                                     }
                                                 }
+
+                                                // 3. Sub Bar: Search & Category Dropdown (for Produk tab)
+                                                if (selectedRightTab == "Produk") {
+                                                    Surface(
+                                                        color = AppPrimaryColor,
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            // Search Bar
+                                                            Surface(
+                                                                shape = RoundedCornerShape(20.dp),
+                                                                color = Color.White.copy(alpha = 0.15f),
+                                                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                                                                modifier = Modifier
+                                                                    .weight(1f)
+                                                                    .height(36.dp)
+                                                            ) {
+                                                                Row(
+                                                                    modifier = Modifier
+                                                                        .fillMaxSize()
+                                                                        .padding(horizontal = 12.dp),
+                                                                    verticalAlignment = Alignment.CenterVertically
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Search,
+                                                                        contentDescription = "Cari",
+                                                                        tint = Color.White,
+                                                                        modifier = Modifier.size(16.dp)
+                                                                    )
+                                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                                    BasicTextField(
+                                                                        value = searchQuery,
+                                                                        onValueChange = { searchQuery = it },
+                                                                        singleLine = true,
+                                                                        textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                                                                        cursorBrush = SolidColor(Color.White),
+                                                                        decorationBox = { innerTextField ->
+                                                                            Box(contentAlignment = Alignment.CenterStart) {
+                                                                                if (searchQuery.isEmpty()) {
+                                                                                    Text(
+                                                                                        text = "Cari produk...",
+                                                                                        color = Color.White.copy(alpha = 0.6f),
+                                                                                        fontSize = 13.sp
+                                                                                    )
+                                                                                }
+                                                                                innerTextField()
+                                                                            }
+                                                                        },
+                                                                        modifier = Modifier.fillMaxWidth()
+                                                                    )
+                                                                }
+                                                            }
+
+                                                            Spacer(modifier = Modifier.width(8.dp))
+
+                                                            // Category Dropdown Filter
+                                                            Box {
+                                                                Surface(
+                                                                    shape = RoundedCornerShape(16.dp),
+                                                                    color = Color.White.copy(alpha = 0.18f),
+                                                                    modifier = Modifier.clickable { isCategoryDropdownExpanded = true }
+                                                                ) {
+                                                                    Row(
+                                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                                                        verticalAlignment = Alignment.CenterVertically
+                                                                    ) {
+                                                                        Text(
+                                                                            text = selectedCategoryName,
+                                                                            color = Color.White,
+                                                                            fontSize = 12.sp,
+                                                                            fontWeight = FontWeight.SemiBold,
+                                                                            maxLines = 1,
+                                                                            overflow = TextOverflow.Ellipsis
+                                                                        )
+                                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                                        Icon(
+                                                                            imageVector = Icons.Default.ArrowDropDown,
+                                                                            contentDescription = "Pilih Kategori",
+                                                                            tint = Color.White,
+                                                                            modifier = Modifier.size(18.dp)
+                                                                        )
+                                                                    }
+                                                                }
+
+                                                                DropdownMenu(
+                                                                    expanded = isCategoryDropdownExpanded,
+                                                                    onDismissRequest = { isCategoryDropdownExpanded = false }
+                                                                ) {
+                                                                    categories.forEach { category ->
+                                                                        DropdownMenuItem(
+                                                                            text = { Text(category.name) },
+                                                                            onClick = {
+                                                                                selectedCategoryId = category.id
+                                                                                isCategoryDropdownExpanded = false
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // 4. Menu Panel Area
+                                                Box(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .fillMaxWidth()
+                                                ) {
+                                                    when (selectedRightTab) {
+                                                        "Produk" -> {
+                                                            OlseraProductGrid(
+                                                                products = filteredProducts,
+                                                                onAddToCart = onAddToCart,
+                                                                columnsCount = 2,
+                                                                orderType = orderType,
+                                                                modifier = Modifier.fillMaxSize()
+                                                            )
+                                                        }
+                                                        "Barcode" -> {
+                                                            BarcodeTabContent(
+                                                                products = allProducts,
+                                                                onAddToCart = onAddToCart,
+                                                                modifier = Modifier.fillMaxSize()
+                                                            )
+                                                        }
+                                                        "Custom" -> {
+                                                            CustomDepositTabContent(
+                                                                onAddToCart = onAddToCart,
+                                                                modifier = Modifier.fillMaxSize()
+                                                            )
+                                                        }
+                                                    }
+                                                }
+
+                                                // 5. Total & Cart Button Bar (Separated boxes with 10.dp bottom spacing)
+                                                val totalCartCount = cartItems.sumOf { it.quantity }
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(bottom = 14.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(0.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    // Left Green Rectangle (Centered Total Text)
+                                                    Surface(
+                                                        color = OlseraGreenPay,
+                                                        shape = RoundedCornerShape(0.dp),
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(55.dp)
+                                                            .clickable { isPhoneCartView = true }
+                                                    ) {
+                                                        Box(
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Text(
+                                                                text = "Rp ${formatRawCurrency(cartGrandTotal)}",
+                                                                fontSize = 18.sp,
+                                                                fontWeight = FontWeight.ExtraBold,
+                                                                color = Color.White,
+                                                                textAlign = TextAlign.Center
+                                                            )
+                                                        }
+                                                    }
+
+                                                    // Right Maroon Square (Cart Button with Badge)
+                                                    Surface(
+                                                        shape = RoundedCornerShape(0.dp),
+                                                        color = AppPrimaryColor,
+                                                        modifier = Modifier
+                                                            .size(55.dp)
+                                                            .clickable { isPhoneCartView = true }
+                                                    ) {
+                                                        Box(
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.ShoppingCart,
+                                                                contentDescription = "Buka Keranjang",
+                                                                tint = Color.White,
+                                                                modifier = Modifier.size(24.dp)
+                                                            )
+                                                            if (totalCartCount > 0) {
+                                                                Surface(
+                                                                    shape = CircleShape,
+                                                                    color = Color.Red,
+                                                                    modifier = Modifier
+                                                                        .align(Alignment.TopEnd)
+                                                                        .offset(x = 4.dp, y = (-4).dp)
+                                                                        .size(18.dp)
+                                                                ) {
+                                                                    Box(
+                                                                        modifier = Modifier.fillMaxSize(),
+                                                                        contentAlignment = Alignment.Center
+                                                                    ) {
+                                                                        Text(
+                                                                            text = totalCartCount.toString(),
+                                                                            color = Color.White,
+                                                                            fontSize = 10.sp,
+                                                                            fontWeight = FontWeight.Bold
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            // ------------------------------------------
+                                            // HALAMAN CART (PHONE)
+                                            // ------------------------------------------
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(Color.White)
+                                            ) {
+                                                // 1. Header Top Bar (Blue with Close X button, darker shade)
+                                                Surface(
+                                                    color = AppPrimaryColor,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .background(Color.Black.copy(alpha = 0.18f))
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .statusBarsPadding()
+                                                                .height(48.dp)
+                                                                .padding(horizontal = 16.dp),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Text(
+                                                                text = "Keranjang Pesanan",
+                                                                color = Color.White,
+                                                                fontSize = 16.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+
+                                                            IconButton(onClick = { isPhoneCartView = false }) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Close,
+                                                                    contentDescription = "Tutup Keranjang",
+                                                                    tint = Color.White
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // 2. Sub Header Options Bar (Meja, In/Aw, Pesanan, Remark aligned left)
+                                                Surface(
+                                                    color = AppPrimaryColor,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(1.dp)
+                                                    ) {
+                                                        HeaderTabItem(
+                                                            label = if (viewModel.selectedTable.isBlank()) "Meja" else viewModel.selectedTable,
+                                                            isSelected = viewModel.selectedTable.isNotBlank(),
+                                                            onClick = { showTableInputDialog = true }
+                                                        )
+                                                        val orderTypeTabLabel = when {
+                                                            orderType.isBlank() -> "In/Aw"
+                                                            orderType.uppercase() == "TAKE_AWAY" || orderType.uppercase() == "TAKEAWAY" || orderType.uppercase().contains("TAKE") -> "Take Away"
+                                                            else -> orderType
+                                                        }
+                                                        HeaderTabItem(
+                                                            label = orderTypeTabLabel,
+                                                            isSelected = orderType.isNotBlank(),
+                                                            onClick = { showOrderTypeDialog = true }
+                                                        )
+                                                        HeaderTabItem(
+                                                            label = "Pesanan",
+                                                            isSelected = false,
+                                                            showRedDot = viewModel.activeRealtimePesanan.isNotEmpty(),
+                                                            onClick = { viewModel.showPesananDialog = true }
+                                                        )
+                                                        HeaderTabItem(
+                                                            label = if (orderNote.isNotBlank()) "Remark ($orderNote)" else "Remark",
+                                                            isSelected = orderNote.isNotBlank(),
+                                                            onClick = { showOrderNoteDialog = true }
+                                                        )
+                                                    }
+                                                }
+
+                                                // 3. Cart Panel (Occupying remaining space)
+                                                OlseraCartPanel(
+                                                    cartItems = cartItems,
+                                                    customers = viewModel.customers,
+                                                    orderType = orderType,
+                                                    isSubmitting = viewModel.isSubmitting,
+                                                    onIncreaseQuantity = onIncreaseQuantity,
+                                                    onDecreaseQuantity = onDecreaseQuantity,
+                                                    onItemClick = { item ->
+                                                        selectedCartItem = item
+                                                        showEditDialog = true
+                                                    },
+                                                    onDiscountClick = { showDiscountDialog = true },
+                                                    onClearCart = { showCancelDialog = true },
+                                                    onHoldCart = {
+                                                        if (cartItems.isNotEmpty()) {
+                                                            viewModel.holdCurrentCart(
+                                                                cartItems = cartItems,
+                                                                orderType = orderType,
+                                                                selectedCustomer = selectedCustomer,
+                                                                discount = discountAmount,
+                                                                tax = 0.0,
+                                                                nidOutlet = nidOutlet,
+                                                                orderNote = orderNote,
+                                                                onSuccess = {
+                                                                    cartItems.clear()
+                                                                    orderType = ""
+                                                                    viewModel.selectedTable = ""
+                                                                    selectedCustomer = null
+                                                                    selectedVoucher = null
+                                                                    manualDiscountInput = ""
+                                                                    orderNote = ""
+                                                                    viewModel.currentDraftId = null
+                                                                    isPhoneCartView = false
+                                                                }
+                                                            )
+                                                        }
+                                                    },
+                                                    onSendToKitchenClick = {
+                                                        viewModel.openKitchenPrintDialog(
+                                                            context = context,
+                                                            items = cartItems,
+                                                            userName = userName,
+                                                            outletName = outletName ?: "",
+                                                            onAutoFinishCheckout = autoFinishCheckout
+                                                        )
+                                                    },
+                                                    onCheckPrintClick = {
+                                                        if (cartItems.isEmpty()) {
+                                                            android.widget.Toast.makeText(context, "Keranjang belanja kosong", android.widget.Toast.LENGTH_SHORT).show()
+                                                        } else {
+                                                            val activeServedByName = viewModel.selectedServedBy?.name ?: userName
+                                                            if (viewModel.isShowPrintPreviewEnabled(context)) {
+                                                                viewModel.openCheckPrintDialog()
+                                                            } else {
+                                                                viewModel.printCheckReceipt(
+                                                                    context = context,
+                                                                    cartItems = cartItems,
+                                                                    orderType = orderType,
+                                                                    cashierName = activeServedByName,
+                                                                    customerName = selectedCustomer?.name,
+                                                                    tableName = viewModel.selectedTable.ifBlank { null },
+                                                                    discountAmount = discountAmount,
+                                                                    taxAmount = 0.0,
+                                                                    paxCount = 1
+                                                                )
+                                                            }
+                                                        }
+                                                    },
+                                                    onCheckoutClick = {
+                                                        triggerCheckout()
+                                                    },
+                                                    selectedCustomerName = selectedCustomer?.name ?: "",
+                                                    onCustomerSelected = { customer ->
+                                                        selectedCustomer = customer
+                                                    },
+                                                    onOpenCustomerPanel = {
+                                                        showCustomerPanel = true
+                                                    },
+                                                    selectedTable = viewModel.selectedTable,
+                                                    cashierName = userName,
+                                                    servedByName = viewModel.selectedServedBy?.name ?: userName,
+                                                    onServedByClick = { viewModel.showServedByDialog = true },
+                                                    orderNote = orderNote,
+                                                    onOrderNoteClick = { showOrderNoteDialog = true },
+                                                    discountAmount = discountAmount,
+                                                    grandTotal = cartGrandTotal,
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
                                             }
                                         }
                                     }

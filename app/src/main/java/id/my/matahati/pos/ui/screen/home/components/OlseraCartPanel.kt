@@ -64,10 +64,10 @@ import java.util.Locale
 
 import id.my.matahati.pos.ui.theme.AppPrimaryColor
 import id.my.matahati.pos.ui.theme.AppPrimaryLight
+import id.my.matahati.pos.ui.theme.OlseraLightBg
 
 val OlseraGreenPay = Color(0xFF4CAF50)
 val OlseraHeaderBlue = AppPrimaryColor
-val OlseraLightBg = AppPrimaryLight
 
 private data class QuickActionData(
     val menuItem: CartMenuItem,
@@ -508,28 +508,36 @@ fun OlseraCartPanel(
                 }
             }
 
-            // Big Green Pay Bar at the bottom
-            Surface(
-                color = OlseraGreenPay,
-                shape = RoundedCornerShape(0.dp),
-                shadowElevation = 0.dp,
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    if (cartItems.isNotEmpty()) onCheckoutClick()
-                }
+            // Big Green Pay Bar at the bottom (10.dp bottom spacing)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 14.dp)
             ) {
-                Box(
+                Surface(
+                    color = OlseraGreenPay,
+                    shape = RoundedCornerShape(0.dp),
+                    shadowElevation = 0.dp,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center
+                        .height(55.dp)
+                        .fillMaxWidth(),
+                    onClick = {
+                        if (cartItems.isNotEmpty()) onCheckoutClick()
+                    }
                 ) {
-                    Text(
-                        text = "Rp ${formatRawCurrency(totalAmount)}",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Rp ${formatRawCurrency(totalAmount)}",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }

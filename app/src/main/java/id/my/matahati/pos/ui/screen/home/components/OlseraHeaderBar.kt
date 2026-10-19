@@ -423,7 +423,7 @@ fun PengaturanHeaderBar(
 }
 
 @Composable
-private fun HeaderTabItem(
+fun HeaderTabItem(
     label: String,
     isSelected: Boolean,
     showRedDot: Boolean = false,
@@ -443,7 +443,7 @@ private fun HeaderTabItem(
                     shape = RoundedCornerShape(12.dp)
                 )
                 .clickable { onClick() }
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -467,7 +467,7 @@ private fun HeaderTabItem(
 }
 
 @Composable
-private fun RightHeaderTabItem(label: String, isSelected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun RightHeaderTabItem(label: String, isSelected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.clickable { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
