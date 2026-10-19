@@ -14,6 +14,9 @@ import id.my.matahati.pos.model.LocalPrinter
 import id.my.matahati.pos.model.PrinterRole
 import id.my.matahati.pos.model.PrinterType
 import id.my.matahati.pos.model.ShiftResponse
+import id.my.matahati.pos.model.getCashCancellationAmount
+import id.my.matahati.pos.model.getExpectedCashAmount
+import id.my.matahati.pos.model.getTotalCancellationAmount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -105,16 +108,20 @@ class SalesClosureReportViewModel : ViewModel() {
         val discountAmountSum = shifts.sumOf { it.discountAmount ?: 0.0 }
         val totalCashSalesSum = shifts.sumOf { it.cashSales ?: 0.0 }
         val totalNonCashSalesSum = maxOf(0.0, totalSalesSum - totalCashSalesSum)
-        val totalRefundSum = shifts.sumOf { it.refundCash }
-        val totalCancellationSum = shifts.sumOf { it.cancellationCash }
+        
+        // Cash-only refund & cancellation for Kas section
+        val cashRefundSum = shifts.sumOf { it.cashRefund ?: it.refundCash }
+        val cashCancellationSum = shifts.sumOf { it.getCashCancellationAmount() }
+        
+        // Total cancellation across all payment methods for Penjualan nett
+        val totalCancellationSum = shifts.sumOf { it.getTotalCancellationAmount() }
         val netSalesSum = maxOf(0.0, totalSalesSum - totalCancellationSum)
+        
         val totalCashIn = shifts.sumOf { it.cashIn }
         val totalCashOut = shifts.sumOf { it.cashOut }
         val netCashMovementSum = totalCashIn - totalCashOut
 
-        val totalExpectedCash = shifts.sumOf { 
-            it.expectedCash ?: (it.openingCash + (it.cashSales ?: 0.0) + (it.cashIn - it.cashOut) - it.refundCash - it.cancellationCash)
-        }
+        val totalExpectedCash = shifts.sumOf { it.getExpectedCashAmount() }
         val totalActualCash = shifts.sumOf { it.actualCash ?: 0.0 }
         val totalDifference = shifts.sumOf { it.difference ?: (it.actualCash?.minus(totalExpectedCash) ?: 0.0) }
 
@@ -161,8 +168,8 @@ class SalesClosureReportViewModel : ViewModel() {
             discountAmount = discountAmountSum,
             cashSales = totalCashSalesSum,
             nonCashSales = totalNonCashSalesSum,
-            refundCash = totalRefundSum,
-            cancellationCash = totalCancellationSum,
+            refundCash = cashRefundSum,
+            cancellationCash = cashCancellationSum,
             netSales = netSalesSum,
             netCashMovement = netCashMovementSum,
             expectedCash = totalExpectedCash,

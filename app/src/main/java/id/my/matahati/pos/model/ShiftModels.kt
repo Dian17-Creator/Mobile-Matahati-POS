@@ -59,6 +59,9 @@ data class ShiftResponse(
     @SerializedName("total_receipts", alternate = ["receipt_count", "total_orders", "order_count", "ntotal_orders", "ntotal_transactions", "total_transactions", "transaction_count", "ntransaction", "ntransactions", "norder", "norders", "nreceipt", "nreceipts"]) val totalReceipts: Int? = null,
     @SerializedName("subtotal", alternate = ["nsubtotal", "gross_subtotal"]) val subtotal: Double? = null,
     @SerializedName("discount_amount", alternate = ["bill_discount", "ndiscount", "total_discount"]) val discountAmount: Double? = null,
+    @SerializedName("cash_refund") val cashRefund: Double? = null,
+    @SerializedName("cash_cancellation") val cashCancellation: Double? = null,
+    @SerializedName("total_cancellation") val totalCancellation: Double? = null,
     @SerializedName("payment_breakdown") val paymentBreakdown: List<PaymentBreakdownItem>? = null
 )
 
@@ -71,3 +74,26 @@ data class PaymentBreakdownItem(
 )
 
 typealias Shift = ShiftResponse
+
+fun ShiftResponse.getTotalCancellationAmount(): Double {
+    return this.totalCancellation ?: this.cancellationCash
+}
+
+fun ShiftResponse.getCashCancellationAmount(): Double {
+    if (this.cashCancellation != null) return this.cashCancellation
+    val cashPm = this.paymentBreakdown?.find { it.name.trim().uppercase() in listOf("CASH", "TUNAI", "KAS") }
+    if (cashPm != null) return cashPm.voidAmount
+    val nonCashCancellationSum = this.paymentBreakdown
+        ?.filter { pm -> pm.name.trim().uppercase() !in listOf("CASH", "TUNAI", "KAS") }
+        ?.sumOf { it.voidAmount } ?: 0.0
+    val totalCancel = this.totalCancellation ?: this.cancellationCash
+    return (totalCancel - nonCashCancellationSum).coerceAtLeast(0.0)
+}
+
+fun ShiftResponse.getExpectedCashAmount(): Double {
+    val cashSalesVal = this.cashSales ?: 0.0
+    val refundCashVal = this.cashRefund ?: this.refundCash
+    val cancellationCashVal = this.getCashCancellationAmount()
+    val netCashMovement = this.cashIn - this.cashOut
+    return this.openingCash + cashSalesVal + netCashMovement - refundCashVal - cancellationCashVal
+}

@@ -182,6 +182,13 @@ fun ReceiptDialog(
                                     Spacer(modifier = Modifier.height(4.dp))
                                     RowAmount("GRAND TOTAL", formatStringNum(trx.grandTotal), true)
                                     RowAmount("Paid", formatStringNum(trx.paidAmount))
+                                    val paymentName = (trx.payment?.cname?.takeIf { it.isNotBlank() } ?: "CASH").uppercase()
+                                    Text(
+                                        text = paymentName,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(vertical = 1.dp)
+                                    )
                                     RowAmount("Change", formatStringNum(trx.changeAmount))
                                 }
 

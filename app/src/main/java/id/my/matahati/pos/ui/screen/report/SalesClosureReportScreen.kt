@@ -346,12 +346,12 @@ fun SalesClosureReportScreen(
                             ReportShiftRow("Total Kas Diharapkan (Laci)", formatNumberDisplay(dailyData.expectedCash), isBold = true, verticalPadding = 18.dp)
                             HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 0.8.dp)
 
-                            ReportShiftRow("Kas Fisik (Aktual)", formatNumberDisplay(dailyData.actualCash), verticalPadding = 18.dp)
-                            HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 0.8.dp)
-
-                            val diffColor = if (dailyData.difference < 0) Color.Red else if (dailyData.difference > 0) Color(0xFF388E3C) else Color(0xFF333333)
-                            ReportShiftRow("Selisih", formatNumberDisplay(dailyData.difference), isBold = true, valueColor = diffColor, verticalPadding = 18.dp)
-                            HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 0.8.dp)
+//                            ReportShiftRow("Kas Fisik (Aktual)", formatNumberDisplay(dailyData.actualCash), verticalPadding = 18.dp)
+//                            HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 0.8.dp)
+//
+//                            val diffColor = if (dailyData.difference < 0) Color.Red else if (dailyData.difference > 0) Color(0xFF388E3C) else Color(0xFF333333)
+//                            ReportShiftRow("Selisih", formatNumberDisplay(dailyData.difference), isBold = true, valueColor = diffColor, verticalPadding = 18.dp)
+//                            HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 0.8.dp)
                         }
 
                         // Bottom Action: CETAK Button (Green)

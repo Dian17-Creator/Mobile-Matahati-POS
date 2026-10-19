@@ -462,7 +462,8 @@ fun HomeScreen(
                         currentScreen = "pengaturan"
                         coroutineScope.launch { drawerState.close() }
                     },
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    outletName = outletName
                 )
             }
         ) {

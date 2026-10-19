@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import id.my.matahati.pos.model.ShiftResponse
+import id.my.matahati.pos.model.getCashCancellationAmount
+import id.my.matahati.pos.model.getExpectedCashAmount
+import id.my.matahati.pos.model.getTotalCancellationAmount
 import id.my.matahati.pos.ui.screen.home.components.OlseraDateFilterDialog
 import id.my.matahati.pos.ui.screen.shift.components.ShiftCloseSalesReceiptDialog
 import java.text.NumberFormat
@@ -399,11 +402,10 @@ fun ShiftScreen(
                                     val cashInVal = shiftToShow.cashIn
                                     val cashOutVal = shiftToShow.cashOut
                                     val cashRefundVal = shiftToShow.refundCash
-                                    val cashCanceledVal = shiftToShow.cancellationCash
+                                    val totalCanceledVal = shiftToShow.getTotalCancellationAmount()
                                     val netCashMovement = cashInVal - cashOutVal
 
-                                    val expectedCashVal = shiftToShow.expectedCash
-                                        ?: (openingCashVal + cashSalesVal + netCashMovement - cashRefundVal - cashCanceledVal)
+                                    val expectedCashVal = shiftToShow.getExpectedCashAmount()
 
                                     val cashierName = shiftToShow.user?.name ?: userName ?: "-"
                                     val formattedOpenedAt = formatShiftDate(shiftToShow.openedAt)
@@ -510,13 +512,13 @@ fun ShiftScreen(
 
                                         ShiftInfoRow(
                                             label = "Kas Pembatalan",
-                                            value = formatNumberDisplay(cashCanceledVal),
+                                            value = formatNumberDisplay(totalCanceledVal),
                                             startPadding = 32.dp,
                                             verticalPadding = 16.dp
                                         )
                                         HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
-                                        val netSalesVal = maxOf(0.0, totalSalesVal - cashCanceledVal)
+                                        val netSalesVal = maxOf(0.0, totalSalesVal - totalCanceledVal)
                                         ShiftInfoRow(
                                             label = "Penjualan nett",
                                             value = formatNumberDisplay(netSalesVal),
@@ -546,27 +548,27 @@ fun ShiftScreen(
                                             val actualCash = shiftToShow.actualCash ?: 0.0
                                             val difference = shiftToShow.difference ?: 0.0
 
-                                            ShiftInfoRow(
-                                                label = "Kas Fisik (Aktual)",
-                                                value = formatNumberDisplay(actualCash),
-                                                isBold = true,
-                                                verticalPadding = 16.dp,
-                                                valueColor = OlseraBlueHeader
-                                            )
-                                            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                                            val diffColor = when {
-                                                difference < 0 -> Color(0xFFC62828)
-                                                difference > 0 -> Color(0xFF2E7D32)
-                                                else -> Color(0xFF555555)
-                                            }
-                                            ShiftInfoRow(
-                                                label = "Selisih",
-                                                value = formatNumberDisplay(difference),
-                                                isBold = true,
-                                                verticalPadding = 16.dp,
-                                                valueColor = diffColor
-                                            )
+//                                            ShiftInfoRow(
+//                                                label = "Kas Fisik (Aktual)",
+//                                                value = formatNumberDisplay(actualCash),
+//                                                isBold = true,
+//                                                verticalPadding = 16.dp,
+//                                                valueColor = OlseraBlueHeader
+//                                            )
+//                                            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+//
+//                                            val diffColor = when {
+//                                                difference < 0 -> Color(0xFFC62828)
+//                                                difference > 0 -> Color(0xFF2E7D32)
+//                                                else -> Color(0xFF555555)
+//                                            }
+//                                            ShiftInfoRow(
+//                                                label = "Selisih",
+//                                                value = formatNumberDisplay(difference),
+//                                                isBold = true,
+//                                                verticalPadding = 16.dp,
+//                                                valueColor = diffColor
+//                                            )
                                             HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
                                         }
                                     }
@@ -879,19 +881,20 @@ private fun ActiveShiftContent(
     val openingCashVal = shift.openingCash
     val totalSalesVal = shift.totalSales
     val cashSalesVal = shift.cashSales ?: 0.0
+    val nonCashSalesVal = (totalSalesVal - cashSalesVal).coerceAtLeast(0.0)
     val cashInVal = shift.cashIn
     val cashOutVal = shift.cashOut
     val cashRefundVal = shift.refundCash
-    val cashCanceledVal = shift.cancellationCash
+    val totalCanceledVal = shift.getTotalCancellationAmount()
     val netCashMovement = cashInVal - cashOutVal
 
-    // Backend sends expected_cash automatically
-    val expectedCashVal = shift.expectedCash
-        ?: (openingCashVal + cashSalesVal + netCashMovement - cashRefundVal - cashCanceledVal)
+    val expectedCashVal = shift.getExpectedCashAmount()
 
-    val cashierName = shift.user?.name ?: userName ?: "dian23"
+    val cashierName = shift.user?.name ?: userName ?: "-"
     val formattedOpenedAt = formatShiftDate(shift.openedAt)
+    val formattedClosedAt = if (!shift.closedAt.isNullOrBlank()) formatShiftDate(shift.closedAt) else "-"
     val isOpen = shift.status.uppercase() == "OPEN"
+    val netSalesVal = maxOf(0.0, totalSalesVal - totalCanceledVal)
 
     Row(modifier = Modifier.fillMaxSize()) {
         // Left Column: Rincian Shift & Tombol Shift Berakhir
@@ -910,7 +913,7 @@ private fun ActiveShiftContent(
                     label = "Kasir",
                     value = cashierName,
                     isBold = true,
-                    verticalPadding = 18.dp
+                    verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
@@ -918,7 +921,15 @@ private fun ActiveShiftContent(
                     label = "Mulai Shift",
                     value = formattedOpenedAt,
                     isBold = true,
-                    verticalPadding = 18.dp
+                    verticalPadding = 16.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                ShiftInfoRow(
+                    label = "Shift Berakhir",
+                    value = formattedClosedAt,
+                    isBold = true,
+                    verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
@@ -926,7 +937,7 @@ private fun ActiveShiftContent(
                     label = "Kas",
                     value = formatNumberDisplay(expectedCashVal),
                     isBold = true,
-                    verticalPadding = 18.dp
+                    verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
@@ -934,69 +945,36 @@ private fun ActiveShiftContent(
                     label = "Awal di Laci",
                     value = formatNumberDisplay(openingCashVal),
                     startPadding = 32.dp,
-                    verticalPadding = 18.dp
+                    verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                val subtotalVal = shift.subtotal ?: (totalSalesVal + (shift.discountAmount ?: 0.0))
-                val discountVal = shift.discountAmount ?: 0.0
-                val netSalesVal = maxOf(0.0, totalSalesVal - cashCanceledVal)
 
                 ShiftInfoRow(
                     label = "Total Penjualan",
                     value = formatNumberDisplay(totalSalesVal),
-                    startPadding = 32.dp,
-                    verticalPadding = 18.dp
-                )
-                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                ShiftInfoRow(
-                    label = "  • Subtotal",
-                    value = formatNumberDisplay(subtotalVal),
-                    startPadding = 48.dp,
-                    verticalPadding = 14.dp
-                )
-                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                if (discountVal != 0.0) {
-                    val discText = if (discountVal > 0) "-${formatNumberDisplay(discountVal)}" else formatNumberDisplay(discountVal)
-                    ShiftInfoRow(
-                        label = "  • Diskon Bill",
-                        value = discText,
-                        startPadding = 48.dp,
-                        verticalPadding = 14.dp
-                    )
-                    HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-                }
-
-                ShiftInfoRow(
-                    label = "  • Penjualan nett",
-                    value = formatNumberDisplay(netSalesVal),
-                    isItalic = true,
-                    startPadding = 48.dp,
-                    verticalPadding = 14.dp
-                )
-                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                // Kas Section
-                ShiftInfoRow(
-                    label = "Kas",
-                    value = formatNumberDisplay(expectedCashVal),
-                    isBold = true,
-                    verticalPadding = 18.dp
-                )
-                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                ShiftInfoRow(
-                    label = "  Kas Penjualan",
-                    value = formatNumberDisplay(cashSalesVal),
                     startPadding = 32.dp,
                     verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
-                    label = "  Kas Pengembalian",
+                    label = "  • Penjualan Tunai",
+                    value = formatNumberDisplay(cashSalesVal),
+                    startPadding = 48.dp,
+                    verticalPadding = 12.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                ShiftInfoRow(
+                    label = "  • Penjualan Non-Tunai (QRIS)",
+                    value = formatNumberDisplay(nonCashSalesVal),
+                    startPadding = 48.dp,
+                    verticalPadding = 12.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                ShiftInfoRow(
+                    label = "Kas Pengembalian",
                     value = formatNumberDisplay(cashRefundVal),
                     startPadding = 32.dp,
                     verticalPadding = 16.dp
@@ -1004,64 +982,35 @@ private fun ActiveShiftContent(
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
-                    label = "  Kas Pembatalan",
-                    value = formatNumberDisplay(cashCanceledVal),
+                    label = "Kas Pembatalan",
+                    value = formatNumberDisplay(totalCanceledVal),
                     startPadding = 32.dp,
                     verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
                 ShiftInfoRow(
-                    label = "  Kas Masuk-Keluar",
+                    label = "Penjualan nett",
+                    value = formatNumberDisplay(netSalesVal),
+                    isItalic = true,
+                    startPadding = 32.dp,
+                    verticalPadding = 16.dp
+                )
+                HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
+
+                ShiftInfoRow(
+                    label = "Kas Masuk-Keluar",
                     value = formatNumberDisplay(netCashMovement),
                     startPadding = 32.dp,
                     verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
 
-                // Non-Cash Payment Methods Breakdown
-                shift.paymentBreakdown?.forEach { pm ->
-                    val nameUpper = pm.name.trim().uppercase()
-                    if (nameUpper != "CASH" && nameUpper != "TUNAI" && nameUpper != "KAS") {
-                        ShiftInfoRow(
-                            label = pm.name,
-                            value = formatNumberDisplay(pm.net),
-                            isBold = true,
-                            verticalPadding = 18.dp
-                        )
-                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                        ShiftInfoRow(
-                            label = "  Penjualan",
-                            value = formatNumberDisplay(pm.sales),
-                            startPadding = 32.dp,
-                            verticalPadding = 14.dp
-                        )
-                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                        ShiftInfoRow(
-                            label = "  Pengembalian",
-                            value = formatNumberDisplay(pm.refund),
-                            startPadding = 32.dp,
-                            verticalPadding = 14.dp
-                        )
-                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-
-                        ShiftInfoRow(
-                            label = "  Batal",
-                            value = formatNumberDisplay(pm.voidAmount),
-                            startPadding = 32.dp,
-                            verticalPadding = 14.dp
-                        )
-                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
-                    }
-                }
-
                 ShiftInfoRow(
                     label = "Total Kas Diharapkan (Laci)",
                     value = formatNumberDisplay(expectedCashVal),
                     isBold = true,
-                    verticalPadding = 18.dp
+                    verticalPadding = 16.dp
                 )
                 HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.8.dp)
             }
@@ -1362,20 +1311,20 @@ private fun ShiftHistoryCard(
                     Text(formatCurrency(openingCash), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Kas Fisik (Aktual)", fontSize = 11.sp, color = Color.Gray)
-                    Text(formatCurrency(actualCash), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = OlseraBlueHeader)
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Selisih", fontSize = 11.sp, color = Color.Gray)
-                    val diffColor = when {
-                        difference < 0 -> Color(0xFFC62828)
-                        difference > 0 -> Color(0xFF2E7D32)
-                        else -> Color.Gray
-                    }
-                    Text(formatCurrency(difference), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = diffColor)
-                }
+//                Column(horizontalAlignment = Alignment.End) {
+//                    Text("Kas Fisik (Aktual)", fontSize = 11.sp, color = Color.Gray)
+//                    Text(formatCurrency(actualCash), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = OlseraBlueHeader)
+//                }
+//
+//                Column(horizontalAlignment = Alignment.End) {
+//                    Text("Selisih", fontSize = 11.sp, color = Color.Gray)
+//                    val diffColor = when {
+//                        difference < 0 -> Color(0xFFC62828)
+//                        difference > 0 -> Color(0xFF2E7D32)
+//                        else -> Color.Gray
+//                    }
+//                    Text(formatCurrency(difference), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = diffColor)
+//                }
             }
         }
     }
@@ -1641,13 +1590,13 @@ private fun ShiftDetailDialog(
                 ShiftDetailRow(label = "Kas Masuk", value = formatCurrency(cashIn))
                 ShiftDetailRow(label = "Kas Keluar", value = formatCurrency(cashOut))
                 ShiftDetailRow(label = "Ekspektasi Kas", value = formatCurrency(expectedCash))
-                ShiftDetailRow(label = "Kas Fisik (Aktual)", value = formatCurrency(actualCash), isBold = true)
-                ShiftDetailRow(
-                    label = "Selisih",
-                    value = formatCurrency(difference),
-                    isBold = true,
-                    valueColor = if (difference < 0) Color.Red else Color(0xFF2E7D32)
-                )
+//                ShiftDetailRow(label = "Kas Fisik (Aktual)", value = formatCurrency(actualCash), isBold = true)
+//                ShiftDetailRow(
+//                    label = "Selisih",
+//                    value = formatCurrency(difference),
+//                    isBold = true,
+//                    valueColor = if (difference < 0) Color.Red else Color(0xFF2E7D32)
+//                )
             }
         },
         confirmButton = {
