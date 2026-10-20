@@ -174,10 +174,10 @@ fun ShiftCloseSalesReceiptDialog(
                             ReceiptRow(label = "  Subtotal", value = formatNum(subtotalVal))
                             val discText = if (discountVal > 0) "-${formatNum(discountVal)}" else formatNum(discountVal)
                             ReceiptRow(label = "  Diskon Bill", value = discText)
-                            ReceiptRow(label = "", value = formatNum(totalSales))
                         } else {
                             ReceiptRow(label = "  Subtotal", value = formatNum(totalSales))
                         }
+
                         ReceiptRow(label = "  Penjualan nett", value = formatNum(netSalesVal), isItalic = true)
 
                         Spacer(modifier = Modifier.height(10.dp))

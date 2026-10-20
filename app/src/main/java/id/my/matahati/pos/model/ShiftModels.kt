@@ -80,7 +80,9 @@ fun ShiftResponse.getTotalCancellationAmount(): Double {
 }
 
 fun ShiftResponse.getCashCancellationAmount(): Double {
-    if (this.cashCancellation != null) return kotlin.math.abs(this.cashCancellation)
+    if (this.cashCancellation != null && this.cashCancellation > 0.0) {
+        return kotlin.math.abs(this.cashCancellation)
+    }
     val cashPm = this.paymentBreakdown?.find { it.name.trim().uppercase() in listOf("CASH", "TUNAI", "KAS") }
     if (cashPm != null) return kotlin.math.abs(cashPm.voidAmount)
     val nonCashCancellationSum = this.paymentBreakdown
@@ -91,10 +93,9 @@ fun ShiftResponse.getCashCancellationAmount(): Double {
 }
 
 fun ShiftResponse.getExpectedCashAmount(): Double {
-    if (this.expectedCash != null) return this.expectedCash
     val cashSalesVal = this.cashSales ?: 0.0
     val refundCashVal = kotlin.math.abs(this.cashRefund ?: this.refundCash)
     val cancellationCashVal = kotlin.math.abs(this.getCashCancellationAmount())
     val netCashMovement = this.cashIn - this.cashOut
-    return this.openingCash + cashSalesVal + netCashMovement - refundCashVal - cancellationCashVal
+    return (this.openingCash + cashSalesVal + netCashMovement - refundCashVal - cancellationCashVal).coerceAtLeast(0.0)
 }
