@@ -58,21 +58,7 @@ fun TransactionDetailScreen(
     val cashierName = transaction.posUser?.user?.name ?: "Unknown"
     val hasPartialHistory = transaction.details?.any { it.qtyVoid > 0 || it.qtyRefund > 0 } == true
 
-    val detailsList = transaction.details ?: emptyList()
-    val activeItemsTotal = detailsList.sumOf { item ->
-        val unitPrice = item.price.toDoubleOrNull() ?: 0.0
-        val effectiveQty = if (isReversalChild) item.quantity else item.qtyAvailable
-        unitPrice * effectiveQty
-    }
-    val taxVal = transaction.tax.toDoubleOrNull() ?: 0.0
-    val discountVal = transaction.discount.toDoubleOrNull() ?: 0.0
-    val displayGrandTotal = if (isReversalChild || isCancelled) {
-        transaction.grandTotal.toDoubleOrNull() ?: 0.0
-    } else if (detailsList.isNotEmpty()) {
-        maxOf(0.0, activeItemsTotal - discountVal + taxVal)
-    } else {
-        transaction.grandTotal.toDoubleOrNull() ?: 0.0
-    }
+    val displayGrandTotal = transaction.grandTotal.toDoubleOrNull() ?: 0.0
 
     var showPartialActionWarningDialog by remember { mutableStateOf(false) }
 
