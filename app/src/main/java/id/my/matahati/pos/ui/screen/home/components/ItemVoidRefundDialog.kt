@@ -1,29 +1,33 @@
 package id.my.matahati.pos.ui.screen.home.components
 
-import id.my.matahati.pos.ui.theme.AppPrimaryColor
-
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import id.my.matahati.pos.model.ItemVoidRefundRequestItem
 import id.my.matahati.pos.model.TransactionDetailModel
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
 
 @Composable
 fun ItemVoidRefundDialog(
@@ -60,24 +64,27 @@ fun ItemVoidRefundDialog(
 
     Dialog(onDismissRequest = { if (!isLoading) onDismiss() }) {
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             color = Color.White,
             modifier = Modifier
                 .width(480.dp)
-                .padding(16.dp)
+                .padding(16.dp),
+            shadowElevation = 8.dp
         ) {
             Column(
                 modifier = Modifier
-                    .padding(20.dp)
+                    .padding(24.dp)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.Start
             ) {
                 // Header
                 Text(
                     text = "Void / Refund Per Item",
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = AppPrimaryColor
+                    color = AppPrimaryColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -90,39 +97,30 @@ fun ItemVoidRefundDialog(
                     color = Color.DarkGray
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Row(
-                    modifier = Modifier.selectableGroup(),
-                    verticalAlignment = Alignment.CenterVertically
+                // Modern Choice Cards (Atas - Bawah)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clickable { if (!isLoading) selectedAction = VoidRefundActionType.VOID }
-                            .padding(end = 16.dp)
-                    ) {
-                        RadioButton(
-                            selected = selectedAction == VoidRefundActionType.VOID,
-                            onClick = { selectedAction = VoidRefundActionType.VOID },
-                            enabled = !isLoading
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Pembatalan (Void)", fontSize = 14.sp)
-                    }
+                    ActionChoiceCard(
+                        title = "Pembatalan (Void)",
+                        description = "Membatalkan item karena kesalahan input atau batal beli.",
+                        icon = Icons.Default.Block,
+                        isSelected = selectedAction == VoidRefundActionType.VOID,
+                        onClick = { if (!isLoading) selectedAction = VoidRefundActionType.VOID },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { if (!isLoading) selectedAction = VoidRefundActionType.REFUND }
-                    ) {
-                        RadioButton(
-                            selected = selectedAction == VoidRefundActionType.REFUND,
-                            onClick = { selectedAction = VoidRefundActionType.REFUND },
-                            enabled = !isLoading
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Pengembalian (Refund)", fontSize = 14.sp)
-                    }
+                    ActionChoiceCard(
+                        title = "Pengembalian (Refund)",
+                        description = "Pengembalian dana atau item yang dikembalikan oleh pelanggan.",
+                        icon = Icons.Default.Refresh,
+                        isSelected = selectedAction == VoidRefundActionType.REFUND,
+                        onClick = { if (!isLoading) selectedAction = VoidRefundActionType.REFUND },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -160,7 +158,7 @@ fun ItemVoidRefundDialog(
                                 )
                             }
                         } else {
-                            items(availableItems) { item ->
+                            itemsIndexed(availableItems) { index, item ->
                                 val detailId = item.id.toIntOrNull() ?: 0
                                 val currentQty = itemQuantities[detailId] ?: 0
 
@@ -233,7 +231,9 @@ fun ItemVoidRefundDialog(
                                         }
                                     }
                                 }
-                                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                                if (index < availableItems.lastIndex) {
+                                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                                }
                             }
                         }
                     }
@@ -250,11 +250,17 @@ fun ItemVoidRefundDialog(
                             showReasonError = false
                         }
                     },
-                    label = { Text("Alasan (Wajib diisi)") },
+                    placeholder = { Text("Alasan (Wajib diisi)") },
                     isError = showReasonError,
                     enabled = !isLoading,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AppPrimaryColor,
+                        unfocusedBorderColor = Color.LightGray
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = false,
+                    minLines = 3,
                     maxLines = 3
                 )
 
@@ -287,22 +293,25 @@ fun ItemVoidRefundDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
-                // Buttons
+                // Buttons: Full Width Side-by-Side
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
-                        enabled = !isLoading
+                        enabled = !isLoading,
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
                     ) {
-                        Text("Batal")
+                        Text("Batal", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                     }
-
-                    Spacer(modifier = Modifier.width(12.dp))
 
                     Button(
                         onClick = {
@@ -341,21 +350,88 @@ fun ItemVoidRefundDialog(
                             onSubmit(selectedAction, selectedRequestItems, reasonText.trim())
                         },
                         enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor)
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AppPrimaryColor,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
+                                modifier = Modifier.size(20.dp),
                                 color = Color.White,
                                 strokeWidth = 2.dp
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Memproses...")
                         } else {
-                            Text("Submit")
+                            Text("Submit", fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActionChoiceCard(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) AppPrimaryColor else Color.LightGray.copy(alpha = 0.5f)
+    val bgColor = if (isSelected) AppPrimaryColor.copy(alpha = 0.08f) else Color.White
+    val contentColor = if (isSelected) AppPrimaryColor else Color.Gray
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = bgColor,
+        border = BorderStroke(if (isSelected) 2.dp else 1.dp, borderColor),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = if (isSelected) AppPrimaryColor.copy(alpha = 0.15f) else Color(0xFFF0F0F0),
+                modifier = Modifier.size(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = contentColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 14.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                    color = if (isSelected) AppPrimaryColor else Color.DarkGray
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = description,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

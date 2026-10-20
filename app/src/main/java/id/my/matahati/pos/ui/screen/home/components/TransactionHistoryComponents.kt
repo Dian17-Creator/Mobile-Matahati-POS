@@ -115,12 +115,6 @@ fun TransactionItemCard(
     val isReversalChild = !transaction.nidParentTransaction.isNullOrBlank()
     val isSelfCancelled = statusUpper in listOf("CANCELLED", "CANCEL", "VOID", "VOIDED", "REFUND", "REFUNDED")
 
-    val reversalsTotal = transaction.reversals?.sumOf { it.grandTotal.toDoubleOrNull() ?: 0.0 } ?: 0.0
-    val originalAmountNum = transaction.grandTotal.toDoubleOrNull() ?: 0.0
-    val netRemainingAmount = originalAmountNum + reversalsTotal
-
-    val isFullyCancelled = isSelfCancelled || (hasReversals && netRemainingAmount <= 0)
-
     val timeStr = try {
         val dateTime = transaction.transactionDate.replace("T", " ")
         if (dateTime.contains(" ")) {
@@ -156,7 +150,7 @@ fun TransactionItemCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon
-            val showRedIcon = isFullyCancelled || isReversalChild
+            val showRedIcon = isSelfCancelled || isReversalChild
             Surface(
                 shape = CircleShape,
                 color = if (showRedIcon) Color(0xFFFEEBEE) else Color(0xFFE0F7FA),
@@ -237,8 +231,7 @@ fun TransactionItemCard(
 
                 val displayAmountText = when {
                     isReversalChild -> "$amountStr - $paymentName (REVERSAL)"
-                    isFullyCancelled -> "0 (Dibatalkan) - $paymentName"
-                    hasReversals -> "${formatter.format(netRemainingAmount)} - $paymentName$customerStr"
+                    isSelfCancelled -> "0 (Dibatalkan) - $paymentName"
                     else -> "$amountStr - $paymentName$customerStr"
                 }
 
