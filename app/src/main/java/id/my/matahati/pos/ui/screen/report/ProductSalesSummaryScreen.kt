@@ -22,14 +22,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import id.my.matahati.pos.model.ProductSalesSummaryHeader
+import id.my.matahati.pos.model.ProductSalesSummaryItem
 import id.my.matahati.pos.ui.screen.home.components.OlseraDateFilterDialog
 import id.my.matahati.pos.ui.screen.report.components.ProductSalesReceiptDialog
+import id.my.matahati.pos.ui.theme.AppPrimaryColor
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-
-import id.my.matahati.pos.ui.theme.AppPrimaryColor
 
 private val OlseraBlueHeader = AppPrimaryColor
 private val GreenSubHeader = Color(0xFF4CAF50)
@@ -67,7 +68,6 @@ fun ProductSalesSummaryScreen(
     var activeSelectedDayDisplay by remember { mutableStateOf(displayDaySdf.format(today)) }
     var activeSelectedDayApi by remember { mutableStateOf(apiSdf.format(today)) }
 
-    // Auto-select first date item when screen is loaded or date range changes
     LaunchedEffect(selectedDayItems) {
         if (selectedDayItems.isNotEmpty()) {
             val firstItem = selectedDayItems.first()
@@ -89,11 +89,9 @@ fun ProductSalesSummaryScreen(
                         .fillMaxWidth()
                         .statusBarsPadding()
                         .height(56.dp)
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left: Back Arrow
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -102,336 +100,338 @@ fun ProductSalesSummaryScreen(
                         )
                     }
 
-                    // Middle: Date Text
                     Text(
-                        text = selectedHeaderDateText,
+                        text = "Ringkasan Penjualan Produk",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
                     )
 
-                    // Right: Calendar Filter Icon
-                    IconButton(onClick = { showDateFilterDialog = true }) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = "Filter Tanggal",
-                            tint = Color.White
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(48.dp))
                 }
             }
         },
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
-        Row(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color.White)
         ) {
-            // =========================================================
-            // PANEL KIRI: DAFTAR TANGGAL (35% Width)
-            // =========================================================
-            Column(
-                modifier = Modifier
-                    .weight(0.5f)
-                    .fillMaxHeight()
-                    .background(Color.White)
-            ) {
-                // Sub-Header Bar "Tanggal"
-                Box(
+            val isTablet = maxWidth >= 600.dp
+
+            if (!isTablet) {
+                // Mobile Phone 1-Column View
+                MobileProductSalesSummaryContent(
+                    activeSelectedDayDisplay = activeSelectedDayDisplay,
+                    summaryHeader = summaryViewModel.summaryHeader,
+                    itemsList = summaryViewModel.itemsList,
+                    isLoading = summaryViewModel.isLoading,
+                    errorMessage = summaryViewModel.errorMessage,
+                    onDateFilterClick = { showDateFilterDialog = true },
+                    onPrintClick = {
+                        summaryViewModel.selectedDayDisplay = activeSelectedDayDisplay
+                        summaryViewModel.selectedDayApi = activeSelectedDayApi
+                        summaryViewModel.openReceiptPreview()
+                    }
+                )
+            } else {
+                // Tablet 2-Panel Split Layout
+                Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .background(GreenSubHeader)
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .fillMaxSize()
+                        .background(Color.White)
                 ) {
-                    Text(
-                        text = "Tanggal",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-
-                // Date List Content
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(selectedDayItems) { dayItem ->
-                        val isSelected = (dayItem.apiDate == activeSelectedDayApi)
-                        val rowBgColor = if (isSelected) Color(0xFFE3F2FD) else Color.White
-                        val textColor = if (isSelected) OlseraBlueHeader else Color(0xFF424242)
-                        val textWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-
-                        Column(
+                    // PANEL KIRI: DAFTAR TANGGAL (35% Width)
+                    Column(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .fillMaxHeight()
+                            .background(Color.White)
+                    ) {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(rowBgColor)
-                                .clickable {
-                                    activeSelectedDayDisplay = dayItem.displayLabel
-                                    activeSelectedDayApi = dayItem.apiDate
-                                    summaryViewModel.fetchSummary(
-                                        apiDate = dayItem.apiDate,
-                                        nidOutlet = nidOutlet
-                                    )
-                                }
+                                .background(GreenSubHeader)
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 14.dp)
-                            ) {
-                                Text(
-                                    text = dayItem.displayLabel,
-                                    fontSize = 15.sp,
-                                    fontWeight = textWeight,
-                                    color = textColor
-                                )
-                            }
-
-                            HorizontalDivider(
-                                color = Color.LightGray.copy(alpha = 0.4f),
-                                thickness = 0.8.dp
+                            Text(
+                                text = "Tanggal",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
                         }
-                    }
-                }
-            }
 
-            // Vertical Divider
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .fillMaxHeight()
-                    .background(Color.LightGray.copy(alpha = 0.5f))
-            )
-
-            // =========================================================
-            // PANEL KANAN: DETAIL RINGKASAN PRODUK & CETAK (65% Width)
-            // =========================================================
-            Column(
-                modifier = Modifier
-                    .weight(0.5f)
-                    .fillMaxHeight()
-                    .background(Color.White)
-            ) {
-                // Header Bar dengan Tanggal Terpilih (Biru)
-                Surface(
-                    color = OlseraBlueHeader,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = activeSelectedDayDisplay.ifBlank { "Detail Laporan" },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
-                // Summary Info Banner (Grand Total Qty & Sales)
-                val summaryHeader = summaryViewModel.summaryHeader
-                val isLoading = summaryViewModel.isLoading
-                val itemsList = summaryViewModel.itemsList
-                val errorMessage = summaryViewModel.errorMessage
-
-                if (summaryHeader != null && !isLoading && itemsList.isNotEmpty()) {
-                    Surface(
-                        color = Color(0xFFE3F2FD),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Total Item Terjual",
-                                    fontSize = 12.sp,
-                                    color = Color.Gray
-                                )
-                                Text(
-                                    text = "${summaryHeader.grandTotalQty} Item",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = OlseraBlueHeader
-                                )
-                            }
-
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = "Total Penjualan",
-                                    fontSize = 12.sp,
-                                    color = Color.Gray
-                                )
-                                Text(
-                                    text = ReportViewModel.formatRupiah(summaryHeader.grandTotalSales),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = OlseraBlueHeader
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Main Content List / Loading / Empty State Area
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    if (isLoading) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(color = OlseraBlueHeader)
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = "Memuat ringkasan produk...",
-                                    fontSize = 14.sp,
-                                    color = Color.Gray
-                                )
-                            }
-                        }
-                    } else if (errorMessage != null || itemsList.isEmpty()) {
-                        // EMPTY STATE
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(32.dp),
-                                    color = Color(0xFFF5F5F5),
-                                    modifier = Modifier.size(64.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Default.Receipt,
-                                            contentDescription = null,
-                                            tint = Color(0xFFBDBDBD),
-                                            modifier = Modifier.size(32.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Text(
-                                    text = "Tidak ada transaksi ditemukan",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF424242),
-                                    textAlign = TextAlign.Center
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Text(
-                                    text = "Tidak ada transaksi untuk tanggal yang dipilih",
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF757575),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    } else {
-                        // PRODUCT SUMMARY LIST
                         LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.fillMaxSize()
                         ) {
-                            items(itemsList) { item ->
+                            items(selectedDayItems) { dayItem ->
+                                val isSelected = (dayItem.apiDate == activeSelectedDayApi)
+                                val rowBgColor = if (isSelected) Color(0xFFE3F2FD) else Color.White
+                                val textColor = if (isSelected) OlseraBlueHeader else Color(0xFF424242)
+                                val textWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 6.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = item.productName.ifBlank { "Produk Tanpa Nama" },
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF212121)
-                                            )
-
-                                            if (item.categoryName.isNotBlank()) {
-                                                Spacer(modifier = Modifier.height(2.dp))
-                                                Text(
-                                                    text = item.categoryName,
-                                                    fontSize = 12.sp,
-                                                    color = Color.Gray
-                                                )
-                                            }
-
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                text = "${ReportViewModel.formatRupiah(item.price)}  x${item.soldQty}",
-                                                fontSize = 13.sp,
-                                                color = Color(0xFF616161)
+                                        .background(rowBgColor)
+                                        .clickable {
+                                            activeSelectedDayDisplay = dayItem.displayLabel
+                                            activeSelectedDayApi = dayItem.apiDate
+                                            summaryViewModel.fetchSummary(
+                                                apiDate = dayItem.apiDate,
+                                                nidOutlet = nidOutlet
                                             )
                                         }
-
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                                    ) {
                                         Text(
-                                            text = ReportViewModel.formatRupiah(item.totalSales),
+                                            text = dayItem.displayLabel,
                                             fontSize = 15.sp,
+                                            fontWeight = textWeight,
+                                            color = textColor
+                                        )
+                                    }
+
+                                    HorizontalDivider(
+                                        color = Color.LightGray.copy(alpha = 0.4f),
+                                        thickness = 0.8.dp
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    VerticalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+
+                    // PANEL KANAN: DETAIL RINGKASAN PRODUK & CETAK (65% Width)
+                    Column(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .fillMaxHeight()
+                            .background(Color.White)
+                    ) {
+                        Surface(
+                            color = OlseraBlueHeader,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = activeSelectedDayDisplay.ifBlank { "Detail Laporan" },
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        val summaryHeader = summaryViewModel.summaryHeader
+                        val isLoading = summaryViewModel.isLoading
+                        val itemsList = summaryViewModel.itemsList
+                        val errorMessage = summaryViewModel.errorMessage
+
+                        if (summaryHeader != null && !isLoading && itemsList.isNotEmpty()) {
+                            Surface(
+                                color = Color(0xFFE3F2FD),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = "Total Item Terjual",
+                                            fontSize = 12.sp,
+                                            color = Color.Gray
+                                        )
+                                        Text(
+                                            text = "${summaryHeader.grandTotalQty} Item",
+                                            fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = OlseraBlueHeader
                                         )
                                     }
 
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = "Total Penjualan",
+                                            fontSize = 12.sp,
+                                            color = Color.Gray
+                                        )
+                                        Text(
+                                            text = ReportViewModel.formatRupiah(summaryHeader.grandTotalSales),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = OlseraBlueHeader
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
-                }
 
-                // Sticky Bottom Button "Cetak" di Panel Kanan (Full Width Edge-to-Edge)
-                Button(
-                    onClick = {
-                        summaryViewModel.selectedDayDisplay = activeSelectedDayDisplay
-                        summaryViewModel.selectedDayApi = activeSelectedDayApi
-                        summaryViewModel.openReceiptPreview()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = OlseraGreenButton),
-                    shape = RoundedCornerShape(0.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                ) {
-                    Text(
-                        text = "CETAK",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            if (isLoading) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        CircularProgressIndicator(color = OlseraBlueHeader)
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = "Memuat ringkasan produk...",
+                                            fontSize = 14.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                            } else if (errorMessage != null || itemsList.isEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(32.dp),
+                                            color = Color(0xFFF5F5F5),
+                                            modifier = Modifier.size(64.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Receipt,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFBDBDBD),
+                                                    modifier = Modifier.size(32.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                        Text(
+                                            text = "Tidak ada transaksi ditemukan",
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF424242),
+                                            textAlign = TextAlign.Center
+                                        )
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Text(
+                                            text = "Tidak ada transaksi untuk tanggal yang dipilih",
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF757575),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(itemsList) { item ->
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.Top
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = item.productName.ifBlank { "Produk Tanpa Nama" },
+                                                        fontSize = 15.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF212121)
+                                                    )
+
+                                                    if (item.categoryName.isNotBlank()) {
+                                                        Spacer(modifier = Modifier.height(2.dp))
+                                                        Text(
+                                                            text = item.categoryName,
+                                                            fontSize = 12.sp,
+                                                            color = Color.Gray
+                                                        )
+                                                    }
+
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = "${ReportViewModel.formatRupiah(item.price)}  x${item.soldQty}",
+                                                        fontSize = 13.sp,
+                                                        color = Color(0xFF616161)
+                                                    )
+                                                }
+
+                                                Text(
+                                                    text = ReportViewModel.formatRupiah(item.totalSales),
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = OlseraBlueHeader
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                summaryViewModel.selectedDayDisplay = activeSelectedDayDisplay
+                                summaryViewModel.selectedDayApi = activeSelectedDayApi
+                                summaryViewModel.openReceiptPreview()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = OlseraGreenButton),
+                            shape = RoundedCornerShape(0.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp)
+                        ) {
+                            Text(
+                                text = "CETAK",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -448,69 +448,311 @@ fun ProductSalesSummaryScreen(
         )
     }
 
-    // Modal Preview Hasil Cetak Struk
+    // Receipt Preview Dialog
     if (summaryViewModel.showReceiptPreview) {
-        val isPreviewEnabled = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
-            .getBoolean("show_print_preview", true)
-
-        if (!isPreviewEnabled) {
-            summaryViewModel.showReceiptPreview = false
-            summaryViewModel.printToPhysicalPrinter(context, savedOutletName)
-        } else {
-            ProductSalesReceiptDialog(
-                dateDisplay = activeSelectedDayDisplay,
-                items = summaryViewModel.itemsList,
-                summaryHeader = summaryViewModel.summaryHeader,
-                savedOutletName = savedOutletName,
-                apiDate = activeSelectedDayApi,
-                isPrinting = summaryViewModel.isPrinting,
-                onPrintToPhysicalPrinter = {
-                    summaryViewModel.printToPhysicalPrinter(context, savedOutletName)
-                },
-                onDismiss = { summaryViewModel.closeReceiptPreview() }
-            )
-        }
-    }
-
-    // Alert Dialog untuk Status Cetak Printer
-    if (summaryViewModel.printMessage != null) {
-        AlertDialog(
-            onDismissRequest = { summaryViewModel.clearPrintMessage() },
-            title = { Text("Informasi Cetak", fontWeight = FontWeight.Bold) },
-            text = { Text(summaryViewModel.printMessage ?: "") },
-            confirmButton = {
-                TextButton(onClick = { summaryViewModel.clearPrintMessage() }) {
-                    Text("OK", color = OlseraBlueHeader, fontWeight = FontWeight.Bold)
-                }
+        ProductSalesReceiptDialog(
+            items = summaryViewModel.itemsList,
+            summaryHeader = summaryViewModel.summaryHeader,
+            dateDisplay = summaryViewModel.selectedDayDisplay,
+            apiDate = summaryViewModel.selectedDayApi,
+            savedOutletName = savedOutletName,
+            isPrinting = summaryViewModel.isPrinting,
+            onPrintToPhysicalPrinter = {
+                summaryViewModel.printToPhysicalPrinter(
+                    context = context,
+                    savedOutletName = savedOutletName
+                )
+            },
+            onDismiss = {
+                summaryViewModel.closeReceiptPreview()
             }
         )
+    }
+}
+
+@Composable
+private fun MobileProductSalesSummaryContent(
+    activeSelectedDayDisplay: String,
+    summaryHeader: ProductSalesSummaryHeader?,
+    itemsList: List<ProductSalesSummaryItem>,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onDateFilterClick: () -> Unit,
+    onPrintClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        // Date Selector Header Bar
+        Surface(
+            color = OlseraBlueHeader,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onDateFilterClick() }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = "Pilih Tanggal",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = activeSelectedDayDisplay.ifBlank { "Pilih Tanggal" },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
+                Text(
+                    text = "Ganti",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            }
+        }
+
+        // Summary Info Banner (Grand Total Qty & Sales)
+        if (summaryHeader != null && !isLoading && itemsList.isNotEmpty()) {
+            Surface(
+                color = Color(0xFFE3F2FD),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Total Item Terjual",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = "${summaryHeader.grandTotalQty} Item",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OlseraBlueHeader
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Total Penjualan",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = ReportViewModel.formatRupiah(summaryHeader.grandTotalSales),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OlseraBlueHeader
+                        )
+                    }
+                }
+            }
+        }
+
+        // Main Content List / Loading / Empty State
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = OlseraBlueHeader)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Memuat ringkasan produk...",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            } else if (errorMessage != null || itemsList.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(32.dp),
+                            color = Color(0xFFF5F5F5),
+                            modifier = Modifier.size(64.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Receipt,
+                                    contentDescription = null,
+                                    tint = Color(0xFFBDBDBD),
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Tidak ada transaksi ditemukan",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF424242),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Tidak ada transaksi untuk tanggal yang dipilih",
+                            fontSize = 14.sp,
+                            color = Color(0xFF757575),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(itemsList) { item ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = item.productName.ifBlank { "Produk Tanpa Nama" },
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF212121)
+                                        )
+
+                                        if (item.categoryName.isNotBlank()) {
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = item.categoryName,
+                                                fontSize = 12.sp,
+                                                color = Color.Gray
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "${ReportViewModel.formatRupiah(item.price)}  x${item.soldQty}",
+                                            fontSize = 13.sp,
+                                            color = Color(0xFF616161)
+                                        )
+                                    }
+
+                                    Text(
+                                        text = ReportViewModel.formatRupiah(item.totalSales),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = OlseraBlueHeader
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                            }
+                        }
+                    }
+
+                    // Button Cetak (Mobile Version)
+                    Button(
+                        onClick = onPrintClick,
+                        colors = ButtonDefaults.buttonColors(containerColor = OlseraGreenButton),
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = "CETAK",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
 private fun generateDailyItemObjects(startDateStr: String, endDateStr: String): List<DayItem> {
     val items = mutableListOf<DayItem>()
     try {
-        val apiSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         val displayDaySdf = SimpleDateFormat("EEE, dd MMM yyyy", Locale.forLanguageTag("id-ID"))
 
-        val startDate = apiSdf.parse(startDateStr) ?: Date()
-        val endDate = apiSdf.parse(endDateStr) ?: startDate
+        val start = inputFormat.parse(startDateStr)
+        val end = inputFormat.parse(endDateStr)
 
-        val calendar = Calendar.getInstance().apply { time = startDate }
-        val endCalendar = Calendar.getInstance().apply { time = endDate }
-
-        while (!calendar.after(endCalendar)) {
-            val date = calendar.time
-            items.add(
-                DayItem(
-                    displayLabel = displayDaySdf.format(date),
-                    apiDate = apiSdf.format(date)
+        if (start != null && end != null) {
+            val cal = Calendar.getInstance().apply { time = start }
+            while (!cal.time.after(end)) {
+                val curDate = cal.time
+                items.add(
+                    DayItem(
+                        displayLabel = displayDaySdf.format(curDate),
+                        apiDate = inputFormat.format(curDate)
+                    )
                 )
-            )
-            calendar.add(Calendar.DATE, 1)
+                cal.add(Calendar.DATE, 1)
+            }
         }
     } catch (_: Exception) {
-        items.add(DayItem(displayLabel = startDateStr, apiDate = startDateStr))
+        val today = Date()
+        val displayDaySdf = SimpleDateFormat("EEE, dd MMM yyyy", Locale.forLanguageTag("id-ID"))
+        val apiSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        items.add(DayItem(displayLabel = displayDaySdf.format(today), apiDate = apiSdf.format(today)))
     }
-    return if (items.isEmpty()) listOf(DayItem(displayLabel = startDateStr, apiDate = startDateStr)) else items
+
+    if (items.isEmpty()) {
+        val today = Date()
+        val displayDaySdf = SimpleDateFormat("EEE, dd MMM yyyy", Locale.forLanguageTag("id-ID"))
+        val apiSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        items.add(DayItem(displayLabel = displayDaySdf.format(today), apiDate = apiSdf.format(today)))
+    }
+
+    return items
 }
