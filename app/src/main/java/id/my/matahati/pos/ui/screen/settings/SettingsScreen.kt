@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -445,12 +446,22 @@ fun SettingsScreen(
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = menuItem.icon,
-                                            contentDescription = null,
-                                            tint = if (menuItem.isDestructive) Color(0xFFD32F2F) else SettingsBlue,
-                                            modifier = Modifier.size(20.dp)
-                                        )
+                                        val resId = menuItem.iconResId
+                                        if (resId != null) {
+                                            Icon(
+                                                painter = painterResource(id = resId),
+                                                contentDescription = null,
+                                                tint = if (menuItem.isDestructive) Color(0xFFD32F2F) else SettingsBlue,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = menuItem.icon,
+                                                contentDescription = null,
+                                                tint = if (menuItem.isDestructive) Color(0xFFD32F2F) else SettingsBlue,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
                                     }
                                 }
 

@@ -11,7 +11,6 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -28,6 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+import androidx.compose.ui.res.painterResource
+import id.my.matahati.pos.R
 
 @Composable
 fun SidebarDrawer(
@@ -65,8 +67,7 @@ fun SidebarDrawer(
                 .fillMaxWidth()
                 .background(OlseraBlueHeader)
                 .statusBarsPadding()
-                .clickable { isAccountMenuExpanded = !isAccountMenuExpanded }
-                .padding(24.dp)
+                .padding(top = 24.dp, start = 12.dp, end = 12.dp, bottom = 12.dp)
         ) {
             Column(
                 verticalArrangement = Arrangement.Center,
@@ -75,23 +76,28 @@ fun SidebarDrawer(
             ) {
                 Box(
                     modifier = Modifier
+                        .padding(start = 8.dp)
                         .size(64.dp)
                         .clip(CircleShape)
                         .background(Color.White),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Person,
+                        painter = painterResource(id = R.drawable.ic_pos_profile),
                         contentDescription = "Profile Avatar",
-                        tint = OlseraBlueHeader,
-                        modifier = Modifier.size(36.dp)
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(30.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { isAccountMenuExpanded = !isAccountMenuExpanded }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -134,10 +140,10 @@ fun SidebarDrawer(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Person,
+                            painter = painterResource(id = R.drawable.ic_pos_profile),
                             contentDescription = "User Avatar",
-                            tint = OlseraBlueHeader,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 },
