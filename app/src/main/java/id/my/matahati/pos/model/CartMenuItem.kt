@@ -12,12 +12,14 @@ import androidx.compose.material.icons.filled.Redeem
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.ui.graphics.vector.ImageVector
+import id.my.matahati.pos.R
 
 enum class CartMenuItem(
     val key: String,
     val title: String,
     val description: String,
-    val icon: ImageVector,
+    val icon: ImageVector = Icons.Default.Person,
+    val iconResId: Int? = null,
     val isDestructive: Boolean = false,
     val defaultEnabled: Boolean = true
 ) {
@@ -43,7 +45,7 @@ enum class CartMenuItem(
         key = "cart_menu_dilayani_oleh",
         title = "Dilayani Oleh",
         description = "Informasi staf/kasir yang melayani",
-        icon = Icons.Default.Person
+        iconResId = R.drawable.ic_pos_profile
     ),
     KIRIM_KE_DAPUR(
         key = "cart_menu_kirim_dapur",

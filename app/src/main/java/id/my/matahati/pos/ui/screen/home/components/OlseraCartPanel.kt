@@ -56,6 +56,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
+import id.my.matahati.pos.R
 import id.my.matahati.pos.model.CartItem
 import id.my.matahati.pos.model.CartMenuItem
 import id.my.matahati.pos.model.Customer
@@ -140,7 +142,7 @@ fun OlseraCartPanel(
                             .background(OlseraHeaderBlue.copy(alpha = 0.1f))
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Person,
+                            painter = painterResource(id = R.drawable.ic_pos_profile),
                             contentDescription = "Pilih Pelanggan",
                             tint = OlseraHeaderBlue,
                             modifier = Modifier.size(22.dp)
@@ -472,6 +474,7 @@ fun OlseraCartPanel(
                             row1Items.forEach { action ->
                                 QuickActionButton(
                                     icon = action.menuItem.icon,
+                                    iconResId = action.menuItem.iconResId,
                                     label = action.menuItem.title,
                                     isDestructive = action.menuItem.isDestructive,
                                     onClick = action.onClick
@@ -493,6 +496,7 @@ fun OlseraCartPanel(
                                 row2Items.forEach { action ->
                                     QuickActionButton(
                                         icon = action.menuItem.icon,
+                                        iconResId = action.menuItem.iconResId,
                                         label = action.menuItem.title,
                                         isDestructive = action.menuItem.isDestructive,
                                         onClick = action.onClick
@@ -634,7 +638,8 @@ private fun OlseraCartItemRow(
 
 @Composable
 private fun QuickActionButton(
-    icon: ImageVector,
+    icon: ImageVector? = null,
+    iconResId: Int? = null,
     label: String,
     isDestructive: Boolean = false,
     onClick: () -> Unit
@@ -652,12 +657,21 @@ private fun QuickActionButton(
                 .background(if (isDestructive) Color(0xFFE53935) else AppPrimaryColor),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = Color.White,
-                modifier = Modifier.size(16.dp)
-            )
+            if (iconResId != null) {
+                Icon(
+                    painter = painterResource(id = iconResId),
+                    contentDescription = label,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            } else if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(3.dp))
         Text(
