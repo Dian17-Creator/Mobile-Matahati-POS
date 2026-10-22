@@ -59,6 +59,7 @@ fun SidebarDrawer(
     ModalDrawerSheet(
         modifier = modifier.width(300.dp),
         drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp),
+        drawerContainerColor = Color.White,
         windowInsets = WindowInsets(0.dp)
     ) {
         // Drawer Header with blue background extending to the top

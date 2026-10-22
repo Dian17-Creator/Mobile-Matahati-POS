@@ -107,13 +107,18 @@ fun VoidRefundDialog(
                             showErrorValidation = false
                         }
                     },
-                    placeholder = { Text("Alasan (Wajib diisi)") },
+                    placeholder = { Text("Alasan (Wajib diisi)", color = Color.Gray) },
+                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.Black),
                     isError = showErrorValidation,
                     enabled = !isLoading,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
                         focusedBorderColor = AppPrimaryColor,
-                        unfocusedBorderColor = Color.LightGray
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = false,
@@ -249,7 +254,7 @@ private fun ActionChoiceCard(
                     text = description,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Normal,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Gray
                 )
             }
         }

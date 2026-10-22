@@ -1838,7 +1838,7 @@ private fun CloseShiftDialog(
                             .weight(1f)
                             .height(48.dp)
                     ) {
-                        Text("TUTUP SHIFT", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text("TUTUP", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
             }
