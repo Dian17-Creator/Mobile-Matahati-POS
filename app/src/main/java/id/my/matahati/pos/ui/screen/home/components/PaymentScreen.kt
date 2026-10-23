@@ -369,7 +369,8 @@ fun PaymentScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(scrollState)
-                        .padding(12.dp),
+                        .padding(12.dp)
+                        .navigationBarsPadding(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // 1. Total Tagihan Card
