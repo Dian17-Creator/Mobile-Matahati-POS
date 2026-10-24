@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import id.my.matahati.pos.model.TransactionModel
 
 @Composable
@@ -35,135 +36,267 @@ fun HeldOrdersDialog(
         }
     }
 
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            modifier = Modifier
-                .width(580.dp)
-                .heightIn(max = 600.dp)
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-            ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        BoxWithConstraints {
+            val isTablet = maxWidth >= 600.dp
+
+            if (isTablet) {
+                // Tampilan Tablet (100% kode awal)
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    modifier = Modifier
+                        .width(580.dp)
+                        .heightIn(max = 600.dp)
+                        .padding(16.dp)
                 ) {
-                    Text(
-                        text = "Pesanan Menggantung (${heldOrders.size})",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.DarkGray
-                    )
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Tutup",
-                            tint = Color(0xFFD32F2F),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (heldOrders.isEmpty()) {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(24.dp)
                     ) {
-                        Text(
-                            text = "Tidak ada pesanan menggantung",
-                            color = Color.Gray,
-                            fontSize = 15.sp
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        items(heldOrders) { order ->
-                            Card(
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        // Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Pesanan Menggantung (${heldOrders.size})",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.DarkGray
+                            )
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Tutup",
+                                    tint = Color(0xFFD32F2F),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        if (heldOrders.isEmpty()) {
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { onOpenOrder(order) }
+                                    .height(200.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    // Sisi Kiri (2 baris)
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                Text(
+                                    text = "Tidak ada pesanan menggantung",
+                                    color = Color.Gray,
+                                    fontSize = 15.sp
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            ) {
+                                items(heldOrders) { order ->
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onOpenOrder(order) }
                                     ) {
-                                        // Baris 1: ID Transaksi | Tanggal dan Jam Menit
                                         Row(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = order.transactionNo,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 15.sp,
-                                                color = Color.Black
-                                            )
-                                            Text(
-                                                text = formatDateTime(order.transactionDate),
-                                                fontSize = 12.sp,
-                                                color = Color.Gray
-                                            )
-                                        }
+                                            // Sisi Kiri (2 baris)
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                // Baris 1: ID Transaksi | Tanggal dan Jam Menit
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = order.transactionNo,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 15.sp,
+                                                        color = Color.Black
+                                                    )
+                                                    Text(
+                                                        text = formatDateTime(order.transactionDate),
+                                                        fontSize = 12.sp,
+                                                        color = Color.Gray
+                                                    )
+                                                }
 
-                                        // Baris 2: Meja & Nama Pelanggan
-                                        val subInfo = listOfNotNull(
-                                            order.tableName?.let { "Meja $it" },
-                                            order.customerName?.let { it }
-                                        ).joinToString(" • ")
-                                        if (subInfo.isNotBlank()) {
-                                            Text(
-                                                text = subInfo,
-                                                fontSize = 13.sp,
-                                                color = Color.DarkGray,
-                                                fontWeight = FontWeight.Medium
-                                            )
+                                                // Baris 2: Meja & Nama Pelanggan
+                                                val subInfo = listOfNotNull(
+                                                    order.tableName?.let { "Meja $it" },
+                                                    order.customerName?.let { it }
+                                                ).joinToString(" • ")
+                                                if (subInfo.isNotBlank()) {
+                                                    Text(
+                                                        text = subInfo,
+                                                        fontSize = 13.sp,
+                                                        color = Color.DarkGray,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.width(16.dp))
+
+                                            // Sisi Kanan: Teks "Ketuk untuk membuka" rata tengah vertikal
+                                            Box(
+                                                modifier = Modifier.fillMaxHeight(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = "Ketuk untuk membuka",
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = AppPrimaryColor
+                                                )
+                                            }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Tampilan Mobile Phone (Rapi & Tidak Terlipat Vertikal)
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth(0.92f)
+                        .heightIn(max = 580.dp)
+                        .padding(vertical = 12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        // Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Pesanan Menggantung (${heldOrders.size})",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.DarkGray
+                            )
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Tutup",
+                                    tint = Color(0xFFD32F2F),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
 
-                                    Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                                    // Sisi Kanan: Teks "Ketuk untuk membuka" rata tengah vertikal
-                                    Box(
-                                        modifier = Modifier.fillMaxHeight(),
-                                        contentAlignment = Alignment.Center
+                        if (heldOrders.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(160.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Tidak ada pesanan menggantung",
+                                    color = Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            ) {
+                                items(heldOrders) { order ->
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onOpenOrder(order) }
                                     ) {
-                                        Text(
-                                            text = "Ketuk untuk membuka",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = AppPrimaryColor
-                                        )
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(12.dp),
+                                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            // Baris 1: ID Transaksi (Kiri) | Ketuk untuk membuka (Kanan)
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = order.transactionNo,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 14.sp,
+                                                    color = Color.Black,
+                                                    modifier = Modifier.weight(1f, fill = false)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = "Ketuk untuk membuka",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = AppPrimaryColor
+                                                )
+                                            }
+
+                                            // Baris 2: Tanggal & Waktu • Meja • Nama Pelanggan
+                                            val subInfo = listOfNotNull(
+                                                formatDateTime(order.transactionDate).ifBlank { null },
+                                                order.tableName?.let { "Meja $it" },
+                                                order.customerName?.let { it }
+                                            ).joinToString(" • ")
+
+                                            if (subInfo.isNotBlank()) {
+                                                Text(
+                                                    text = subInfo,
+                                                    fontSize = 12.sp,
+                                                    color = Color.Gray,
+                                                    fontWeight = FontWeight.Normal
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
