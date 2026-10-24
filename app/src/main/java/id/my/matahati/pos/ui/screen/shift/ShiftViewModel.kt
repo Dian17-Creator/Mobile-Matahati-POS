@@ -219,7 +219,7 @@ class ShiftViewModel : ViewModel() {
                     val list = response.body()?.data
                     shiftHistory.clear()
                     if (!list.isNullOrEmpty()) {
-                        shiftHistory.addAll(list)
+                        shiftHistory.addAll(list.sortedWith(compareBy<ShiftResponse> { it.openedAt }.thenBy { it.shiftNo }))
                     }
                 } else {
                     Log.e("ShiftViewModel", "Gagal memuat riwayat shift: ${response.message()}")
