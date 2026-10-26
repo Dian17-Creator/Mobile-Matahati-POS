@@ -230,7 +230,13 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             val connectionManager = id.my.matahati.pos.data.printer.PrinterConnectionManager(context)
             val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
-            val receiptBytes = formatter.formatReceipt(data, cashierName, savedOutletName, isOrderTypeSelectedByUser)
+            val receiptBytes = formatter.formatReceipt(
+                data = data,
+                cashierName = cashierName,
+                savedOutletName = savedOutletName,
+                isOrderTypeSelected = isOrderTypeSelectedByUser,
+                paymentMethods = paymentMethods
+            )
             
             val result = connectionManager.printData(receiptPrinter, receiptBytes)
             if (result.isFailure) {
@@ -1469,7 +1475,18 @@ class HomeViewModel : ViewModel() {
                             fetchHeldOrders(nidOutlet)
                             onSuccess?.invoke()
                         } else {
-                            lastTransaction = body.data
+                            val returnedTrx = body.data.transaction
+                            val finalTrx = if (returnedTrx != null && returnedTrx.payment == null && selectedPayment != null) {
+                                returnedTrx.copy(
+                                    payment = id.my.matahati.pos.model.PaymentMethodDto(
+                                        nid = selectedPayment.id.toIntOrNull() ?: 1,
+                                        cname = selectedPayment.name
+                                    )
+                                )
+                            } else {
+                                returnedTrx
+                            }
+                            lastTransaction = body.data.copy(transaction = finalTrx)
                             pendingShowReceipt = true
                             fetchVouchers() // Refresh voucher quota after success
                             if (context != null) {

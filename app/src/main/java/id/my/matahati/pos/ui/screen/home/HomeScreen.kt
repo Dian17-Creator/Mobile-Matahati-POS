@@ -2316,6 +2316,7 @@ fun HomeScreen(
             transactionData = viewModel.lastTransaction!!,
             cashierName = userName,
             savedOutletName = outletName,
+            paymentMethods = viewModel.paymentMethods,
             isPrinting = viewModel.isPrinting,
             isOrderTypeSelected = viewModel.isOrderTypeSelectedByUser,
             isPrintPreviewEnabled = viewModel.isShowPrintPreviewEnabled(context),
