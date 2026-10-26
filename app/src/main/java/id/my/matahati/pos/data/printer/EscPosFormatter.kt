@@ -29,7 +29,8 @@ class EscPosFormatter(private val cols: Int = 32) {
         data: TransactionData,
         cashierName: String,
         savedOutletName: String? = null,
-        isOrderTypeSelected: Boolean = true
+        isOrderTypeSelected: Boolean = true,
+        paymentMethods: List<id.my.matahati.pos.model.PaymentMethod> = emptyList()
     ): ByteArray {
         val trx = data.transaction ?: return byteArrayOf()
         val details = data.details ?: emptyList()
@@ -142,7 +143,10 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(BOLD_OFF.toList())
         
         out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
-        val paymentName = (trx.payment?.cname?.takeIf { it.isNotBlank() } ?: "CASH").uppercase()
+        val resolvedPaymentName = trx.payment?.cname?.takeIf { it.isNotBlank() }
+            ?: paymentMethods.find { it.id == trx.nidPayment }?.name
+            ?: "CASH"
+        val paymentName = resolvedPaymentName.uppercase()
         out.addAll(drawTwoColumns(paymentName, "").toByteArray().toList())
         out.addAll(drawTwoColumns("Change", formatNum(trx.changeAmount)).toByteArray().toList())
 

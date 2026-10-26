@@ -29,6 +29,7 @@ fun ReceiptDialog(
     transactionData: TransactionData,
     cashierName: String,
     savedOutletName: String? = null,
+    paymentMethods: List<id.my.matahati.pos.model.PaymentMethod> = emptyList(),
     onPrint: () -> Unit = {},
     isPrinting: Boolean = false,
     isOrderTypeSelected: Boolean = true,
@@ -182,7 +183,10 @@ fun ReceiptDialog(
                                     Spacer(modifier = Modifier.height(4.dp))
                                     RowAmount("GRAND TOTAL", formatStringNum(trx.grandTotal), true)
                                     RowAmount("Paid", formatStringNum(trx.paidAmount))
-                                    val paymentName = (trx.payment?.cname?.takeIf { it.isNotBlank() } ?: "CASH").uppercase()
+                                    val resolvedPaymentName = trx.payment?.cname?.takeIf { it.isNotBlank() }
+                                        ?: paymentMethods.find { it.id == trx.nidPayment }?.name
+                                        ?: "CASH"
+                                    val paymentName = resolvedPaymentName.uppercase()
                                     Text(
                                         text = paymentName,
                                         fontFamily = FontFamily.Monospace,
