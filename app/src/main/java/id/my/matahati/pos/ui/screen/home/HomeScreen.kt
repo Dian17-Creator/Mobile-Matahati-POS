@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import id.my.matahati.pos.R
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -1088,23 +1089,28 @@ fun HomeScreen(
                                                                             modifier = Modifier.size(20.dp)
                                                                         )
                                                                         if (viewModel.heldOrders.size > 0) {
+                                                                            // === BENTUK LINGKARAN MERAH BADGE ===
                                                                             Surface(
-                                                                                shape = CircleShape,
-                                                                                color = Color.Red,
+                                                                                shape = CircleShape, // Bentuk lingkaran
+                                                                                color = Color.Red,   // Warna merah
                                                                                 modifier = Modifier
-                                                                                    .offset(x = 6.dp, y = (-6).dp)
-                                                                                    .size(16.dp)
+                                                                                    .offset(x = 6.dp, y = (-7).dp) // Posisi offset lingkaran merah
+                                                                                    .size(16.dp)                    // Ukuran diameter lingkaran merah
                                                                             ) {
                                                                                 Box(
-                                                                                    modifier = Modifier.fillMaxSize(),
+                                                                                    modifier = Modifier
+                                                                                        .fillMaxSize(),
                                                                                     contentAlignment = Alignment.Center
                                                                                 ) {
+                                                                                    // === TEKS ANGKA JUMLAH PESANAN MENGGANTUNG ===
                                                                                     Text(
-                                                                                        text = viewModel.heldOrders.size.toString(),
-                                                                                        color = Color.White,
-                                                                                        fontSize = 9.sp,
-                                                                                        fontWeight = FontWeight.Bold,
-                                                                                        textAlign = TextAlign.Center
+                                                                                        text = viewModel.heldOrders.size.toString(), // Teks angka
+                                                                                        color = Color.White,                         // Warna teks putih
+                                                                                        fontSize = 9.sp,                             // Ukuran font angka
+                                                                                        fontWeight = FontWeight.Bold,                // Ketebalan font angka
+                                                                                        textAlign = TextAlign.Center,
+                                                                                        modifier = Modifier
+                                                                                                .offset(x = 0.dp, y = (-3).dp)
                                                                                     )
                                                                                 }
                                                                             }
