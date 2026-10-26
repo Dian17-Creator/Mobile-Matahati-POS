@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -556,28 +557,45 @@ private fun OlseraCartItemRow(
     onDecrease: () -> Unit,
     onClick: () -> Unit
 ) {
+    val (cleanNote, _) = CartItem.parseNoteAndSentQty(cartItem.note)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .heightIn(min = 52.dp)
             .clickable { onClick() }
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
         // =========================================================
         // ITEM
         // =========================================================
-        Text(
-            text = cartItem.product.name,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.DarkGray,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Start,
+        Column(
             modifier = Modifier.weight(0.45f)
-        )
+        ) {
+            Text(
+                text = cartItem.product.name,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.DarkGray,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Start
+            )
+
+            if (cleanNote.isNotBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Catatan: $cleanNote",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color(0xFF757575),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
 
         // =========================================================
         // QTY AREA
