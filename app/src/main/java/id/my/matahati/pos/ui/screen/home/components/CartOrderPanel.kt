@@ -300,6 +300,16 @@ private fun CartItemRow(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    val (cleanNote, _) = CartItem.parseNoteAndSentQty(cartItem.note)
+                    if (cleanNote.isNotBlank()) {
+                        Text(
+                            text = "Catatan: $cleanNote",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     Text(
                         text = cartItem.formattedTotalPrice,
                         style = MaterialTheme.typography.bodySmall,
