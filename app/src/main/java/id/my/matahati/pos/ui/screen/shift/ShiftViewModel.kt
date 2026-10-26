@@ -1,11 +1,15 @@
 package id.my.matahati.pos.ui.screen.shift
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import id.my.matahati.pos.data.printer.BluetoothPrinterManager
@@ -232,6 +236,11 @@ class ShiftViewModel : ViewModel() {
         }
     }
 
+    fun isShowPrintPreviewEnabled(context: Context): Boolean {
+        val prefs = context.getSharedPreferences("pos_prefs", Context.MODE_PRIVATE)
+        return prefs.getBoolean("show_print_preview", true)
+    }
+
     var isPrinting by mutableStateOf(false)
         private set
 
@@ -245,6 +254,16 @@ class ShiftViewModel : ViewModel() {
     ) {
         if (shift == null) {
             printMessage = "Tidak ada data shift untuk dicetak"
+            return
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            printMessage = "Izin Bluetooth belum diberikan. Silakan izinkan akses Bluetooth untuk aplikasi ini di Pengaturan HP."
             return
         }
 
@@ -296,6 +315,10 @@ class ShiftViewModel : ViewModel() {
                     } else {
                         printMessage = "Gagal mencetak: ${result.exceptionOrNull()?.localizedMessage ?: "Cek koneksi printer"}"
                     }
+                }
+            } catch (e: SecurityException) {
+                withContext(Dispatchers.Main) {
+                    printMessage = "Izin Bluetooth belum diberikan. Silakan izinkan akses Bluetooth untuk aplikasi ini di Pengaturan HP."
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

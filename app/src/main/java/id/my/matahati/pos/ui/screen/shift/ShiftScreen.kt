@@ -1,5 +1,10 @@
 package id.my.matahati.pos.ui.screen.shift
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -74,6 +80,40 @@ fun ShiftScreen(
     var showCloseShiftDialog by remember { mutableStateOf(false) }
     var showDateFilterDialog by remember { mutableStateOf(false) }
     var showCloseSalesReceiptDialog by remember { mutableStateOf(false) }
+
+    var pendingPrintAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions.entries.all { it.value }
+        if (granted) {
+            pendingPrintAction?.invoke()
+        } else {
+            shiftViewModel.printMessage = "Izin Bluetooth diperlukan untuk mencetak laporan shift."
+        }
+        pendingPrintAction = null
+    }
+
+    val runWithBluetoothPermission: (() -> Unit) -> Unit = { onPermissionGranted ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val permissions = arrayOf(
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.BLUETOOTH_SCAN
+            )
+            val allGranted = permissions.all {
+                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            }
+            if (allGranted) {
+                onPermissionGranted()
+            } else {
+                pendingPrintAction = onPermissionGranted
+                permissionLauncher.launch(permissions)
+            }
+        } else {
+            onPermissionGranted()
+        }
+    }
 
     val today = remember { Calendar.getInstance().time }
     val apiSdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
@@ -239,7 +279,21 @@ fun ShiftScreen(
                             userName = userName,
                             onDateFilterClick = { showDateFilterDialog = true },
                             onSelectShiftDetail = { s -> selectedShiftForDetail = s },
-                            onPrintClick = { showCloseSalesReceiptDialog = true }
+                            onPrintClick = {
+                                runWithBluetoothPermission {
+                                    val shiftToShow = selectedShiftForDetail ?: shiftHistory.firstOrNull()
+                                    if (shiftViewModel.isShowPrintPreviewEnabled(context)) {
+                                        showCloseSalesReceiptDialog = true
+                                    } else if (shiftToShow != null) {
+                                        shiftViewModel.printShift(
+                                            context = context,
+                                            shift = shiftToShow,
+                                            savedOutletName = savedOutletName,
+                                            userName = userName
+                                        )
+                                    }
+                                }
+                            }
                         )
                     } else {
                         // TAB 1: RIWAYAT (2-PANEL SPLIT VIEW TABLET)
@@ -495,7 +549,21 @@ fun ShiftScreen(
 
                                             // Button Cetak Struk Shift
                                             Button(
-                                                onClick = { showCloseSalesReceiptDialog = true },
+                                                onClick = {
+                                                    runWithBluetoothPermission {
+                                                        val shiftToShow = selectedShiftForDetail ?: shiftHistory.firstOrNull()
+                                                        if (shiftViewModel.isShowPrintPreviewEnabled(context)) {
+                                                            showCloseSalesReceiptDialog = true
+                                                        } else if (shiftToShow != null) {
+                                                            shiftViewModel.printShift(
+                                                                context = context,
+                                                                shift = shiftToShow,
+                                                                savedOutletName = savedOutletName,
+                                                                userName = userName
+                                                            )
+                                                        }
+                                                    }
+                                                },
                                                 colors = ButtonDefaults.buttonColors(containerColor = OlseraGreenButton),
                                                 shape = RoundedCornerShape(0.dp),
                                                 modifier = Modifier
@@ -614,16 +682,31 @@ fun ShiftScreen(
                 userName = userName ?: "Kasir",
                 isPrinting = shiftViewModel.isPrinting,
                 onPrintToPhysicalPrinter = {
-                    shiftViewModel.printShift(
-                        context = context,
-                        shift = shiftToShow,
-                        savedOutletName = savedOutletName,
-                        userName = userName
-                    )
+                    runWithBluetoothPermission {
+                        shiftViewModel.printShift(
+                            context = context,
+                            shift = shiftToShow,
+                            savedOutletName = savedOutletName,
+                            userName = userName
+                        )
+                    }
                 },
                 onDismiss = { showCloseSalesReceiptDialog = false }
             )
         }
+    }
+
+    if (shiftViewModel.printMessage != null) {
+        AlertDialog(
+            onDismissRequest = { shiftViewModel.clearPrintMessage() },
+            title = { Text("Informasi Cetak", fontWeight = FontWeight.Bold) },
+            text = { Text(shiftViewModel.printMessage ?: "") },
+            confirmButton = {
+                TextButton(onClick = { shiftViewModel.clearPrintMessage() }) {
+                    Text("OK", color = OlseraBlueHeader, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 
     // Alerts
