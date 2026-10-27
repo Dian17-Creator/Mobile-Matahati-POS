@@ -1893,6 +1893,7 @@ fun HomeScreen(
             isSubmitting = viewModel.isSubmitting,
             errorMessage = viewModel.transactionError,
             initialDpAmount = viewModel.savedDraftDpAmount,
+            initialPaymentId = viewModel.savedDraftPaymentId,
             initialPaymentDualId = viewModel.savedDraftPaymentDualId,
             onBack = { viewModel.showPaymentScreen = false },
             onStateChange = { isDual, p1, p2, dp ->
@@ -2135,7 +2136,7 @@ fun HomeScreen(
                     context = context,
                     userName = userName,
                     outletName = outletName ?: "",
-                    onAutoFinishCheckout = autoFinishCheckout,
+                    onAutoFinishCheckout = null,
                     onUpdateActiveCart = { updatedItems ->
                         // Perbarui status sentQuantity di keranjang lokal
                         updatedItems.forEach { updated ->
@@ -2148,12 +2149,7 @@ fun HomeScreen(
                 )
             },
             onDismiss = {
-                viewModel.closeKitchenPrintDialog(
-                    context = context,
-                    userName = userName,
-                    outletName = outletName ?: "",
-                    onAutoFinishCheckout = autoFinishCheckout
-                )
+                viewModel.showKitchenPrintDialog = false
             }
         )
     }
@@ -2167,12 +2163,7 @@ fun HomeScreen(
                 viewModel.printKitchenTickets(context, viewModel.receiptTickets)
             },
             onDismiss = {
-                viewModel.closeSimulatedReceipt(
-                    context = context,
-                    userName = userName,
-                    outletName = outletName ?: "",
-                    onAutoFinishCheckout = autoFinishCheckout
-                )
+                viewModel.showSimulatedReceipt = false
             }
         )
     }
@@ -2370,6 +2361,7 @@ fun HomeScreen(
             },
             onNewTransaction = {
                 viewModel.showSuccessDialog = false
+                viewModel.showPaymentScreen = false
                 if (viewModel.isShowPdfDialogEnabled(context)) {
                     showPdfConfirmDialog = true
                 } else {
@@ -2378,6 +2370,7 @@ fun HomeScreen(
             },
             onDismiss = {
                 viewModel.showSuccessDialog = false
+                viewModel.showPaymentScreen = false
                 if (viewModel.isShowPdfDialogEnabled(context)) {
                     showPdfConfirmDialog = true
                 } else {
@@ -2408,13 +2401,6 @@ fun HomeScreen(
                 },
                 onDismiss = {
                     viewModel.closeReceiptDialog()
-                    if (currentScreen == "pos") {
-                        if (viewModel.isShowPdfDialogEnabled(context)) {
-                            showPdfConfirmDialog = true
-                        } else {
-                            autoFinishCheckout()
-                        }
-                    }
                 }
             )
         }

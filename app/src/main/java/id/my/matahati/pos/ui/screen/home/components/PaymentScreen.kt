@@ -33,6 +33,7 @@ fun PaymentScreen(
     isSubmitting: Boolean,
     errorMessage: String?,
     initialDpAmount: Double? = null,
+    initialPaymentId: String? = null,
     initialPaymentDualId: String? = null,
     onBack: () -> Unit,
     onPay: (payment1: PaymentMethod, paidAmount: Double, payment2: PaymentMethod?, dpAmount: Double?) -> Unit,
@@ -52,7 +53,10 @@ fun PaymentScreen(
     var isDualPayment by remember { mutableStateOf(hasInitialDp) }
 
     var selectedPayment1 by remember {
-        mutableStateOf(methods.find { it.name.uppercase().contains("CASH") || it.name.uppercase().contains("TUNAI") } ?: methods.firstOrNull())
+        mutableStateOf(
+            if (!initialPaymentId.isNullOrBlank()) methods.find { it.id == initialPaymentId } ?: (methods.find { it.name.uppercase().contains("CASH") || it.name.uppercase().contains("TUNAI") } ?: methods.firstOrNull())
+            else methods.find { it.name.uppercase().contains("CASH") || it.name.uppercase().contains("TUNAI") } ?: methods.firstOrNull()
+        )
     }
     var selectedPayment2 by remember {
         mutableStateOf<PaymentMethod?>(
@@ -75,6 +79,7 @@ fun PaymentScreen(
     }
 
     var isInitialGrandTotal by remember { mutableStateOf(!hasInitialDp) }
+    var isInitialTarget2 by remember { mutableStateOf(true) }
     var activeInputTarget by remember { mutableStateOf(1) } // 1 for Method 1, 2 for Method 2
     var localErrorMsg by remember { mutableStateOf<String?>(null) }
 
@@ -101,31 +106,35 @@ fun PaymentScreen(
             val p1 = paidStr1.toDoubleOrNull() ?: 0.0
             val remaining = (grandTotal - p1).coerceAtLeast(0.0).toLong()
             paidStr2 = remaining.toString()
+            isInitialTarget2 = true
         }
     }
 
     val appendKey: (String) -> Unit = { key ->
-        var targetStr = if (activeInputTarget == 1) paidStr1 else paidStr2
+        val isTarget1 = activeInputTarget == 1
+        var targetStr = if (isTarget1) paidStr1 else paidStr2
+        val isInitial = if (isTarget1) isInitialGrandTotal else isInitialTarget2
+
         if (key == "C") {
             targetStr = "0"
-            isInitialGrandTotal = false
+            if (isTarget1) isInitialGrandTotal = false else isInitialTarget2 = false
         } else if (key == "BS") {
-            if (isInitialGrandTotal && activeInputTarget == 1) {
+            if (isInitial) {
                 targetStr = "0"
-                isInitialGrandTotal = false
+                if (isTarget1) isInitialGrandTotal = false else isInitialTarget2 = false
             } else {
                 targetStr = if (targetStr.length > 1) targetStr.dropLast(1) else "0"
             }
         } else {
-            if (isInitialGrandTotal && activeInputTarget == 1) {
+            if (isInitial) {
                 targetStr = key
-                isInitialGrandTotal = false
+                if (isTarget1) isInitialGrandTotal = false else isInitialTarget2 = false
             } else {
                 targetStr = if (targetStr == "0") key else targetStr + key
             }
         }
 
-        if (activeInputTarget == 1) {
+        if (isTarget1) {
             paidStr1 = targetStr
         } else {
             paidStr2 = targetStr
@@ -338,6 +347,7 @@ fun PaymentScreen(
                                                 .clickable {
                                                     selectedPayment2 = method
                                                     activeInputTarget = 2
+                                                    isInitialTarget2 = true
                                                 }
                                         ) {
                                             Row(
@@ -418,33 +428,53 @@ fun PaymentScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        OutlinedTextField(
-                                            value = "Rp ${formatter.format(paidAmount1)}",
-                                            onValueChange = {},
-                                            readOnly = true,
-                                            label = { Text("Nominal 1 (${selectedPayment1?.name ?: ""})") },
+                                        Box(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .clickable { activeInputTarget = 1 },
-                                            textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppPrimaryColor),
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedBorderColor = if (activeInputTarget == 1) AppPrimaryColor else Color.Gray
+                                                .clickable {
+                                                    activeInputTarget = 1
+                                                    isInitialGrandTotal = true
+                                                }
+                                        ) {
+                                            OutlinedTextField(
+                                                value = "Rp ${formatter.format(paidAmount1)}",
+                                                onValueChange = {},
+                                                readOnly = true,
+                                                enabled = false,
+                                                label = { Text("Nominal 1 (${selectedPayment1?.name ?: ""})") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppPrimaryColor),
+                                                colors = OutlinedTextFieldDefaults.colors(
+                                                    disabledBorderColor = if (activeInputTarget == 1) AppPrimaryColor else Color.LightGray,
+                                                    disabledLabelColor = if (activeInputTarget == 1) AppPrimaryColor else Color.Gray,
+                                                    disabledTextColor = AppPrimaryColor
+                                                )
                                             )
-                                        )
+                                        }
 
-                                        OutlinedTextField(
-                                            value = "Rp ${formatter.format(paidAmount2)}",
-                                            onValueChange = {},
-                                            readOnly = true,
-                                            label = { Text("Nominal 2 (${selectedPayment2?.name ?: ""})") },
+                                        Box(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .clickable { activeInputTarget = 2 },
-                                            textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE65100)),
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedBorderColor = if (activeInputTarget == 2) Color(0xFFE65100) else Color.Gray
+                                                .clickable {
+                                                    activeInputTarget = 2
+                                                    isInitialTarget2 = true
+                                                }
+                                        ) {
+                                            OutlinedTextField(
+                                                value = "Rp ${formatter.format(paidAmount2)}",
+                                                onValueChange = {},
+                                                readOnly = true,
+                                                enabled = false,
+                                                label = { Text("Nominal 2 (${selectedPayment2?.name ?: ""})") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE65100)),
+                                                colors = OutlinedTextFieldDefaults.colors(
+                                                    disabledBorderColor = if (activeInputTarget == 2) Color(0xFFE65100) else Color.LightGray,
+                                                    disabledLabelColor = if (activeInputTarget == 2) Color(0xFFE65100) else Color.Gray,
+                                                    disabledTextColor = Color(0xFFE65100)
+                                                )
                                             )
-                                        )
+                                        }
                                     }
                                 } else {
                                     if (isCash1) {
@@ -477,10 +507,11 @@ fun PaymentScreen(
                                                 onClick = {
                                                     if (activeInputTarget == 1) {
                                                         paidStr1 = nominal.toLong().toString()
+                                                        isInitialGrandTotal = false
                                                     } else {
                                                         paidStr2 = nominal.toLong().toString()
+                                                        isInitialTarget2 = false
                                                     }
-                                                    isInitialGrandTotal = false
                                                 },
                                                 modifier = Modifier.weight(1f),
                                                 shape = RoundedCornerShape(8.dp)
@@ -720,6 +751,7 @@ fun PaymentScreen(
                                                         .clickable {
                                                             selectedPayment2 = method
                                                             activeInputTarget = 2
+                                                            isInitialTarget2 = true
                                                         }
                                                 ) {
                                                     Row(
@@ -775,33 +807,53 @@ fun PaymentScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    OutlinedTextField(
-                                        value = "Rp ${formatter.format(paidAmount1)}",
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        label = { Text("Nominal 1 (${selectedPayment1?.name ?: ""})") },
+                                    Box(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clickable { activeInputTarget = 1 },
-                                        textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppPrimaryColor),
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedBorderColor = if (activeInputTarget == 1) AppPrimaryColor else Color.Gray
+                                            .clickable {
+                                                activeInputTarget = 1
+                                                isInitialGrandTotal = true
+                                            }
+                                    ) {
+                                        OutlinedTextField(
+                                            value = "Rp ${formatter.format(paidAmount1)}",
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            enabled = false,
+                                            label = { Text("Nominal 1 (${selectedPayment1?.name ?: ""})") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppPrimaryColor),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                disabledBorderColor = if (activeInputTarget == 1) AppPrimaryColor else Color.LightGray,
+                                                disabledLabelColor = if (activeInputTarget == 1) AppPrimaryColor else Color.Gray,
+                                                disabledTextColor = AppPrimaryColor
+                                            )
                                         )
-                                    )
+                                    }
 
-                                    OutlinedTextField(
-                                        value = "Rp ${formatter.format(paidAmount2)}",
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        label = { Text("Nominal 2 (${selectedPayment2?.name ?: ""})") },
+                                    Box(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clickable { activeInputTarget = 2 },
-                                        textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE65100)),
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedBorderColor = if (activeInputTarget == 2) Color(0xFFE65100) else Color.Gray
+                                            .clickable {
+                                                activeInputTarget = 2
+                                                isInitialTarget2 = true
+                                            }
+                                    ) {
+                                        OutlinedTextField(
+                                            value = "Rp ${formatter.format(paidAmount2)}",
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            enabled = false,
+                                            label = { Text("Nominal 2 (${selectedPayment2?.name ?: ""})") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE65100)),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                disabledBorderColor = if (activeInputTarget == 2) Color(0xFFE65100) else Color.LightGray,
+                                                disabledLabelColor = if (activeInputTarget == 2) Color(0xFFE65100) else Color.Gray,
+                                                disabledTextColor = Color(0xFFE65100)
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             } else {
                                 if (isCash1) {
@@ -833,10 +885,11 @@ fun PaymentScreen(
                                             onClick = {
                                                 if (activeInputTarget == 1) {
                                                     paidStr1 = nominal.toLong().toString()
+                                                    isInitialGrandTotal = false
                                                 } else {
                                                     paidStr2 = nominal.toLong().toString()
+                                                    isInitialTarget2 = false
                                                 }
-                                                isInitialGrandTotal = false
                                             },
                                             modifier = Modifier.weight(1f),
                                             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),

@@ -270,19 +270,12 @@ fun ReceiptDialog(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Button(
-                            onClick = {
-                                showPreviewModal = false
-                                if (isPdfDialogEnabled) {
-                                    showPdfConfirm = true
-                                } else {
-                                    onDismiss()
-                                }
-                            },
+                            onClick = onDismiss,
                             colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(4.dp)
                         ) {
-                            Text("BATAL", color = Color.White)
+                            Text("TUTUP", color = Color.White)
                         }
                     }
                 }
