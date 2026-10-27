@@ -1503,19 +1503,8 @@ class HomeViewModel : ViewModel() {
                                 returnedTrx
                             }
                             lastTransaction = body.data.copy(transaction = finalTrx)
-                            pendingShowReceipt = true
+                            showSuccessDialog = true
                             fetchVouchers() // Refresh voucher quota after success
-                            if (context != null) {
-                                openKitchenPrintDialog(
-                                    context = context,
-                                    items = cartItems,
-                                    userName = userName,
-                                    outletName = outletName,
-                                    onAutoFinishCheckout = onSuccess
-                                )
-                            } else {
-                                onSuccess?.invoke()
-                            }
                         }
                     } else {
                         transactionError = body?.message ?: "Gagal memproses transaksi."
@@ -1796,15 +1785,6 @@ class HomeViewModel : ViewModel() {
     ) {
         showSimulatedReceipt = false
         receiptTickets.clear()
-        if (context != null) {
-            viewModelScope.launch {
-                kotlinx.coroutines.delay(1000) // Safe inter-print delay for printer socket reset
-                handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
-            }
-        } else if (pendingShowReceipt) {
-            pendingShowReceipt = false
-            showReceiptDialog = true
-        }
     }
 
     fun closeKitchenPrintDialog(
@@ -1814,15 +1794,6 @@ class HomeViewModel : ViewModel() {
         onAutoFinishCheckout: (() -> Unit)? = null
     ) {
         showKitchenPrintDialog = false
-        if (context != null) {
-            viewModelScope.launch {
-                kotlinx.coroutines.delay(1000) // Safe inter-print delay for printer socket reset
-                handlePendingReceipt(context, userName, outletName, onAutoFinishCheckout)
-            }
-        } else if (pendingShowReceipt) {
-            pendingShowReceipt = false
-            showReceiptDialog = true
-        }
     }
 
     fun fetchTransactionHistory(
