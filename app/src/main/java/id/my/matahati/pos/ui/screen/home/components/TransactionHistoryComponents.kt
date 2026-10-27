@@ -131,7 +131,17 @@ fun TransactionItemCard(
     }
     val amountNum = transaction.grandTotal.toDoubleOrNull() ?: 0.0
     val amountStr = formatter.format(amountNum)
-    val paymentName = transaction.payment?.cname?.uppercase() ?: "CASH"
+
+    val payment1Name = transaction.payment?.cname?.uppercase() ?: "CASH"
+    val payment2Name = transaction.paymentDual?.cname?.uppercase()
+    val isDual = !payment2Name.isNullOrBlank()
+
+    val paymentName = if (isDual) {
+        "$payment1Name & $payment2Name (Split Payment)"
+    } else {
+        payment1Name
+    }
+
     val customerStr = if (!transaction.customerName.isNullOrBlank()) " (${transaction.customerName})" else ""
     val itemsSummary = transaction.details?.joinToString(", ") { "${it.quantity}x ${it.productName}" } ?: ""
 
@@ -225,6 +235,23 @@ fun TransactionItemCard(
                         color = Color(0xFFD32F2F),
                         fontWeight = FontWeight.Bold
                     )
+                }
+
+                val isPendingDp = statusUpper == "PENDING" && transaction.remainingAmount > 0
+                if (isPendingDp) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        color = Color(0xFFFFF3E0),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = "DP / SISA: Rp ${formatter.format(transaction.remainingAmount)}",
+                            fontSize = 10.sp,
+                            color = Color(0xFFE65100),
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(2.dp))

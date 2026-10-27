@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,8 +32,11 @@ fun PaymentScreen(
     paymentMethods: List<PaymentMethod>,
     isSubmitting: Boolean,
     errorMessage: String?,
+    initialDpAmount: Double? = null,
+    initialPaymentDualId: String? = null,
     onBack: () -> Unit,
-    onPay: (PaymentMethod, Double) -> Unit,
+    onPay: (payment1: PaymentMethod, paidAmount: Double, payment2: PaymentMethod?, dpAmount: Double?) -> Unit,
+    onStateChange: ((isDual: Boolean, payment1: PaymentMethod?, payment2: PaymentMethod?, dpAmount: Double?) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -45,47 +47,127 @@ fun PaymentScreen(
         methods.add(0, PaymentMethod(id = "1", name = "CASH"))
     }
 
-    var selectedPayment by remember {
+    val hasInitialDp = initialDpAmount != null && initialDpAmount > 0
+
+    var isDualPayment by remember { mutableStateOf(hasInitialDp) }
+
+    var selectedPayment1 by remember {
         mutableStateOf(methods.find { it.name.uppercase().contains("CASH") || it.name.uppercase().contains("TUNAI") } ?: methods.firstOrNull())
     }
-    var paidStr by remember { mutableStateOf(grandTotal.toLong().toString()) }
-    var isInitialGrandTotal by remember { mutableStateOf(true) }
+    var selectedPayment2 by remember {
+        mutableStateOf<PaymentMethod?>(
+            if (!initialPaymentDualId.isNullOrBlank()) methods.find { it.id == initialPaymentDualId }
+            else methods.find { it.id != selectedPayment1?.id }
+        )
+    }
+
+    var paidStr1 by remember {
+        mutableStateOf(
+            if (hasInitialDp) initialDpAmount.toLong().toString()
+            else grandTotal.toLong().toString()
+        )
+    }
+    var paidStr2 by remember {
+        mutableStateOf(
+            if (hasInitialDp) (grandTotal - initialDpAmount).coerceAtLeast(0.0).toLong().toString()
+            else "0"
+        )
+    }
+
+    var isInitialGrandTotal by remember { mutableStateOf(!hasInitialDp) }
+    var activeInputTarget by remember { mutableStateOf(1) } // 1 for Method 1, 2 for Method 2
+    var localErrorMsg by remember { mutableStateOf<String?>(null) }
 
     val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
         maximumFractionDigits = 0
     }
 
-    val paidAmount = paidStr.toDoubleOrNull() ?: 0.0
+    val paidAmount1 = paidStr1.toDoubleOrNull() ?: 0.0
+    val paidAmount2 = paidStr2.toDoubleOrNull() ?: 0.0
 
-    val appendKey: (String) -> Unit = { key ->
-        if (key == "C") {
-            paidStr = "0"
-            isInitialGrandTotal = false
-        } else if (key == "BS") {
-            if (isInitialGrandTotal) {
-                paidStr = "0"
-                isInitialGrandTotal = false
-            } else {
-                paidStr = if (paidStr.length > 1) paidStr.dropLast(1) else "0"
-            }
-        } else {
-            if (isInitialGrandTotal) {
-                paidStr = key
-                isInitialGrandTotal = false
-            } else {
-                paidStr = if (paidStr == "0") key else paidStr + key
-            }
+    // Report state changes to parent (HomeScreen / ViewModel)
+    LaunchedEffect(isDualPayment, selectedPayment1, selectedPayment2, paidAmount1) {
+        onStateChange?.invoke(
+            isDualPayment,
+            selectedPayment1,
+            selectedPayment2,
+            if (isDualPayment) paidAmount1 else null
+        )
+    }
+
+    // Dynamic recalculation of Nominal 2 (paidStr2) whenever Nominal 1 changes in Dual Payment mode
+    LaunchedEffect(paidStr1, isDualPayment) {
+        if (isDualPayment && activeInputTarget == 1) {
+            val p1 = paidStr1.toDoubleOrNull() ?: 0.0
+            val remaining = (grandTotal - p1).coerceAtLeast(0.0).toLong()
+            paidStr2 = remaining.toString()
         }
     }
 
-    val isCash = selectedPayment?.name?.uppercase()?.contains("CASH") == true ||
-            selectedPayment?.name?.uppercase()?.contains("TUNAI") == true ||
-            selectedPayment == null
+    val appendKey: (String) -> Unit = { key ->
+        var targetStr = if (activeInputTarget == 1) paidStr1 else paidStr2
+        if (key == "C") {
+            targetStr = "0"
+            isInitialGrandTotal = false
+        } else if (key == "BS") {
+            if (isInitialGrandTotal && activeInputTarget == 1) {
+                targetStr = "0"
+                isInitialGrandTotal = false
+            } else {
+                targetStr = if (targetStr.length > 1) targetStr.dropLast(1) else "0"
+            }
+        } else {
+            if (isInitialGrandTotal && activeInputTarget == 1) {
+                targetStr = key
+                isInitialGrandTotal = false
+            } else {
+                targetStr = if (targetStr == "0") key else targetStr + key
+            }
+        }
+
+        if (activeInputTarget == 1) {
+            paidStr1 = targetStr
+        } else {
+            paidStr2 = targetStr
+        }
+    }
+
+    val isCash1 = selectedPayment1?.name?.uppercase()?.contains("CASH") == true ||
+            selectedPayment1?.name?.uppercase()?.contains("TUNAI") == true ||
+            selectedPayment1 == null
 
     val triggerPay = {
-        if (selectedPayment != null) {
-            val finalPaid = if (isCash) paidAmount else grandTotal
-            onPay(selectedPayment!!, finalPaid)
+        localErrorMsg = null
+        if (selectedPayment1 == null) {
+            localErrorMsg = "Pilih metode pembayaran utama"
+        } else if (!isDualPayment) {
+            val finalPaid = if (isCash1) paidAmount1 else grandTotal
+            if (isCash1 && finalPaid < grandTotal) {
+                // Treated as DP reservation
+                onPay(selectedPayment1!!, finalPaid, null, finalPaid)
+            } else {
+                onPay(selectedPayment1!!, finalPaid, null, null)
+            }
+        } else {
+            // Dual Payment mode
+            val dp = paidAmount1
+            val second = paidAmount2
+            if (dp <= 0) {
+                localErrorMsg = "Nominal pembayaran 1 / DP tidak boleh 0"
+            } else if (selectedPayment2 != null && selectedPayment2?.id == selectedPayment1?.id) {
+                localErrorMsg = "Metode pembayaran 1 dan 2 tidak boleh sama"
+            } else if (selectedPayment2 != null) {
+                // Split Payment (2 Methods)
+                val totalPaid = dp + second
+                if (totalPaid < grandTotal) {
+                    localErrorMsg = "Total pembayaran kurang dari total tagihan (Rp ${formatter.format(grandTotal)})"
+                } else {
+                    onPay(selectedPayment1!!, totalPaid, selectedPayment2, dp)
+                }
+            } else {
+                // DP Only (Reservation)
+                onPay(selectedPayment1!!, dp, null, dp)
+            }
         }
     }
 
@@ -94,7 +176,7 @@ fun PaymentScreen(
         modifier = modifier.fillMaxSize()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
+            // Header Bar with Dual Payment Switch on the Right
             Surface(
                 color = AppPrimaryColor,
                 modifier = Modifier.fillMaxWidth()
@@ -105,32 +187,76 @@ fun PaymentScreen(
                         .statusBarsPadding()
                         .height(56.dp)
                         .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = Color.White)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = Color.White)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "PEMBAYARAN",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "PEMBAYARAN",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Dual Payment",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Switch(
+                            checked = isDualPayment,
+                            onCheckedChange = { checked ->
+                                localErrorMsg = null
+                                isDualPayment = checked
+                                if (checked) {
+                                    if (paidStr1 == grandTotal.toLong().toString() || paidStr1 == "0") {
+                                        val half = (grandTotal / 2).toLong()
+                                        paidStr1 = half.toString()
+                                        paidStr2 = (grandTotal.toLong() - half).toString()
+                                    } else {
+                                        val remaining = (grandTotal - paidAmount1).coerceAtLeast(0.0).toLong()
+                                        paidStr2 = remaining.toString()
+                                    }
+                                    if (selectedPayment2 == null || selectedPayment2?.id == selectedPayment1?.id) {
+                                        selectedPayment2 = methods.find { it.id != selectedPayment1?.id }
+                                    }
+                                } else {
+                                    paidStr1 = grandTotal.toLong().toString()
+                                    paidStr2 = "0"
+                                    isInitialGrandTotal = true
+                                    activeInputTarget = 1
+                                }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = AppPrimaryColor,
+                                checkedTrackColor = Color.White,
+                                uncheckedThumbColor = Color.LightGray,
+                                uncheckedTrackColor = Color.White.copy(alpha = 0.5f)
+                            )
+                        )
+                    }
                 }
             }
 
             if (isTablet) {
-                // ==========================================
-                // TABLET LAYOUT (SPLIT 2 COLUMNS: 40% & 60%)
-                // ==========================================
+                // TABLET LAYOUT
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Left Column: Payment Methods
+                    // Left Column: Payment Methods Selection
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = Color.White,
@@ -144,44 +270,91 @@ fun PaymentScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = "METODE PEMBAYARAN",
-                                fontSize = 14.sp,
+                                text = if (isDualPayment) "METODE 1 (DP / BAYAR UTAMA)" else "METODE PEMBAYARAN",
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Gray
+                                color = AppPrimaryColor
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
                             LazyColumn(
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxSize()
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
                                 items(methods) { method ->
-                                    val isSelected = selectedPayment?.id == method.id
+                                    val isSelected = selectedPayment1?.id == method.id
                                     Surface(
-                                        shape = RoundedCornerShape(10.dp),
+                                        shape = RoundedCornerShape(8.dp),
                                         color = if (isSelected) Color(0xFFE0F7FA) else Color(0xFFFAFAFA),
                                         border = BorderStroke(1.dp, if (isSelected) AppPrimaryColor else Color(0xFFE0E0E0)),
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable { selectedPayment = method }
+                                            .clickable {
+                                                selectedPayment1 = method
+                                                activeInputTarget = 1
+                                            }
                                     ) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(16.dp),
+                                                .padding(12.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            RadioButton(
-                                                selected = isSelected,
-                                                onClick = null
-                                            )
-                                            Spacer(modifier = Modifier.width(12.dp))
+                                            RadioButton(selected = isSelected, onClick = null)
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Text(
                                                 text = method.name,
                                                 fontWeight = FontWeight.Bold,
-                                                fontSize = 15.sp,
+                                                fontSize = 14.sp,
                                                 color = if (isSelected) AppPrimaryColor else Color.DarkGray
                                             )
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (isDualPayment) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "METODE 2 (SISA TAGIHAN / SPLIT)",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE65100)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                LazyColumn(
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    items(methods) { method ->
+                                        val isSelected2 = selectedPayment2?.id == method.id
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (isSelected2) Color(0xFFFFF3E0) else Color(0xFFFAFAFA),
+                                            border = BorderStroke(1.dp, if (isSelected2) Color(0xFFE65100) else Color(0xFFE0E0E0)),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    selectedPayment2 = method
+                                                    activeInputTarget = 2
+                                                }
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(selected = isSelected2, onClick = null)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = method.name,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 14.sp,
+                                                    color = if (isSelected2) Color(0xFFE65100) else Color.DarkGray
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -189,7 +362,7 @@ fun PaymentScreen(
                         }
                     }
 
-                    // Right Column: Summary & Keypad
+                    // Right Column: Summary & Inputs
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = Color.White,
@@ -207,7 +380,7 @@ fun PaymentScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Text(
                                     text = "DETAIL PEMBAYARAN",
@@ -225,7 +398,7 @@ fun PaymentScreen(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(16.dp),
+                                            .padding(14.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -239,16 +412,62 @@ fun PaymentScreen(
                                     }
                                 }
 
-                                if (isCash) {
-                                    OutlinedTextField(
-                                        value = "Rp ${formatter.format(paidAmount)}",
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        label = { Text("Nominal Pembayaran") },
+                                if (isDualPayment) {
+                                    // Row Side-by-Side: Nominal 1 (Left) & Nominal 2 (Right)
+                                    Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                                    )
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        OutlinedTextField(
+                                            value = "Rp ${formatter.format(paidAmount1)}",
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            label = { Text("Nominal 1 (${selectedPayment1?.name ?: ""})") },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { activeInputTarget = 1 },
+                                            textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppPrimaryColor),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = if (activeInputTarget == 1) AppPrimaryColor else Color.Gray
+                                            )
+                                        )
 
+                                        OutlinedTextField(
+                                            value = "Rp ${formatter.format(paidAmount2)}",
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            label = { Text("Nominal 2 (${selectedPayment2?.name ?: ""})") },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { activeInputTarget = 2 },
+                                            textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE65100)),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = if (activeInputTarget == 2) Color(0xFFE65100) else Color.Gray
+                                            )
+                                        )
+                                    }
+                                } else {
+                                    if (isCash1) {
+                                        OutlinedTextField(
+                                            value = "Rp ${formatter.format(paidAmount1)}",
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            label = { Text("Nominal Pembayaran") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "Pembayaran non-tunai (${selectedPayment1?.name}) akan diproses secara otomatis sesuai total tagihan.",
+                                            color = Color.Gray,
+                                            fontSize = 14.sp,
+                                            modifier = Modifier.padding(vertical = 16.dp)
+                                        )
+                                    }
+                                }
+
+                                // Quick Nominal Buttons (10k, 20k, 50k, 100k)
+                                if (isDualPayment || isCash1) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -256,7 +475,11 @@ fun PaymentScreen(
                                         listOf(10000.0, 20000.0, 50000.0, 100000.0).forEach { nominal ->
                                             OutlinedButton(
                                                 onClick = {
-                                                    paidStr = nominal.toLong().toString()
+                                                    if (activeInputTarget == 1) {
+                                                        paidStr1 = nominal.toLong().toString()
+                                                    } else {
+                                                        paidStr2 = nominal.toLong().toString()
+                                                    }
                                                     isInitialGrandTotal = false
                                                 },
                                                 modifier = Modifier.weight(1f),
@@ -297,7 +520,7 @@ fun PaymentScreen(
                                                         shape = RoundedCornerShape(8.dp),
                                                         modifier = Modifier
                                                             .weight(1f)
-                                                            .fillMaxHeight()
+                                                            .height(80.dp)
                                                     ) {
                                                         if (key == "BS") {
                                                             Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = "Delete", tint = Color.DarkGray)
@@ -314,20 +537,14 @@ fun PaymentScreen(
                                             }
                                         }
                                     }
-                                } else {
-                                    Spacer(modifier = Modifier.height(24.dp))
-                                    Text(
-                                        text = "Pembayaran non-tunai (${selectedPayment?.name}) akan diproses secara otomatis sesuai total tagihan.",
-                                        color = Color.Gray,
-                                        fontSize = 14.sp
-                                    )
                                 }
                             }
 
                             Column(modifier = Modifier.fillMaxWidth()) {
-                                if (errorMessage != null) {
+                                val displayErr = localErrorMsg ?: errorMessage
+                                if (displayErr != null) {
                                     Text(
-                                        text = errorMessage,
+                                        text = displayErr,
                                         color = Color.Red,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.SemiBold
@@ -342,14 +559,13 @@ fun PaymentScreen(
                                     shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = 16.dp)
                                         .height(52.dp)
                                 ) {
                                     if (isSubmitting) {
                                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                                     } else {
                                         Text(
-                                            text = "BAYAR",
+                                            text = if (isDualPayment) "PROSES DUAL PAYMENT" else "BAYAR",
                                             color = Color.White,
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.ExtraBold
@@ -361,9 +577,7 @@ fun PaymentScreen(
                     }
                 }
             } else {
-                // ==========================================
-                // MOBILE PHONE LAYOUT (SINGLE COLUMN VERTICAL)
-                // ==========================================
+                // MOBILE PHONE LAYOUT
                 val scrollState = rememberScrollState()
                 Column(
                     modifier = Modifier
@@ -396,7 +610,7 @@ fun PaymentScreen(
                         }
                     }
 
-                    // 2. Metode Pembayaran Chips / Cards
+                    // 2. Metode Pembayaran 1
                     Surface(
                         shape = RoundedCornerShape(10.dp),
                         color = Color.White,
@@ -408,50 +622,49 @@ fun PaymentScreen(
                                 .padding(12.dp)
                         ) {
                             Text(
-                                text = "METODE PEMBAYARAN",
+                                text = if (isDualPayment) "METODE 1 (DP / UTAMA)" else "METODE PEMBAYARAN",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Gray
+                                color = AppPrimaryColor
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
                             val methodRows = remember(methods) { methods.chunked(2) }
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 methodRows.forEach { rowMethods ->
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         rowMethods.forEach { method ->
-                                            val isSelected = selectedPayment?.id == method.id
+                                            val isSelected = selectedPayment1?.id == method.id
                                             Surface(
                                                 shape = RoundedCornerShape(8.dp),
                                                 color = if (isSelected) Color(0xFFE0F7FA) else Color(0xFFFAFAFA),
                                                 border = BorderStroke(1.dp, if (isSelected) AppPrimaryColor else Color(0xFFE0E0E0)),
                                                 modifier = Modifier
                                                     .weight(1f)
-                                                    .clickable { selectedPayment = method }
+                                                    .clickable {
+                                                        selectedPayment1 = method
+                                                        activeInputTarget = 1
+                                                    }
                                             ) {
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                                        .padding(horizontal = 10.dp, vertical = 10.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.Center
                                                 ) {
-                                                    RadioButton(
-                                                        selected = isSelected,
-                                                        onClick = null,
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    RadioButton(selected = isSelected, onClick = null, modifier = Modifier.size(18.dp))
+                                                    Spacer(modifier = Modifier.width(6.dp))
                                                     Text(
                                                         text = method.name,
                                                         fontWeight = FontWeight.Bold,
-                                                        fontSize = 14.sp,
+                                                        fontSize = 13.sp,
                                                         color = if (isSelected) AppPrimaryColor else Color.DarkGray
                                                     )
                                                 }
@@ -466,7 +679,78 @@ fun PaymentScreen(
                         }
                     }
 
-                    // 3. Detail Pembayaran (Numpad / Quick Nominal jika Cash)
+                    // 3. Metode Pembayaran 2 (If Dual Payment)
+                    if (isDualPayment) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color.White,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = "METODE 2 (SISA TAGIHAN / SPLIT)",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE65100)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                val methodRows = remember(methods) { methods.chunked(2) }
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    methodRows.forEach { rowMethods ->
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            rowMethods.forEach { method ->
+                                                val isSelected2 = selectedPayment2?.id == method.id
+                                                Surface(
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    color = if (isSelected2) Color(0xFFFFF3E0) else Color(0xFFFAFAFA),
+                                                    border = BorderStroke(1.dp, if (isSelected2) Color(0xFFE65100) else Color(0xFFE0E0E0)),
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .clickable {
+                                                            selectedPayment2 = method
+                                                            activeInputTarget = 2
+                                                        }
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(horizontal = 10.dp, vertical = 10.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.Center
+                                                    ) {
+                                                        RadioButton(selected = isSelected2, onClick = null, modifier = Modifier.size(18.dp))
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Text(
+                                                            text = method.name,
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 13.sp,
+                                                            color = if (isSelected2) Color(0xFFE65100) else Color.DarkGray
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            if (rowMethods.size < 2) {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 4. Detail Pembayaran & Numpad
                     Surface(
                         shape = RoundedCornerShape(10.dp),
                         color = Color.White,
@@ -485,41 +769,73 @@ fun PaymentScreen(
                                 color = Color.Gray
                             )
 
-                            if (isCash) {
-                                OutlinedTextField(
-                                    value = "Rp ${formatter.format(paidAmount)}",
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("Nominal Pembayaran") },
+                            if (isDualPayment) {
+                                // Row Side-by-Side: Nominal 1 (Left) & Nominal 2 (Right)
+                                Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                                )
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = "Rp ${formatter.format(paidAmount1)}",
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        label = { Text("Nominal 1 (${selectedPayment1?.name ?: ""})") },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable { activeInputTarget = 1 },
+                                        textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppPrimaryColor),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = if (activeInputTarget == 1) AppPrimaryColor else Color.Gray
+                                        )
+                                    )
 
-                                // Quick Cash Buttons (Uang Pas, 10rb, 20rb, 50rb, 100rb)
+                                    OutlinedTextField(
+                                        value = "Rp ${formatter.format(paidAmount2)}",
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        label = { Text("Nominal 2 (${selectedPayment2?.name ?: ""})") },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable { activeInputTarget = 2 },
+                                        textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE65100)),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = if (activeInputTarget == 2) Color(0xFFE65100) else Color.Gray
+                                        )
+                                    )
+                                }
+                            } else {
+                                if (isCash1) {
+                                    OutlinedTextField(
+                                        value = "Rp ${formatter.format(paidAmount1)}",
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        label = { Text("Nominal Pembayaran") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Pembayaran non-tunai (${selectedPayment1?.name}) akan diproses secara otomatis sesuai total tagihan.",
+                                        color = Color.Gray,
+                                        fontSize = 13.sp,
+                                        modifier = Modifier.padding(vertical = 12.dp)
+                                    )
+                                }
+                            }
+
+                            if (isDualPayment || isCash1) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-//                                    OutlinedButton(
-//                                        onClick = {
-//                                            paidStr = grandTotal.toLong().toString()
-//                                            isInitialGrandTotal = false
-//                                        },
-//                                        modifier = Modifier.weight(1f),
-//                                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-//                                        shape = RoundedCornerShape(6.dp)
-//                                    ) {
-//                                        Text(
-//                                            text = "Uang Pas",
-//                                            fontSize = 11.sp,
-//                                            fontWeight = FontWeight.Bold
-//                                        )
-//                                    }
-
                                     listOf(10000.0, 20000.0, 50000.0, 100000.0).forEach { nominal ->
                                         OutlinedButton(
                                             onClick = {
-                                                paidStr = nominal.toLong().toString()
+                                                if (activeInputTarget == 1) {
+                                                    paidStr1 = nominal.toLong().toString()
+                                                } else {
+                                                    paidStr2 = nominal.toLong().toString()
+                                                }
                                                 isInitialGrandTotal = false
                                             },
                                             modifier = Modifier.weight(1f),
@@ -535,7 +851,6 @@ fun PaymentScreen(
                                     }
                                 }
 
-                                // Keypad / Numpad Grid
                                 val keys = listOf(
                                     listOf("1", "2", "3"),
                                     listOf("4", "5", "6"),
@@ -575,20 +890,14 @@ fun PaymentScreen(
                                         }
                                     }
                                 }
-                            } else {
-                                Text(
-                                    text = "Pembayaran non-tunai (${selectedPayment?.name}) akan diproses secara otomatis sesuai total tagihan.",
-                                    color = Color.Gray,
-                                    fontSize = 13.sp,
-                                    modifier = Modifier.padding(vertical = 12.dp)
-                                )
                             }
                         }
                     }
 
-                    if (errorMessage != null) {
+                    val displayErr = localErrorMsg ?: errorMessage
+                    if (displayErr != null) {
                         Text(
-                            text = errorMessage,
+                            text = displayErr,
                             color = Color.Red,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
@@ -608,7 +917,7 @@ fun PaymentScreen(
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {
                             Text(
-                                text = "BAYAR",
+                                text = if (isDualPayment) "PROSES DUAL PAYMENT" else "BAYAR",
                                 color = Color.White,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.ExtraBold

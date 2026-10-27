@@ -98,6 +98,9 @@ class HomeViewModel : ViewModel() {
     val heldOrders = mutableStateListOf<TransactionModel>()
     var showHeldOrdersDialog by mutableStateOf(false)
     var currentDraftId by mutableStateOf<String?>(null)
+    var savedDraftDpAmount by mutableStateOf<Double?>(null)
+    var savedDraftPaymentDualId by mutableStateOf<String?>(null)
+    var savedDraftPaymentId by mutableStateOf<String?>(null)
     var showCashierConfirmDialog by mutableStateOf(false)
     var showPaymentScreen by mutableStateOf(false)
     var pendingShowReceipt by mutableStateOf(false)
@@ -1310,6 +1313,8 @@ class HomeViewModel : ViewModel() {
         discount: Double,
         tax: Double,
         paidAmount: Double,
+        selectedPaymentDual: PaymentMethod? = null,
+        dpAmount: Double? = null,
         nidVoucher: Int? = null,
         nidOutlet: String?,
         orderNote: String? = null,
@@ -1323,6 +1328,8 @@ class HomeViewModel : ViewModel() {
             orderType = orderType,
             selectedCustomer = selectedCustomer,
             selectedPayment = selectedPayment,
+            selectedPaymentDual = selectedPaymentDual,
+            dpAmount = dpAmount,
             discount = discount,
             tax = tax,
             paidAmount = paidAmount,
@@ -1369,6 +1376,9 @@ class HomeViewModel : ViewModel() {
         discount: Double,
         tax: Double,
         nidOutlet: String?,
+        selectedPayment: PaymentMethod? = null,
+        selectedPaymentDual: PaymentMethod? = null,
+        dpAmount: Double? = null,
         orderNote: String? = null,
         onSuccess: () -> Unit = {}
     ) {
@@ -1377,10 +1387,12 @@ class HomeViewModel : ViewModel() {
             cartItems = cartItems,
             orderType = orderType,
             selectedCustomer = selectedCustomer,
-            selectedPayment = null,
+            selectedPayment = selectedPayment,
+            selectedPaymentDual = selectedPaymentDual,
+            dpAmount = dpAmount,
             discount = discount,
             tax = tax,
-            paidAmount = 0.0,
+            paidAmount = dpAmount ?: 0.0,
             nidOutlet = nidOutlet,
             status = "DRAFT",
             cancelNote = null,
@@ -1395,6 +1407,8 @@ class HomeViewModel : ViewModel() {
         orderType: String,
         selectedCustomer: Customer?,
         selectedPayment: PaymentMethod?,
+        selectedPaymentDual: PaymentMethod? = null,
+        dpAmount: Double? = null,
         discount: Double,
         tax: Double,
         paidAmount: Double,
@@ -1441,6 +1455,8 @@ class HomeViewModel : ViewModel() {
             nidOutlet = parsedOutlet,
             nidUser = selectedServedBy?.id,
             nidPayment = selectedPayment?.id,
+            nidPaymentDual = selectedPaymentDual?.id,
+            dpAmount = dpAmount,
             nidVoucher = nidVoucher,
             customerName = selectedCustomer?.name,
             orderType = orderType.ifBlank { defaultOrderType },
@@ -1561,6 +1577,9 @@ class HomeViewModel : ViewModel() {
         showReceiptDialog = false
         lastTransaction = null
         selectedTable = ""
+        savedDraftDpAmount = null
+        savedDraftPaymentDualId = null
+        savedDraftPaymentId = null
     }
 
     fun isShowPrintPreviewEnabled(context: android.content.Context): Boolean {
@@ -1956,6 +1975,39 @@ class HomeViewModel : ViewModel() {
                 voidRefundError = "Gagal merefund item: ${e.message}"
             } finally {
                 isVoidRefundLoading = false
+            }
+        }
+    }
+
+    // Settle Payment / Pelunasan DP
+    var isSettlePaymentLoading by mutableStateOf(false)
+        private set
+    var settlePaymentError by mutableStateOf<String?>(null)
+
+    fun settlePayment(
+        transactionId: String,
+        request: id.my.matahati.pos.model.SettlePaymentRequest,
+        nidOutlet: String? = null,
+        onSuccess: (id.my.matahati.pos.model.TransactionData?) -> Unit
+    ) {
+        viewModelScope.launch {
+            isSettlePaymentLoading = true
+            settlePaymentError = null
+            try {
+                val response = RetrofitClient.apiService.settlePayment(transactionId, request)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val updatedData = response.body()?.data
+                    fetchTransactionHistory(nidOutlet = nidOutlet)
+                    onSuccess(updatedData)
+                } else {
+                    val msg = response.body()?.message ?: "Gagal memproses pelunasan: ${response.message()}"
+                    settlePaymentError = msg
+                }
+            } catch (e: Exception) {
+                Log.e("SettlePayment", "Error: ${e.message}", e)
+                settlePaymentError = "Gagal memproses pelunasan: ${e.message}"
+            } finally {
+                isSettlePaymentLoading = false
             }
         }
     }

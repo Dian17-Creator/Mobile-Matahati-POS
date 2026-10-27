@@ -43,11 +43,28 @@ data class TransactionModel(
     @SerializedName("details") val details: List<TransactionDetailModel>? = null,
     @SerializedName("pos_user") val posUser: PosUserModel? = null,
     @SerializedName("payment") val payment: PaymentMethodDto? = null,
+    @SerializedName("nid_payment_dual") val nidPaymentDual: String? = null,
+    @SerializedName("ndp_amount") val dpAmount: Double = 0.0,
+    @SerializedName("nremaining_amount") val remainingAmount: Double = 0.0,
+    @SerializedName("payment_dual") val paymentDual: PaymentMethodDto? = null,
+    @SerializedName("sales_payments") val salesPayments: List<SalesPaymentItem>? = emptyList(),
     @SerializedName("outlet") val outlet: OutletModel? = null,
     @SerializedName("cpdf_url") val pdfUrl: String? = null,
     @SerializedName("nid_parent_transaction") val nidParentTransaction: String? = null,
     @SerializedName("reversals") val reversals: List<TransactionModel>? = null,
     @SerializedName("parent_transaction") val parentTransaction: TransactionModel? = null
+)
+
+data class SalesPaymentItem(
+    @SerializedName("nid") val id: Long? = null,
+    @SerializedName("nid_payment") val paymentId: Int? = null,
+    @SerializedName("namount") val amount: Double = 0.0,
+    @SerializedName("nchange") val change: Double = 0.0,
+    @SerializedName("cpayment_type") val paymentType: String? = null, // "FULL", "DP", "PELUNASAN", "SPLIT"
+    @SerializedName("creference_no") val referenceNo: String? = null,
+    @SerializedName("cnote") val note: String? = null,
+    @SerializedName("dpaid_at") val paidAt: String? = null,
+    @SerializedName("payment") val paymentMethod: PaymentMethodDto? = null
 )
 
 data class OutletModel(

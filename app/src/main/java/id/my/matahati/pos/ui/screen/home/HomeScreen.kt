@@ -118,6 +118,7 @@ fun HomeScreen(
     var transaksiSearchQuery by remember { mutableStateOf("") }
     var selectedHistoryTransaction by remember { mutableStateOf<id.my.matahati.pos.model.TransactionModel?>(null) }
     var showVoidRefundDialog by remember { mutableStateOf(false) }
+    var showSettlePaymentDialog by remember { mutableStateOf(false) }
     var showItemVoidRefundDialog by remember { mutableStateOf(false) }
     var targetItemForVoidRefund by remember { mutableStateOf<id.my.matahati.pos.model.TransactionDetailModel?>(null) }
     var selectedPaymentType by remember { mutableStateOf("Semua Tipe Pembayaran") }
@@ -600,6 +601,9 @@ fun HomeScreen(
                                                         targetItemForVoidRefund = item
                                                         showItemVoidRefundDialog = true
                                                     },
+                                                    onSettlePaymentClick = {
+                                                        showSettlePaymentDialog = true
+                                                    },
                                                     modifier = Modifier.fillMaxSize()
                                                 )
                                             } else {
@@ -679,6 +683,9 @@ fun HomeScreen(
                                         onItemVoidRefundClick = { item ->
                                             targetItemForVoidRefund = item
                                             showItemVoidRefundDialog = true
+                                        },
+                                        onSettlePaymentClick = {
+                                            showSettlePaymentDialog = true
                                         },
                                         modifier = Modifier.fillMaxSize()
                                     )
@@ -791,6 +798,9 @@ fun HomeScreen(
                                                             discount = discountAmount,
                                                             tax = 0.0,
                                                             nidOutlet = nidOutlet,
+                                                            selectedPayment = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentId },
+                                                            selectedPaymentDual = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentDualId },
+                                                            dpAmount = viewModel.savedDraftDpAmount,
                                                             orderNote = orderNote,
                                                             onSuccess = {
                                                                 cartItems.clear()
@@ -801,6 +811,9 @@ fun HomeScreen(
                                                                 manualDiscountInput = ""
                                                                 orderNote = ""
                                                                 viewModel.currentDraftId = null
+                                                                viewModel.savedDraftDpAmount = null
+                                                                viewModel.savedDraftPaymentDualId = null
+                                                                viewModel.savedDraftPaymentId = null
                                                             }
                                                         )
                                                     }
@@ -1480,6 +1493,9 @@ fun HomeScreen(
                                                                 discount = discountAmount,
                                                                 tax = 0.0,
                                                                 nidOutlet = nidOutlet,
+                                                                selectedPayment = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentId },
+                                                                selectedPaymentDual = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentDualId },
+                                                                dpAmount = viewModel.savedDraftDpAmount,
                                                                 orderNote = orderNote,
                                                                 onSuccess = {
                                                                     cartItems.clear()
@@ -1490,6 +1506,9 @@ fun HomeScreen(
                                                                     manualDiscountInput = ""
                                                                     orderNote = ""
                                                                     viewModel.currentDraftId = null
+                                                                    viewModel.savedDraftDpAmount = null
+                                                                    viewModel.savedDraftPaymentDualId = null
+                                                                    viewModel.savedDraftPaymentId = null
                                                                     isPhoneCartView = false
                                                                 }
                                                             )
@@ -1873,17 +1892,36 @@ fun HomeScreen(
             paymentMethods = viewModel.paymentMethods,
             isSubmitting = viewModel.isSubmitting,
             errorMessage = viewModel.transactionError,
+            initialDpAmount = viewModel.savedDraftDpAmount,
+            initialPaymentDualId = viewModel.savedDraftPaymentDualId,
             onBack = { viewModel.showPaymentScreen = false },
-            onPay = { method, amount ->
+            onStateChange = { isDual, p1, p2, dp ->
+                if (isDual && dp != null && dp > 0) {
+                    viewModel.savedDraftDpAmount = dp
+                    viewModel.savedDraftPaymentDualId = p2?.id
+                    viewModel.savedDraftPaymentId = p1?.id
+                } else if (!isDual) {
+                    viewModel.savedDraftDpAmount = null
+                    viewModel.savedDraftPaymentDualId = null
+                    viewModel.savedDraftPaymentId = p1?.id
+                }
+            },
+            onPay = { payment1, paidAmount, payment2, dpAmount ->
+                viewModel.savedDraftDpAmount = dpAmount
+                viewModel.savedDraftPaymentDualId = payment2?.id
+                viewModel.savedDraftPaymentId = payment1.id
+
                 viewModel.submitTransaction(
                     context = context,
                     cartItems = cartItems,
                     orderType = orderType,
                     selectedCustomer = selectedCustomer,
-                    selectedPayment = method,
+                    selectedPayment = payment1,
+                    selectedPaymentDual = payment2,
+                    dpAmount = dpAmount,
                     discount = discountAmount,
                     tax = 0.0,
-                    paidAmount = amount,
+                    paidAmount = paidAmount,
                     nidVoucher = selectedVoucher?.id?.toIntOrNull(),
                     nidOutlet = nidOutlet,
                     orderNote = orderNote,
@@ -2074,6 +2112,9 @@ fun HomeScreen(
                 }
                 selectedVoucher = null
                 viewModel.currentDraftId = heldOrder.id
+                viewModel.savedDraftDpAmount = heldOrder.dpAmount.takeIf { it > 0 }
+                viewModel.savedDraftPaymentDualId = heldOrder.nidPaymentDual
+                viewModel.savedDraftPaymentId = heldOrder.nidPayment
                 viewModel.removeHeldOrderLocal(heldOrder.id)
                 viewModel.showHeldOrdersDialog = false
             },
@@ -2283,6 +2324,36 @@ fun HomeScreen(
         )
     }
 
+    if (showSettlePaymentDialog && selectedHistoryTransaction != null) {
+        id.my.matahati.pos.ui.screen.home.components.SettlePaymentDialog(
+            transactionNo = selectedHistoryTransaction!!.transactionNo,
+            remainingAmount = selectedHistoryTransaction!!.remainingAmount,
+            paymentMethods = viewModel.paymentMethods,
+            isSubmitting = viewModel.isSettlePaymentLoading,
+            errorMessage = viewModel.settlePaymentError,
+            onDismiss = {
+                if (!viewModel.isSettlePaymentLoading) {
+                    showSettlePaymentDialog = false
+                }
+            },
+            onSubmit = { request ->
+                viewModel.settlePayment(
+                    transactionId = selectedHistoryTransaction!!.id,
+                    request = request,
+                    nidOutlet = nidOutlet,
+                    onSuccess = { updatedData ->
+                        showSettlePaymentDialog = false
+                        if (updatedData?.transaction != null) {
+                            selectedHistoryTransaction = updatedData.transaction
+                        }
+                        shiftViewModel.checkCurrentShift(nidOutlet)
+                        android.widget.Toast.makeText(context, "Pelunasan berhasil diproses", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+        )
+    }
+
     // 1. Transaction Success Popup
     if (viewModel.showSuccessDialog && viewModel.lastTransaction != null) {
         TransactionSuccessDialog(
@@ -2318,33 +2389,35 @@ fun HomeScreen(
 
     // 2. Receipt Modal Preview
     if (viewModel.showReceiptDialog && viewModel.lastTransaction != null) {
-        ReceiptDialog(
-            transactionData = viewModel.lastTransaction!!,
-            cashierName = userName,
-            savedOutletName = outletName,
-            paymentMethods = viewModel.paymentMethods,
-            isPrinting = viewModel.isPrinting,
-            isOrderTypeSelected = viewModel.isOrderTypeSelectedByUser,
-            isPrintPreviewEnabled = viewModel.isShowPrintPreviewEnabled(context),
-            isPdfDialogEnabled = viewModel.isShowPdfDialogEnabled(context),
-            onPrint = {
-                if (viewModel.selectedPrinterAddress == null) {
-                    viewModel.openPrinterSelection(printerManager)
-                } else {
-                    viewModel.printReceipt(context, viewModel.lastTransaction!!, userName, outletName)
-                }
-            },
-            onDismiss = {
-                viewModel.closeReceiptDialog()
-                if (currentScreen == "pos") {
-                    if (viewModel.isShowPdfDialogEnabled(context)) {
-                        showPdfConfirmDialog = true
+        key(viewModel.lastTransaction?.transaction?.id) {
+            ReceiptDialog(
+                transactionData = viewModel.lastTransaction!!,
+                cashierName = userName,
+                savedOutletName = outletName,
+                paymentMethods = viewModel.paymentMethods,
+                isPrinting = viewModel.isPrinting,
+                isOrderTypeSelected = viewModel.isOrderTypeSelectedByUser,
+                isPrintPreviewEnabled = viewModel.isShowPrintPreviewEnabled(context),
+                isPdfDialogEnabled = viewModel.isShowPdfDialogEnabled(context),
+                onPrint = {
+                    if (viewModel.selectedPrinterAddress == null) {
+                        viewModel.openPrinterSelection(printerManager)
                     } else {
-                        autoFinishCheckout()
+                        viewModel.printReceipt(context, viewModel.lastTransaction!!, userName, outletName)
+                    }
+                },
+                onDismiss = {
+                    viewModel.closeReceiptDialog()
+                    if (currentScreen == "pos") {
+                        if (viewModel.isShowPdfDialogEnabled(context)) {
+                            showPdfConfirmDialog = true
+                        } else {
+                            autoFinishCheckout()
+                        }
                     }
                 }
-            }
-        )
+            )
+        }
     }
 
     // 3. Optional PDF Confirmation Dialog

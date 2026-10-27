@@ -41,6 +41,7 @@ fun TransactionDetailScreen(
     onPrintReceipt: (() -> Unit)? = null,
     onVoidRefundClick: () -> Unit = {},
     onItemVoidRefundClick: ((TransactionDetailModel?) -> Unit)? = null,
+    onSettlePaymentClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -59,6 +60,7 @@ fun TransactionDetailScreen(
     val hasPartialHistory = transaction.details?.any { it.qtyVoid > 0 || it.qtyRefund > 0 } == true
 
     val displayGrandTotal = transaction.grandTotal.toDoubleOrNull() ?: 0.0
+    val isDpPending = statusUpper == "PENDING" && transaction.remainingAmount > 0
 
     var showPartialActionWarningDialog by remember { mutableStateOf(false) }
 
@@ -203,12 +205,62 @@ fun TransactionDetailScreen(
                         text = "Catatan: ${transaction.orderNote}"
                     )
                 }
-                val paymentName = transaction.payment?.cname?.uppercase() ?: "CASH"
+                val payment1Name = transaction.payment?.cname?.uppercase() ?: "CASH"
+                val payment2Name = transaction.paymentDual?.cname?.uppercase()
+                val isDual = !payment2Name.isNullOrBlank()
+
+                val paymentInfoText = when {
+                    isCancelled -> "Rp ${formatStringNum(displayGrandTotal.toString())} - $payment1Name (${transaction.status})"
+                    isDual -> "Rp ${formatStringNum(displayGrandTotal.toString())} - $payment1Name & $payment2Name (Split Payment)"
+                    isDpPending -> "DP Rp ${formatStringNum(transaction.dpAmount.toString())} (Sisa Rp ${formatStringNum(transaction.remainingAmount.toString())}) - $payment1Name"
+                    else -> "Rp ${formatStringNum(displayGrandTotal.toString())} - $payment1Name"
+                }
+
                 InfoIconRow(
                     icon = Icons.Default.AttachMoney,
-                    text = if (isCancelled) "Rp ${formatStringNum(displayGrandTotal.toString())} - $paymentName (${transaction.status})" else "Rp ${formatStringNum(displayGrandTotal.toString())} - $paymentName",
+                    text = paymentInfoText,
                     textColor = if (isCancelled) Color.Red else Color.Black
                 )
+
+                if (isDpPending) {
+                    Surface(
+                        color = Color(0xFFFFF3E0),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "STATUS: DP / RESERVASI",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE65100)
+                                )
+                                Text(
+                                    text = "Sisa Tagihan: Rp ${formatStringNum(transaction.remainingAmount.toString())}",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFFE65100)
+                                )
+                            }
+                            if (onSettlePaymentClick != null) {
+                                Button(
+                                    onClick = onSettlePaymentClick,
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100)),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+                                ) {
+                                    Text("PELUNASAN", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // Table Header
@@ -525,6 +577,28 @@ fun TransactionDetailScreen(
                             onDismissRequest = { showOptionsMenu = false },
                             modifier = Modifier.background(Color.White)
                         ) {
+                            if (isDpPending && onSettlePaymentClick != null) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Payments,
+                                                contentDescription = null,
+                                                tint = Color(0xFFE65100),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text("Pelunasan DP", color = Color(0xFFE65100), fontWeight = FontWeight.Bold)
+                                        }
+                                    },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        onSettlePaymentClick()
+                                    }
+                                )
+                                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                            }
+
                             DropdownMenuItem(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
