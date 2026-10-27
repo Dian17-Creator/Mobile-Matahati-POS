@@ -141,21 +141,65 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(BOLD_ON.toList())
         out.addAll(drawTwoColumns("GRAND TOTAL", formatNum(trx.grandTotal)).toByteArray().toList())
         out.addAll(BOLD_OFF.toList())
-        
-        out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
-        val resolvedPaymentName = trx.payment?.cname?.takeIf { it.isNotBlank() }
+
+        val resolvedPayment1Name = trx.payment?.cname?.takeIf { it.isNotBlank() }
             ?: paymentMethods.find { it.id == trx.nidPayment }?.name
             ?: "CASH"
-        val paymentName = resolvedPaymentName.uppercase()
-        out.addAll(drawTwoColumns(paymentName, "").toByteArray().toList())
-        out.addAll(drawTwoColumns("Change", formatNum(trx.changeAmount)).toByteArray().toList())
+        val payment1Name = resolvedPayment1Name.uppercase()
+
+        val resolvedPayment2Name = trx.paymentDual?.cname?.takeIf { it.isNotBlank() }
+            ?: paymentMethods.find { it.id == trx.nidPaymentDual }?.name
+        val payment2Name = resolvedPayment2Name?.uppercase()
+
+        val isDualPayment = !payment2Name.isNullOrBlank()
+        val isDpReservation = (trx.status.uppercase() == "PENDING" && trx.remainingAmount > 0) || (trx.dpAmount > 0 && trx.remainingAmount > 0)
+        val salesPayments = trx.salesPayments
+
+        val totalPaid = trx.paidAmount.toDoubleOrNull() ?: 0.0
+        val grandTotalNum = trx.grandTotal.toDoubleOrNull() ?: 0.0
+        val changeCalculated = maxOf(0.0, totalPaid - grandTotalNum)
+        val changeToDisplay = if (changeCalculated > 0) changeCalculated else (trx.changeAmount.toDoubleOrNull() ?: 0.0)
+
+        if (!salesPayments.isNullOrEmpty() && salesPayments.size > 1) {
+            out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
+            salesPayments.forEachIndexed { index, sp ->
+                val pName = sp.paymentMethod?.cname?.uppercase() ?: "BAYAR ${index + 1}"
+                out.addAll(drawTwoColumns(pName, formatNum(sp.amount.toString())).toByteArray().toList())
+            }
+            if (trx.remainingAmount > 0) {
+                out.addAll(drawTwoColumns("Sisa Tagihan", formatNum(trx.remainingAmount.toString())).toByteArray().toList())
+            }
+            out.addAll(drawTwoColumns("Change", formatNum(changeToDisplay.toString())).toByteArray().toList())
+        } else if (isDualPayment) {
+            val dpVal = if (trx.dpAmount > 0) trx.dpAmount else totalPaid / 2
+            val secondVal = maxOf(0.0, totalPaid - dpVal)
+
+            out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
+            out.addAll(drawTwoColumns(payment1Name, formatNum(dpVal.toString())).toByteArray().toList())
+            out.addAll(drawTwoColumns(payment2Name, formatNum(secondVal.toString())).toByteArray().toList())
+            out.addAll(drawTwoColumns("Change", formatNum(changeToDisplay.toString())).toByteArray().toList())
+        } else if (isDpReservation) {
+            val dpVal = if (trx.dpAmount > 0) trx.dpAmount else (trx.paidAmount.toDoubleOrNull() ?: 0.0)
+            out.addAll(drawTwoColumns("DP ($payment1Name)", formatNum(dpVal.toString())).toByteArray().toList())
+            out.addAll(drawTwoColumns("SISA TAGIHAN", formatNum(trx.remainingAmount.toString())).toByteArray().toList())
+            out.addAll(drawTwoColumns("Change", formatNum(changeToDisplay.toString())).toByteArray().toList())
+        } else {
+            out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
+            out.addAll(drawTwoColumns(payment1Name, "").toByteArray().toList())
+            out.addAll(drawTwoColumns("Change", formatNum(changeToDisplay.toString())).toByteArray().toList())
+        }
 
         // 9. Status & Footer (Center)
         out.addAll("\n".toByteArray().toList())
         out.addAll(ALIGN_CENTER.toList())
         out.addAll(drawLine("=").toByteArray().toList())
         out.addAll(BOLD_ON.toList())
-        out.addAll("Status: ${trx.status}\n".toByteArray().toList())
+        val displayStatus = when {
+            isDpReservation -> "Status: DP / RESERVASI"
+            trx.status.uppercase() == "PAID" || trx.status.uppercase() == "SUCCESS" -> "Status: LUNAS"
+            else -> "Status: ${trx.status}"
+        }
+        out.addAll("$displayStatus\n".toByteArray().toList())
         out.addAll(BOLD_OFF.toList())
         out.addAll(drawLine("=").toByteArray().toList())
         

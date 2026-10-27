@@ -75,6 +75,12 @@ interface ApiService {
     @POST("api/pos/transactions")
     suspend fun submitTransaction(@Body request: id.my.matahati.pos.model.TransactionRequest): Response<id.my.matahati.pos.model.TransactionResponse>
 
+    @POST("api/pos/transactions/{id}/pay")
+    suspend fun settlePayment(
+        @Path("id") id: String,
+        @Body request: id.my.matahati.pos.model.SettlePaymentRequest
+    ): Response<id.my.matahati.pos.model.TransactionResponse>
+
     @GET("api/pos/transactions")
     suspend fun getTransactions(
         @Query("start_date") startDate: String? = null,

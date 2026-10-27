@@ -41,8 +41,8 @@ fun ReceiptDialog(
     val details = transactionData.details ?: emptyList()
     val context = LocalContext.current
 
-    var showPreviewModal by remember { mutableStateOf(isPrintPreviewEnabled) }
-    var showPdfConfirm by remember { mutableStateOf(!isPrintPreviewEnabled && isPdfDialogEnabled) }
+    var showPreviewModal by remember(trx.id, isPrintPreviewEnabled) { mutableStateOf(isPrintPreviewEnabled) }
+    var showPdfConfirm by remember(trx.id, isPrintPreviewEnabled, isPdfDialogEnabled) { mutableStateOf(!isPrintPreviewEnabled && isPdfDialogEnabled) }
     
     // Prioritize cashier name from transaction data if available
     val finalCashierName = trx.posUser?.user?.name ?: cashierName
@@ -92,8 +92,9 @@ fun ReceiptDialog(
                     shape = RoundedCornerShape(8.dp),
                     color = Color.White,
                     modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .fillMaxHeight(0.85f)
+                        .widthIn(max = 380.dp)
+                        .fillMaxWidth(0.9f)
+                        .fillMaxHeight(0.88f)
                         .padding(16.dp)
                 ) {
                     Column(
@@ -183,17 +184,44 @@ fun ReceiptDialog(
                                     Spacer(modifier = Modifier.height(4.dp))
                                     RowAmount("GRAND TOTAL", formatStringNum(trx.grandTotal), true)
                                     RowAmount("Paid", formatStringNum(trx.paidAmount))
-                                    val resolvedPaymentName = trx.payment?.cname?.takeIf { it.isNotBlank() }
+
+                                    val resolvedPayment1Name = trx.payment?.cname?.takeIf { it.isNotBlank() }
                                         ?: paymentMethods.find { it.id == trx.nidPayment }?.name
                                         ?: "CASH"
-                                    val paymentName = resolvedPaymentName.uppercase()
-                                    Text(
-                                        text = paymentName,
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 12.sp,
-                                        modifier = Modifier.padding(vertical = 1.dp)
-                                    )
-                                    RowAmount("Change", formatStringNum(trx.changeAmount))
+                                    val payment1Name = resolvedPayment1Name.uppercase()
+
+                                    val resolvedPayment2Name = trx.paymentDual?.cname?.takeIf { it.isNotBlank() }
+                                        ?: paymentMethods.find { it.id == trx.nidPaymentDual }?.name
+                                    val payment2Name = resolvedPayment2Name?.uppercase()
+
+                                    val isDual = !payment2Name.isNullOrBlank()
+                                    val isDpPending = (trx.status.uppercase() == "PENDING" && trx.remainingAmount > 0) || (trx.dpAmount > 0 && trx.remainingAmount > 0)
+
+                                    if (isDual) {
+                                        val totalPaid = trx.paidAmount.toDoubleOrNull() ?: 0.0
+                                        val dpVal = if (trx.dpAmount > 0) trx.dpAmount else totalPaid / 2
+                                        val secondVal = maxOf(0.0, totalPaid - dpVal)
+                                        RowAmount(payment1Name, formatStringNum(dpVal.toString()))
+                                        RowAmount(payment2Name, formatStringNum(secondVal.toString()))
+                                    } else if (isDpPending) {
+                                        val dpVal = if (trx.dpAmount > 0) trx.dpAmount else (trx.paidAmount.toDoubleOrNull() ?: 0.0)
+                                        RowAmount("DP ($payment1Name)", formatStringNum(dpVal.toString()))
+                                        RowAmount("SISA TAGIHAN", formatStringNum(trx.remainingAmount.toString()))
+                                    } else {
+                                        Text(
+                                            text = payment1Name,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 12.sp,
+                                            modifier = Modifier.padding(vertical = 1.dp)
+                                        )
+                                    }
+
+                                    val totalPaid = trx.paidAmount.toDoubleOrNull() ?: 0.0
+                                    val grandTotal = trx.grandTotal.toDoubleOrNull() ?: 0.0
+                                    val changeCalculated = maxOf(0.0, totalPaid - grandTotal)
+                                    val changeToDisplay = if (changeCalculated > 0) changeCalculated else (trx.changeAmount.toDoubleOrNull() ?: 0.0)
+
+                                    RowAmount("Change", formatStringNum(changeToDisplay.toString()))
                                 }
 
                                 Spacer(modifier = Modifier.height(16.dp))
