@@ -551,7 +551,7 @@ fun PaymentScreen(
                                                         shape = RoundedCornerShape(8.dp),
                                                         modifier = Modifier
                                                             .weight(1f)
-                                                            .height(80.dp)
+                                                            .height(85.dp)
                                                     ) {
                                                         if (key == "BS") {
                                                             Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = "Delete", tint = Color.DarkGray)
@@ -583,6 +583,8 @@ fun PaymentScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
 
+                                Spacer(modifier = Modifier.height(8.dp))
+
                                 Button(
                                     onClick = triggerPay,
                                     enabled = !isSubmitting,
@@ -590,7 +592,7 @@ fun PaymentScreen(
                                     shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(52.dp)
+                                        .height(50.dp)
                                 ) {
                                     if (isSubmitting) {
                                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
@@ -926,7 +928,7 @@ fun PaymentScreen(
                                                     shape = RoundedCornerShape(8.dp),
                                                     modifier = Modifier
                                                         .weight(1f)
-                                                        .height(48.dp)
+                                                        .height(45.dp)
                                                 ) {
                                                     if (key == "BS") {
                                                         Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = "Delete", tint = Color.DarkGray)
@@ -964,7 +966,7 @@ fun PaymentScreen(
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
+                            .height(45.dp)
                     ) {
                         if (isSubmitting) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
