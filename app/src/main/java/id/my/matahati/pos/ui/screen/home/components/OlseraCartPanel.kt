@@ -192,8 +192,9 @@ fun OlseraCartPanel(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    // Right: Plus Button
-                    val isHoldEnabled = !isSubmitting && cartItems.isNotEmpty()
+                    // Right: Plus Button (Simpan ke Pesanan Menggantung / Draft)
+                    val isReservation = orderType.uppercase() == "RESERVATION" || orderType.uppercase() == "RESERVASI"
+                    val isHoldEnabled = !isSubmitting && (cartItems.isNotEmpty() || isReservation)
                     IconButton(
                         onClick = onHoldCart,
                         enabled = isHoldEnabled,
@@ -528,7 +529,8 @@ fun OlseraCartPanel(
                         .height(55.dp)
                         .fillMaxWidth(),
                     onClick = {
-                        if (cartItems.isNotEmpty()) onCheckoutClick()
+                        val isReservation = orderType.uppercase() == "RESERVATION" || orderType.uppercase() == "RESERVASI"
+                        if (cartItems.isNotEmpty() || isReservation) onCheckoutClick()
                     }
                 ) {
                     Box(

@@ -295,7 +295,7 @@ fun PaymentScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
 
                                     LazyColumn(
-                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp),
                                         modifier = Modifier.fillMaxSize()
                                     ) {
                                         items(methods) { method ->
@@ -355,7 +355,7 @@ fun PaymentScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
 
                                     LazyColumn(
-                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp),
                                         modifier = Modifier.fillMaxSize()
                                     ) {
                                         items(methods) { method ->
@@ -416,7 +416,7 @@ fun PaymentScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
 
                                     LazyColumn(
-                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp),
                                         modifier = Modifier.fillMaxSize()
                                     ) {
                                         items(methods) { method ->
