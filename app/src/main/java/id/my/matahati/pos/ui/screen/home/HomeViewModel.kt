@@ -1423,7 +1423,9 @@ class HomeViewModel : ViewModel() {
     ) {
         if (isSubmitting) return
 
-        if (status != "CANCELLED" && cartItems.isEmpty()) {
+        val isReservation = orderType.uppercase() == "RESERVATION" || orderType.uppercase() == "RESERVASI"
+
+        if (status != "CANCELLED" && cartItems.isEmpty() && !isReservation) {
             transactionError = "Cart kosong."
             return
         }
@@ -1437,13 +1439,15 @@ class HomeViewModel : ViewModel() {
         isSubmitting = true
         transactionError = null
 
-        val details = cartItems.map {
-            TransactionDetailRequest(
-                productId = it.product.id,
-                quantity = it.quantity,
-                note = it.encodeNoteWithSentQty()
-            )
-        }
+        val details = cartItems
+            .filter { it.product.id.toIntOrNull() != null }
+            .map {
+                TransactionDetailRequest(
+                    productId = it.product.id,
+                    quantity = it.quantity,
+                    note = it.encodeNoteWithSentQty()
+                )
+            }
 
         val parsedOutlet = nidOutlet?.toIntOrNull() ?: 1
         isOrderTypeSelectedByUser = orderType.isNotBlank()

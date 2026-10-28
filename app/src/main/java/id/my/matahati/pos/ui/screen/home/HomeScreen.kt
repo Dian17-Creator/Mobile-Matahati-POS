@@ -190,7 +190,8 @@ fun HomeScreen(
     }
 
     val triggerCheckout: () -> Unit = {
-        if (cartItems.isNotEmpty()) {
+        val isReservation = orderType.uppercase() == "RESERVATION" || orderType.uppercase() == "RESERVASI"
+        if (cartItems.isNotEmpty() || isReservation) {
             if (shiftViewModel.currentShift == null) {
                 validationWarningMessage = "Kasir belum memulai shift. Silakan buka shift terlebih dahulu di menu Shift."
             } else if (selectedCustomer == null) {
@@ -204,6 +205,8 @@ fun HomeScreen(
                     viewModel.showPaymentScreen = true
                 }
             }
+        } else {
+            validationWarningMessage = "Keranjang belanja masih kosong"
         }
     }
 
@@ -790,7 +793,8 @@ fun HomeScreen(
                                                     showCancelDialog = true
                                                 },
                                                 onHoldCart = {
-                                                    if (cartItems.isNotEmpty()) {
+                                                    val isReservation = orderType.uppercase() == "RESERVATION" || orderType.uppercase() == "RESERVASI"
+                                                    if (cartItems.isNotEmpty() || isReservation) {
                                                         viewModel.holdCurrentCart(
                                                             cartItems = cartItems,
                                                             orderType = orderType,
@@ -1485,7 +1489,8 @@ fun HomeScreen(
                                                     onDiscountClick = { showDiscountDialog = true },
                                                     onClearCart = { showCancelDialog = true },
                                                     onHoldCart = {
-                                                        if (cartItems.isNotEmpty()) {
+                                                        val isReservation = orderType.uppercase() == "RESERVATION" || orderType.uppercase() == "RESERVASI"
+                                                        if (cartItems.isNotEmpty() || isReservation) {
                                                             viewModel.holdCurrentCart(
                                                                 cartItems = cartItems,
                                                                 orderType = orderType,
