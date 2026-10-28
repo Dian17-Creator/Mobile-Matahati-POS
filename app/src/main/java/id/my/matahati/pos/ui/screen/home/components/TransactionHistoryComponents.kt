@@ -9,16 +9,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import id.my.matahati.pos.R
 import id.my.matahati.pos.model.TransactionModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -163,16 +164,25 @@ fun TransactionItemCard(
             val showRedIcon = isSelfCancelled || isReversalChild
             Surface(
                 shape = CircleShape,
-                color = if (showRedIcon) Color(0xFFFEEBEE) else Color(0xFFE0F7FA),
-                modifier = Modifier.size(38.dp)
+                color = if (showRedIcon) Color(0xFFFEEBEE) else Color(0xFFFFFFFF),
+                modifier = Modifier.size(30.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = if (showRedIcon) Icons.Default.Block else Icons.Default.Receipt,
-                        contentDescription = null,
-                        tint = if (showRedIcon) Color.Red else AppPrimaryColor,
-                        modifier = Modifier.size(22.dp)
-                    )
+                    if (showRedIcon) {
+                        Icon(
+                            imageVector = Icons.Default.Block,
+                            contentDescription = null,
+                            tint = Color.Red,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_matahati_money),
+                            contentDescription = null,
+                            tint = AppPrimaryColor,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
                 }
             }
 
