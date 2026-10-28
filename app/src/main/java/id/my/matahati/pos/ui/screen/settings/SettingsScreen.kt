@@ -268,139 +268,139 @@ fun SettingsScreen(
                     }
                 }
 
-                // Payment Options Card
+                // Payment Options Card (Combined Konfirmasi Kasir, Preview Cetak, and Tampilkan Dialog Cetak PDF)
                 Card(
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(
+                        // Setting 1: Konfirmasi Kasir
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .padding(end = 16.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Konfirmasi Kasir",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = Color(0xFF212121)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Tampilkan opsi konfirmasi kasir sebelum masuk ke halaman pembayaran",
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                lineHeight = 16.sp
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 16.dp)
+                            ) {
+                                Text(
+                                    text = "Konfirmasi Kasir",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color(0xFF212121)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Tampilkan opsi konfirmasi kasir sebelum masuk ke halaman pembayaran",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    lineHeight = 16.sp
+                                )
+                            }
+
+                            Switch(
+                                checked = viewModel.isConfirmOrderEnabled,
+                                onCheckedChange = { viewModel.updateConfirmOrderEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = SettingsBlue,
+                                    uncheckedThumbColor = Color.White,
+                                    uncheckedTrackColor = Color.LightGray
+                                )
                             )
                         }
 
-                        Switch(
-                            checked = viewModel.isConfirmOrderEnabled,
-                            onCheckedChange = { viewModel.updateConfirmOrderEnabled(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = SettingsBlue,
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = Color.LightGray
-                            )
-                        )
-                    }
-                }
+                        HorizontalDivider(color = Color(0xFFEEEEEE))
 
-                // Preview Cetak Option Card
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
+                        // Setting 2: Preview Cetak
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .padding(end = 16.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Preview Cetak",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = Color(0xFF212121)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Tampilkan pop-up preview invoice dan pesanan sebelum mencetak ke printer",
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                lineHeight = 16.sp
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 16.dp)
+                            ) {
+                                Text(
+                                    text = "Preview Cetak",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color(0xFF212121)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Tampilkan pop-up preview invoice dan pesanan sebelum mencetak ke printer",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    lineHeight = 16.sp
+                                )
+                            }
+
+                            Switch(
+                                checked = viewModel.isShowPrintPreviewEnabled,
+                                onCheckedChange = { viewModel.updateShowPrintPreviewEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = SettingsBlue,
+                                    uncheckedThumbColor = Color.White,
+                                    uncheckedTrackColor = Color.LightGray
+                                )
                             )
                         }
 
-                        Switch(
-                            checked = viewModel.isShowPrintPreviewEnabled,
-                            onCheckedChange = { viewModel.updateShowPrintPreviewEnabled(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = SettingsBlue,
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = Color.LightGray
-                            )
-                        )
-                    }
+                        HorizontalDivider(color = Color(0xFFEEEEEE))
 
-                    HorizontalDivider(color = Color(0xFFEEEEEE))
-
-                    // Setting 3: Tampilkan Dialog Cetak PDF
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
+                        // Setting 3: Tampilkan Dialog Cetak PDF
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .padding(end = 16.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Tampilkan Dialog Cetak PDF",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = Color(0xFF212121)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Tampilkan pop-up konfirmasi cetak PDF setelah transaksi diselesaikan",
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                lineHeight = 16.sp
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 16.dp)
+                            ) {
+                                Text(
+                                    text = "Tampilkan Dialog Cetak PDF",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color(0xFF212121)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Tampilkan pop-up konfirmasi cetak PDF setelah transaksi diselesaikan",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    lineHeight = 16.sp
+                                )
+                            }
+
+                            Switch(
+                                checked = viewModel.isShowPdfDialogEnabled,
+                                onCheckedChange = { viewModel.updateShowPdfDialogEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = SettingsBlue,
+                                    uncheckedThumbColor = Color.White,
+                                    uncheckedTrackColor = Color.LightGray
+                                )
                             )
                         }
-
-                        Switch(
-                            checked = viewModel.isShowPdfDialogEnabled,
-                            onCheckedChange = { viewModel.updateShowPdfDialogEnabled(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = SettingsBlue,
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = Color.LightGray
-                            )
-                        )
                     }
                 }
             }
