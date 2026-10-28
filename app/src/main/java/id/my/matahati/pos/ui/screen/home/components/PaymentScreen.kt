@@ -266,104 +266,188 @@ fun PaymentScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Left Column: Payment Methods Selection
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.White,
+                    Column(
                         modifier = Modifier
                             .weight(0.4f)
-                            .fillMaxHeight()
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = if (isDualPayment) "METODE 1 (DP / BAYAR UTAMA)" else "METODE PEMBAYARAN",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AppPrimaryColor
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            LazyColumn(
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.weight(1f)
+                        if (isDualPayment) {
+                            // Card 1: Metode 1 (DP / Bayar Utama)
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
                             ) {
-                                items(methods) { method ->
-                                    val isSelected = selectedPayment1?.id == method.id
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = if (isSelected) Color(0xFFE0F7FA) else Color(0xFFFAFAFA),
-                                        border = BorderStroke(1.dp, if (isSelected) AppPrimaryColor else Color(0xFFE0E0E0)),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                selectedPayment1 = method
-                                                activeInputTarget = 1
-                                            }
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = "METODE 1 (DP / BAYAR UTAMA)",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppPrimaryColor
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    LazyColumn(
+                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier.fillMaxSize()
                                     ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            RadioButton(selected = isSelected, onClick = null)
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = method.name,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp,
-                                                color = if (isSelected) AppPrimaryColor else Color.DarkGray
-                                            )
+                                        items(methods) { method ->
+                                            val isSelected = selectedPayment1?.id == method.id
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = if (isSelected) Color(0xFFE0F7FA) else Color(0xFFFAFAFA),
+                                                border = BorderStroke(1.dp, if (isSelected) AppPrimaryColor else Color(0xFFE0E0E0)),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable {
+                                                        selectedPayment1 = method
+                                                        activeInputTarget = 1
+                                                    }
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(80.dp)
+                                                        .padding(12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    RadioButton(selected = isSelected, onClick = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = method.name,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 14.sp,
+                                                        color = if (isSelected) AppPrimaryColor else Color.DarkGray
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
 
-                            if (isDualPayment) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = "METODE 2 (SISA TAGIHAN / SPLIT)",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFE65100)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                LazyColumn(
-                                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                                    modifier = Modifier.weight(1f)
+                            // Card 2: Metode 2 (Sisa Tagihan / Split)
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(16.dp)
                                 ) {
-                                    items(methods) { method ->
-                                        val isSelected2 = selectedPayment2?.id == method.id
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = if (isSelected2) Color(0xFFFFF3E0) else Color(0xFFFAFAFA),
-                                            border = BorderStroke(1.dp, if (isSelected2) Color(0xFFE65100) else Color(0xFFE0E0E0)),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    selectedPayment2 = method
-                                                    activeInputTarget = 2
-                                                    isInitialTarget2 = true
-                                                }
-                                        ) {
-                                            Row(
+                                    Text(
+                                        text = "METODE 2 (SISA TAGIHAN / SPLIT)",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFE65100)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    LazyColumn(
+                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        items(methods) { method ->
+                                            val isSelected2 = selectedPayment2?.id == method.id
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = if (isSelected2) Color(0xFFFFF3E0) else Color(0xFFFAFAFA),
+                                                border = BorderStroke(1.dp, if (isSelected2) Color(0xFFE65100) else Color(0xFFE0E0E0)),
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(12.dp),
-                                                verticalAlignment = Alignment.CenterVertically
+                                                    .clickable {
+                                                        selectedPayment2 = method
+                                                        activeInputTarget = 2
+                                                        isInitialTarget2 = true
+                                                    }
                                             ) {
-                                                RadioButton(selected = isSelected2, onClick = null)
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = method.name,
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 14.sp,
-                                                    color = if (isSelected2) Color(0xFFE65100) else Color.DarkGray
-                                                )
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(80.dp)
+                                                        .padding(12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    RadioButton(selected = isSelected2, onClick = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = method.name,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 14.sp,
+                                                        color = if (isSelected2) Color(0xFFE65100) else Color.DarkGray
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // Single Card for Single Payment Mode
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = "METODE PEMBAYARAN",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppPrimaryColor
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    LazyColumn(
+                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        items(methods) { method ->
+                                            val isSelected = selectedPayment1?.id == method.id
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = if (isSelected) Color(0xFFE0F7FA) else Color(0xFFFAFAFA),
+                                                border = BorderStroke(1.dp, if (isSelected) AppPrimaryColor else Color(0xFFE0E0E0)),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable {
+                                                        selectedPayment1 = method
+                                                        activeInputTarget = 1
+                                                    }
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(80.dp)
+                                                        .padding(12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    RadioButton(selected = isSelected, onClick = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = method.name,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 14.sp,
+                                                        color = if (isSelected) AppPrimaryColor else Color.DarkGray
+                                                    )
+                                                }
                                             }
                                         }
                                     }
