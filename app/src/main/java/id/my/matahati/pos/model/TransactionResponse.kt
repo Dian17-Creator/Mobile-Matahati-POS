@@ -23,6 +23,7 @@ data class TransactionModel(
     @SerializedName("nid") val id: String,
     @SerializedName("cnotransaction") val transactionNo: String,
     @SerializedName("dtransaction") val transactionDate: String,
+    @SerializedName("dpayment_date") val paymentDate: String? = null,
     @SerializedName("nid_payment") val nidPayment: String? = null,
     @SerializedName("cname_customer") val customerName: String?,
     @SerializedName("cordertype") val orderType: String?,
