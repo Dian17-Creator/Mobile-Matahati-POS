@@ -1,5 +1,6 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,9 +12,11 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,12 +27,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-import androidx.compose.ui.res.painterResource
 import id.my.matahati.pos.R
+import id.my.matahati.pos.model.OutletItem
 
 @Composable
 fun SidebarDrawer(
@@ -45,9 +48,13 @@ fun SidebarDrawer(
     onNavigateToShift: () -> Unit = {},
     onNavigateToLaporan: () -> Unit = {},
     onNavigateToPengaturan: () -> Unit = {},
-    outletName: String? = null
+    outletName: String? = null,
+    activeOutletId: String? = null,
+    outlets: List<OutletItem> = emptyList(),
+    onSelectOutlet: (OutletItem) -> Unit = {}
 ) {
     var isAccountMenuExpanded by remember { mutableStateOf(false) }
+    var showOutletDialog by remember { mutableStateOf(false) }
 
     val rolesList = mutableListOf<String>()
     if (roleOwner) rolesList.add("Owner")
@@ -55,6 +62,7 @@ fun SidebarDrawer(
     if (roleCaptain) rolesList.add("Captain")
 
     val displayStoreName = if (!outletName.isNullOrBlank()) outletName else "IQOS Matahati Tulungagung"
+    val canSwitchOutlet = outlets.size > 1
 
     ModalDrawerSheet(
         modifier = modifier.width(300.dp),
@@ -167,6 +175,40 @@ fun SidebarDrawer(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Opsi Switch Outlet (Diletakkan di atas tombol Keluar)
+            if (canSwitchOutlet) {
+                NavigationDrawerItem(
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Storefront,
+                            contentDescription = "Ganti Outlet",
+                            tint = OlseraBlueHeader
+                        )
+                    },
+                    label = {
+                        Column {
+                            Text(
+                                text = "Ganti Outlet",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                color = OlseraBlueHeader
+                            )
+                            Text(
+                                text = displayStoreName,
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    },
+                    selected = false,
+                    onClick = { showOutletDialog = true },
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             val logoutRed = Color(0xFFE53935)
             NavigationDrawerItem(
                 icon = {
@@ -242,4 +284,92 @@ fun SidebarDrawer(
             )
         }
     }
+
+    if (showOutletDialog) {
+        OutletSelectionDialog(
+            outlets = outlets,
+            currentOutletId = activeOutletId,
+            onSelect = { selectedOutlet ->
+                showOutletDialog = false
+                if (selectedOutlet.id.toString() != activeOutletId) {
+                    onSelectOutlet(selectedOutlet)
+                }
+            },
+            onDismiss = { showOutletDialog = false }
+        )
+    }
+}
+
+@Composable
+fun OutletSelectionDialog(
+    outlets: List<OutletItem>,
+    currentOutletId: String?,
+    onSelect: (OutletItem) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        modifier = Modifier
+            .width(360.dp)
+            .wrapContentHeight(),
+        title = {
+            Text(
+                text = "Pilih Outlet",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                outlets.forEach { outlet ->
+                    val isSelected = outlet.id.toString() == currentOutletId
+                    Surface(
+                        onClick = { onSelect(outlet) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isSelected) Color(0xFFE3F2FD) else Color(0xFFF8F9FA),
+                        border = BorderStroke(
+                            1.dp,
+                            if (isSelected) OlseraBlueHeader else Color.LightGray.copy(alpha = 0.5f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = outlet.name,
+                                fontSize = 15.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) OlseraBlueHeader else Color.DarkGray,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = OlseraBlueHeader,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Batal", color = Color.Gray, fontWeight = FontWeight.Bold)
+            }
+        }
+    )
 }

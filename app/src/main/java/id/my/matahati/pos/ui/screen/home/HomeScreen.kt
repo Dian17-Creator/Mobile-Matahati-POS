@@ -67,6 +67,7 @@ fun HomeScreen(
     userName: String = "Kasir",
     nidOutlet: String? = null,
     outletName: String? = null,
+    userOutlets: List<id.my.matahati.pos.model.OutletItem> = emptyList(),
     roleOwner: Boolean = false,
     roleCashier: Boolean = true,
     roleCaptain: Boolean = false,
@@ -76,6 +77,11 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val printerManager = remember { BluetoothPrinterManager(context) }
+
+    var activeNidOutlet by remember(nidOutlet) { mutableStateOf(nidOutlet) }
+    var activeOutletName by remember(outletName) { mutableStateOf(outletName) }
+    var pendingOutletToSwitch by remember { mutableStateOf<id.my.matahati.pos.model.OutletItem?>(null) }
+    var showSwitchOutletConfirmDialog by remember { mutableStateOf(false) }
     
     // Drawer State
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -132,6 +138,36 @@ fun HomeScreen(
     var showPdfConfirmDialog by remember { mutableStateOf(false) }
     
     val cartItems = remember { mutableStateListOf<CartItem>() }
+
+    val switchOutletAction: (id.my.matahati.pos.model.OutletItem) -> Unit = { targetOutlet ->
+        cartItems.clear()
+        orderType = ""
+        viewModel.selectedTable = ""
+        selectedCustomer = null
+        selectedVoucher = null
+        manualDiscountInput = ""
+        orderNote = ""
+        viewModel.currentDraftId = null
+        viewModel.showPaymentScreen = false
+
+        val newOutletIdStr = targetOutlet.id.toString()
+        activeNidOutlet = newOutletIdStr
+        activeOutletName = targetOutlet.name
+
+        val sharedPrefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+        sharedPrefs.edit()
+            .putString("nid_outlet", newOutletIdStr)
+            .putString("outlet_name", targetOutlet.name)
+            .apply()
+
+        val outletIdInt = targetOutlet.id
+        viewModel.fetchData(newOutletIdStr)
+        viewModel.fetchProducts(newOutletIdStr)
+        shiftViewModel.checkCurrentShift(newOutletIdStr)
+        viewModel.fetchHeldOrders(newOutletIdStr)
+        viewModel.loadServedByUsers(outletIdInt, currentUserId = userId, currentUserName = userName)
+        viewModel.startBackgroundPesananSync(context, newOutletIdStr)
+    }
 
     val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Semua Kategori"
 
@@ -194,8 +230,6 @@ fun HomeScreen(
         if (cartItems.isNotEmpty() || isReservation) {
             if (shiftViewModel.currentShift == null) {
                 validationWarningMessage = "Kasir belum memulai shift. Silakan buka shift terlebih dahulu di menu Shift."
-            } else if (selectedCustomer == null) {
-                validationWarningMessage = "Silahkan pilih customer"
             } else {
                 val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
                 val isConfirmEnabled = prefs.getBoolean("confirm_order_before_payment", true)
@@ -215,51 +249,17 @@ fun HomeScreen(
         viewModel.loadPrinterSettings(context)
     }
 
-    fun findDefaultCustomerForOutlet(customers: List<id.my.matahati.pos.model.Customer>, outletName: String?): id.my.matahati.pos.model.Customer? {
-        if (customers.isEmpty()) return null
-        val cleanOutlet = outletName?.trim() ?: ""
-        if (cleanOutlet.isBlank()) return customers.firstOrNull()
-
-        // 1. Exact match (case-insensitive)
-        customers.find { it.name.trim().equals(cleanOutlet, ignoreCase = true) }?.let { return it }
-
-        // 2. Word-by-word match (reverse order to prioritize specific outlet keywords like "Event" over "Matahati")
-        val words = cleanOutlet.split(Regex("\\s+")).filter { it.length > 1 }
-        for (word in words.reversed()) {
-            customers.find { it.name.trim().equals(word, ignoreCase = true) }?.let { return it }
-            customers.find { 
-                it.name.contains(word, ignoreCase = true) || word.contains(it.name.trim(), ignoreCase = true) 
-            }?.let { return it }
-        }
-
-        // 3. Substring match on full outlet name
-        customers.find { 
-            cleanOutlet.contains(it.name.trim(), ignoreCase = true) || it.name.trim().contains(cleanOutlet, ignoreCase = true) 
-        }?.let { return it }
-
-        return customers.firstOrNull()
-    }
-
-    LaunchedEffect(selectedCustomer, viewModel.customers.toList(), outletName) {
-        if (selectedCustomer == null && viewModel.customers.isNotEmpty()) {
-            val defaultCust = findDefaultCustomerForOutlet(viewModel.customers, outletName)
-            if (defaultCust != null) {
-                selectedCustomer = defaultCust
-            }
-        }
-    }
-
-    LaunchedEffect(nidOutlet, userId, userName) {
-        val outletId = nidOutlet?.toIntOrNull() ?: 1
-        viewModel.fetchData(nidOutlet)
+    LaunchedEffect(activeNidOutlet, userId, userName) {
+        val outletId = activeNidOutlet?.toIntOrNull() ?: 1
+        viewModel.fetchData(activeNidOutlet)
         viewModel.loadServedByUsers(outletId, currentUserId = userId, currentUserName = userName)
-        viewModel.fetchHeldOrders(nidOutlet)
-        viewModel.startBackgroundPesananSync(context, nidOutlet)
-        shiftViewModel.checkCurrentShift(nidOutlet)
+        viewModel.fetchHeldOrders(activeNidOutlet)
+        viewModel.startBackgroundPesananSync(context, activeNidOutlet)
+        shiftViewModel.checkCurrentShift(activeNidOutlet)
     }
 
-    LaunchedEffect(selectedCustomer?.id, nidOutlet) {
-        viewModel.fetchProducts(nidOutlet, selectedCustomer?.id)
+    LaunchedEffect(selectedCustomer?.id, activeNidOutlet) {
+        viewModel.fetchProducts(activeNidOutlet, selectedCustomer?.id)
     }
 
     LaunchedEffect(allProducts) {
@@ -274,7 +274,7 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType) {
+    LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType, activeNidOutlet) {
         if (currentScreen == "transaksi") {
             val selectedPaymentMethod = viewModel.paymentMethods.find { 
                 it.name.equals(selectedPaymentType, ignoreCase = true) 
@@ -289,7 +289,7 @@ fun HomeScreen(
                 startDate = selectedStartDate,
                 endDate = selectedEndDate,
                 search = transaksiSearchQuery.ifBlank { null },
-                nidOutlet = nidOutlet,
+                nidOutlet = activeNidOutlet,
                 nidPayment = paymentId
             )
         }
@@ -446,6 +446,36 @@ fun HomeScreen(
             }
         }
 
+        val switchOutletAction: (id.my.matahati.pos.model.OutletItem) -> Unit = { targetOutlet ->
+            cartItems.clear()
+            orderType = ""
+            viewModel.selectedTable = ""
+            selectedCustomer = null
+            selectedVoucher = null
+            manualDiscountInput = ""
+            orderNote = ""
+            viewModel.currentDraftId = null
+            viewModel.showPaymentScreen = false
+
+            val newOutletIdStr = targetOutlet.id.toString()
+            activeNidOutlet = newOutletIdStr
+            activeOutletName = targetOutlet.name
+
+            val sharedPrefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+            sharedPrefs.edit()
+                .putString("nid_outlet", newOutletIdStr)
+                .putString("outlet_name", targetOutlet.name)
+                .apply()
+
+            val outletIdInt = targetOutlet.id
+            viewModel.fetchData(newOutletIdStr)
+            viewModel.fetchProducts(newOutletIdStr)
+            shiftViewModel.checkCurrentShift(newOutletIdStr)
+            viewModel.fetchHeldOrders(newOutletIdStr)
+            viewModel.loadServedByUsers(outletIdInt, currentUserId = userId, currentUserName = userName)
+            viewModel.startBackgroundPesananSync(context, newOutletIdStr)
+        }
+
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
@@ -476,7 +506,18 @@ fun HomeScreen(
                         coroutineScope.launch { drawerState.close() }
                     },
                     onLogout = onLogout,
-                    outletName = outletName
+                    outletName = activeOutletName,
+                    activeOutletId = activeNidOutlet,
+                    outlets = userOutlets,
+                    onSelectOutlet = { targetOutlet ->
+                        coroutineScope.launch { drawerState.close() }
+                        if (cartItems.isNotEmpty()) {
+                            pendingOutletToSwitch = targetOutlet
+                            showSwitchOutletConfirmDialog = true
+                        } else {
+                            switchOutletAction(targetOutlet)
+                        }
+                    }
                 )
             }
         ) {
@@ -697,9 +738,9 @@ fun HomeScreen(
                             "shift" -> {
                                 id.my.matahati.pos.ui.screen.shift.ShiftScreen(
                                     shiftViewModel = shiftViewModel,
-                                    nidOutlet = nidOutlet,
+                                    nidOutlet = activeNidOutlet,
                                     userName = userName,
-                                    savedOutletName = outletName,
+                                    savedOutletName = activeOutletName,
                                     onMenuClick = {
                                         coroutineScope.launch {
                                             if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -710,7 +751,7 @@ fun HomeScreen(
                             }
                             "laporan" -> {
                                 id.my.matahati.pos.ui.screen.report.ReportScreen(
-                                    nidOutlet = nidOutlet,
+                                    nidOutlet = activeNidOutlet,
                                     onMenuClick = {
                                         coroutineScope.launch {
                                             if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -730,8 +771,8 @@ fun HomeScreen(
                             }
                             "penutupan_penjualan" -> {
                                 id.my.matahati.pos.ui.screen.report.SalesClosureReportScreen(
-                                    nidOutlet = nidOutlet,
-                                    savedOutletName = outletName,
+                                    nidOutlet = activeNidOutlet,
+                                    savedOutletName = activeOutletName,
                                     userName = userName,
                                     onBack = {
                                         currentScreen = "laporan"
@@ -741,8 +782,8 @@ fun HomeScreen(
                             }
                             "ringkasan_penjualan_produk" -> {
                                 id.my.matahati.pos.ui.screen.report.ProductSalesSummaryScreen(
-                                    nidOutlet = nidOutlet,
-                                    savedOutletName = outletName,
+                                    nidOutlet = activeNidOutlet,
+                                    savedOutletName = activeOutletName,
                                     onBack = {
                                         currentScreen = "laporan"
                                     },
@@ -2510,6 +2551,48 @@ fun HomeScreen(
         ) {
             CircularProgressIndicator(color = Color.White)
         }
+    }
+
+    if (showSwitchOutletConfirmDialog && pendingOutletToSwitch != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showSwitchOutletConfirmDialog = false
+                pendingOutletToSwitch = null
+            },
+            containerColor = Color.White,
+            title = { Text("Konfirmasi Ganti Outlet", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = {
+                Text(
+                    "Keranjang pesanan saat ini akan dikosongkan jika berganti outlet. Lanjutkan berpindah ke ${pendingOutletToSwitch?.name}?",
+                    fontSize = 15.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSwitchOutletConfirmDialog = false
+                        val target = pendingOutletToSwitch
+                        pendingOutletToSwitch = null
+                        if (target != null) {
+                            switchOutletAction(target)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor)
+                ) {
+                    Text("Lanjutkan", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showSwitchOutletConfirmDialog = false
+                        pendingOutletToSwitch = null
+                    }
+                ) {
+                    Text("Batal", color = Color.DarkGray)
+                }
+            }
+        )
     }
 
     // =============================================================

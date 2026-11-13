@@ -137,7 +137,7 @@ fun ShiftScreen(
         shiftViewModel.checkCurrentShift(nidOutlet)
     }
 
-    LaunchedEffect(selectedTabIndex, activeSelectedDayApi) {
+    LaunchedEffect(selectedTabIndex, activeSelectedDayApi, nidOutlet) {
         if (selectedTabIndex == 1) {
             shiftViewModel.fetchShiftHistory(nidOutlet, date = activeSelectedDayApi)
         }

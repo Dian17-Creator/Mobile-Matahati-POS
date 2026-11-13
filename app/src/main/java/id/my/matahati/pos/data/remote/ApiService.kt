@@ -27,6 +27,9 @@ interface ApiService {
     @POST("api/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
+    @GET("api/user/outlets")
+    suspend fun getUserOutlets(): Response<BaseResponse<List<id.my.matahati.pos.model.OutletItem>>>
+
     @GET("api/categories")
     suspend fun getCategories(
         @Query("nid_outlet") outletId: Int? = null

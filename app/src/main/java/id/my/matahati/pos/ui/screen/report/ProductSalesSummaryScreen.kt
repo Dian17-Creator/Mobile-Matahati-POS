@@ -71,7 +71,7 @@ fun ProductSalesSummaryScreen(
     var activeSelectedDayDisplay by remember { mutableStateOf(displayDaySdf.format(today)) }
     var activeSelectedDayApi by remember { mutableStateOf(apiSdf.format(today)) }
 
-    LaunchedEffect(selectedDayItems) {
+    LaunchedEffect(selectedDayItems, nidOutlet) {
         if (selectedDayItems.isNotEmpty()) {
             val firstItem = selectedDayItems.first()
             activeSelectedDayDisplay = firstItem.displayLabel
