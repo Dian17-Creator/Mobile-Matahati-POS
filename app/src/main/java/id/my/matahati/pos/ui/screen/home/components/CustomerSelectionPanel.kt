@@ -37,7 +37,7 @@ private val PanelBgColor = AppPrimaryLight
 @Composable
 fun CustomerSelectionPanel(
     customers: List<Customer>,
-    onCustomerSelected: (Customer) -> Unit,
+    onCustomerSelected: (Customer?) -> Unit,
     onClose: () -> Unit,
     onOpenAddCustomerPanel: (() -> Unit)? = null,
     onEditCustomer: ((Customer) -> Unit)? = null,
@@ -179,6 +179,53 @@ fun CustomerSelectionPanel(
                     .padding(vertical = 4.dp),
                 contentPadding = PaddingValues(vertical = 4.dp)
             ) {
+                item {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onCustomerSelected(null)
+                                onClose()
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        color = Color.Transparent
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color.LightGray.copy(alpha = 0.4f),
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = "-",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = Color.DarkGray
+                                    )
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Pelanggan Umum",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.DarkGray
+                                )
+                                Text(
+                                    text = "Tanpa data pelanggan (Walk-in)",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                }
+
                 items(filteredCustomers, key = { it.id }) { customer ->
                     CustomerItemRow(
                         customer = customer,

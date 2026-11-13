@@ -96,7 +96,7 @@ fun SalesClosureReportScreen(
         }
     }
 
-    LaunchedEffect(selectedDayItems) {
+    LaunchedEffect(selectedDayItems, nidOutlet) {
         if (selectedDayItems.isNotEmpty()) {
             val firstItem = selectedDayItems.first()
             activeSelectedDayDisplay = firstItem.displayLabel
