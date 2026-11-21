@@ -131,7 +131,7 @@ fun OlseraDiscountDialog(
                 ) {
                     items(vouchers) { voucher ->
                         val isEligible = cartSubtotal >= voucher.minSpend
-                        val isOutOfStock = voucher.remainingQuota <= 0
+                        val isOutOfStock = !voucher.isUnlimitedQty && voucher.remainingQuota <= 0
 
                         Surface(
                             shape = RoundedCornerShape(10.dp),
@@ -164,12 +164,14 @@ fun OlseraDiscountDialog(
                                         fontWeight = FontWeight.ExtraBold,
                                         color = if (isEligible) Color.Black else Color.Gray
                                     )
-                                    Text(
-                                        text = voucher.description,
-                                        fontSize = 12.sp,
-                                        color = Color.DarkGray,
-                                        maxLines = 1
-                                    )
+                                    if (voucher.description.isNotBlank()) {
+                                        Text(
+                                            text = voucher.description,
+                                            fontSize = 12.sp,
+                                            color = Color.DarkGray,
+                                            maxLines = 1
+                                        )
+                                    }
                                     
                                     Spacer(modifier = Modifier.height(4.dp))
                                     
@@ -187,11 +189,17 @@ fun OlseraDiscountDialog(
                                         fontSize = 11.sp,
                                         color = if (isEligible) Color.DarkGray else Color(0xFFD32F2F)
                                     )
+
+                                    Text(
+                                        text = "Berlaku s/d: ${if (voucher.isUnlimitedDate) "-" else voucher.endDate}",
+                                        fontSize = 11.sp,
+                                        color = Color.Gray
+                                    )
                                 }
 
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text(
-                                        text = "Sisa: ${voucher.remainingQuota}",
+                                        text = "Sisa: ${if (voucher.isUnlimitedQty) "-" else voucher.remainingQuota}",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = if (isOutOfStock) Color.Red else Color.DarkGray

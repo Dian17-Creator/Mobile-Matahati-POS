@@ -42,6 +42,7 @@ fun TransactionDetailScreen(
     onVoidRefundClick: () -> Unit = {},
     onItemVoidRefundClick: ((TransactionDetailModel?) -> Unit)? = null,
     onSettlePaymentClick: (() -> Unit)? = null,
+    isTablet: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -122,6 +123,7 @@ fun TransactionDetailScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .then(if (!isTablet) Modifier.statusBarsPadding() else Modifier)
                     .height(56.dp)
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -520,7 +522,11 @@ fun TransactionDetailScreen(
             shadowElevation = 0.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (!isTablet) Modifier.navigationBarsPadding() else Modifier)
+            ) {
                 HorizontalDivider(color = AppPrimaryColor, thickness = 2.dp)
 
                 Row(
