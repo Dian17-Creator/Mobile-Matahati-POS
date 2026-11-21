@@ -21,13 +21,13 @@ data class VoucherDto(
     @SerializedName("cdesc")
     val cdesc: String?,
     @SerializedName("dstart")
-    val dstart: String,
+    val dstart: String?,
     @SerializedName("dend")
-    val dend: String,
+    val dend: String?,
     @SerializedName("nqty")
-    val nqty: Int,
+    val nqty: Int?,
     @SerializedName("nredeem")
-    val nredeem: Int,
+    val nredeem: Int?,
     @SerializedName("nmin_spend")
     val nminSpend: Double?,
     @SerializedName("ndisc_percent")
@@ -35,7 +35,13 @@ data class VoucherDto(
     @SerializedName("ndisc_amount")
     val ndiscAmount: Double?,
     @SerializedName("cstatus")
-    val cstatus: String?
+    val cstatus: String?,
+    @SerializedName("is_unlimited_date")
+    val isUnlimitedDate: Boolean? = null,
+    @SerializedName("is_unlimited_qty")
+    val isUnlimitedQty: Boolean? = null,
+    @SerializedName("nid_outlet")
+    val nidOutlet: Int? = null
 ) {
     fun toVoucher(): Voucher {
         val discountText = when {
@@ -51,19 +57,25 @@ data class VoucherDto(
             else -> "Diskon"
         }
 
+        val isUnlDate = isUnlimitedDate == true || dend.isNullOrBlank() || dend == "2099-12-31"
+        val isUnlQty = isUnlimitedQty == true || nqty == null || nqty == 999999
+
         return Voucher(
             id = nid.toString(),
             code = ckode,
             description = cdesc ?: "",
-            startDate = dstart,
-            endDate = dend,
-            quota = nqty,
-            redeemed = nredeem,
+            startDate = dstart ?: "",
+            endDate = dend ?: "",
+            quota = nqty ?: 0,
+            redeemed = nredeem ?: 0,
             minSpend = nminSpend ?: 0.0,
             discountPercent = ndiscPercent ?: 0.0,
             discountAmount = ndiscAmount ?: 0.0,
             discountDisplay = discountText,
-            status = cstatus ?: "Active"
+            status = cstatus ?: "Active",
+            isUnlimitedDate = isUnlDate,
+            isUnlimitedQty = isUnlQty,
+            nidOutlet = nidOutlet
         )
     }
 }
@@ -80,10 +92,13 @@ data class Voucher(
     val discountPercent: Double,
     val discountAmount: Double,
     val discountDisplay: String,
-    val status: String
+    val status: String,
+    val isUnlimitedDate: Boolean = false,
+    val isUnlimitedQty: Boolean = false,
+    val nidOutlet: Int? = null
 ) {
     val remainingQuota: Int
-        get() = (quota - redeemed).coerceAtLeast(0)
+        get() = if (isUnlimitedQty) Int.MAX_VALUE else (quota - redeemed).coerceAtLeast(0)
 
     val formattedMinSpend: String
         get() {

@@ -531,7 +531,7 @@ class HomeViewModel : ViewModel() {
                 }
 
                 // Fetch Vouchers
-                fetchVouchers()
+                fetchVouchers(outletIdInt)
 
                 // Fetch Payment Methods
                 val payResponse = RetrofitClient.apiService.getPaymentMethods()
@@ -1288,10 +1288,17 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun fetchVouchers() {
+    var activeOutletId: Int? = null
+        private set
+
+    fun fetchVouchers(outletId: Int? = activeOutletId) {
+        if (outletId != null) {
+            activeOutletId = outletId
+        }
+        val targetOutletId = outletId ?: activeOutletId
         viewModelScope.launch {
             try {
-                val vouchResponse = RetrofitClient.apiService.getVouchers()
+                val vouchResponse = RetrofitClient.apiService.getVouchers(targetOutletId)
                 if (vouchResponse.isSuccessful && vouchResponse.body()?.success == true) {
                     val dtos = vouchResponse.body()?.data ?: emptyList()
                     val fetchedVouchers = dtos.map { it.toVoucher() }
@@ -1508,7 +1515,7 @@ class HomeViewModel : ViewModel() {
                             }
                             lastTransaction = body.data.copy(transaction = finalTrx)
                             showSuccessDialog = true
-                            fetchVouchers() // Refresh voucher quota after success
+                            fetchVouchers(parsedOutlet) // Refresh voucher quota after success
                         }
                     } else {
                         transactionError = body?.message ?: "Gagal memproses transaksi."

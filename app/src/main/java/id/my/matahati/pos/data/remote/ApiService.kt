@@ -62,7 +62,9 @@ interface ApiService {
     ): Response<id.my.matahati.pos.model.SingleCustomerResponse>
 
     @GET("api/vouchers")
-    suspend fun getVouchers(): Response<VoucherResponse>
+    suspend fun getVouchers(
+        @Query("nid_outlet") outletId: Int? = null
+    ): Response<VoucherResponse>
 
     @GET("api/payment-methods")
     suspend fun getPaymentMethods(): Response<PaymentMethodResponse>

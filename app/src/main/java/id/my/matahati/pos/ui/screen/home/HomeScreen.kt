@@ -632,6 +632,7 @@ fun HomeScreen(
                                                 TransactionDetailScreen(
                                                     transaction = selectedHistoryTransaction!!,
                                                     showBackButton = false,
+                                                    isTablet = true,
                                                     onSendToKitchen = {
                                                         viewModel.openKitchenPrintDialogFromHistory(context, selectedHistoryTransaction!!)
                                                     },
@@ -715,6 +716,7 @@ fun HomeScreen(
                                     TransactionDetailScreen(
                                         transaction = selectedHistoryTransaction!!,
                                         onBack = { currentScreen = "transaksi" },
+                                        isTablet = false,
                                         onSendToKitchen = {
                                             viewModel.openKitchenPrintDialogFromHistory(context, selectedHistoryTransaction!!)
                                         },
