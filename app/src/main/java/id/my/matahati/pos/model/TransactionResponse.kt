@@ -3,40 +3,40 @@ package id.my.matahati.pos.model
 import com.google.gson.annotations.SerializedName
 
 data class TransactionResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String,
-    @SerializedName("data") val data: TransactionData?
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("data") val data: TransactionData? = null
 )
 
 data class TransactionHistoryResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String,
-    @SerializedName("data") val data: List<TransactionModel>?
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("data") val data: List<TransactionModel>? = null
 )
 
 data class TransactionData(
-    @SerializedName("transaction") val transaction: TransactionModel?,
-    @SerializedName("details") val details: List<TransactionDetailModel>?
+    @SerializedName("transaction") val transaction: TransactionModel? = null,
+    @SerializedName("details") val details: List<TransactionDetailModel>? = null
 )
 
 data class TransactionModel(
-    @SerializedName("nid") val id: String,
-    @SerializedName("cnotransaction") val transactionNo: String,
-    @SerializedName("dtransaction") val transactionDate: String,
+    @SerializedName("nid") val id: String = "",
+    @SerializedName("cnotransaction") val transactionNo: String = "",
+    @SerializedName("dtransaction") val transactionDate: String = "",
     @SerializedName("dpayment_date") val paymentDate: String? = null,
     @SerializedName("nid_payment") val nidPayment: String? = null,
-    @SerializedName("cname_customer") val customerName: String?,
-    @SerializedName("cordertype") val orderType: String?,
-    @SerializedName("ctable") val tableName: String?,
-    @SerializedName("nvisitor") val visitorCount: Int,
-    @SerializedName("nsubtotal") val subtotal: String,
-    @SerializedName("ndiscount") val discount: String,
-    @SerializedName("ntax") val tax: String,
-    @SerializedName("ngrandtotal") val grandTotal: String,
-    @SerializedName("npaid") val paidAmount: String,
-    @SerializedName("nchange") val changeAmount: String,
-    @SerializedName("cstatus") val status: String,
-    @SerializedName("nitem") val itemCount: Int,
+    @SerializedName("cname_customer") val customerName: String? = null,
+    @SerializedName("cordertype") val orderType: String? = null,
+    @SerializedName("ctable") val tableName: String? = null,
+    @SerializedName("nvisitor") val visitorCount: Int = 1,
+    @SerializedName("nsubtotal") val subtotal: String = "0",
+    @SerializedName("ndiscount") val discount: String = "0",
+    @SerializedName("ntax") val tax: String = "0",
+    @SerializedName("ngrandtotal") val grandTotal: String = "0",
+    @SerializedName("npaid") val paidAmount: String = "0",
+    @SerializedName("nchange") val changeAmount: String = "0",
+    @SerializedName("cstatus") val status: String = "",
+    @SerializedName("nitem") val itemCount: Int = 0,
     @SerializedName("ccancel_note") val cancelNote: String? = null,
     @SerializedName("cvoid_note") val voidNote: String? = null,
     @SerializedName("crefund_note") val refundNote: String? = null,
@@ -52,6 +52,10 @@ data class TransactionModel(
     @SerializedName("outlet") val outlet: OutletModel? = null,
     @SerializedName("cpdf_url") val pdfUrl: String? = null,
     @SerializedName("nid_parent_transaction") val nidParentTransaction: String? = null,
+    @SerializedName("ctransaction_category") val transactionCategory: String? = null,
+    @SerializedName("ctax_mode") val taxMode: String? = null,
+    @SerializedName("ntax_percent") val taxPercent: Double? = null,
+    @SerializedName("ndpp") val dpp: Double? = null,
     @SerializedName("reversals") val reversals: List<TransactionModel>? = null,
     @SerializedName("parent_transaction") val parentTransaction: TransactionModel? = null
 )
@@ -74,24 +78,24 @@ data class OutletModel(
 )
 
 data class PosUserModel(
-    @SerializedName("nid") val id: String,
-    @SerializedName("user") val user: UserInternalModel?
+    @SerializedName("nid") val id: String = "",
+    @SerializedName("user") val user: UserInternalModel? = null
 )
 
 data class UserInternalModel(
-    @SerializedName("nid") val id: String,
-    @SerializedName("cname") val name: String
+    @SerializedName("nid") val id: String = "",
+    @SerializedName("cname") val name: String = ""
 )
 
 data class TransactionDetailModel(
-    @SerializedName("nid") val id: String,
-    @SerializedName("nid_product") val productId: String,
-    @SerializedName("cname") val productName: String,
-    @SerializedName("nqty") val quantity: Int,
+    @SerializedName("nid") val id: String = "",
+    @SerializedName("nid_product") val productId: String = "",
+    @SerializedName("cname") val productName: String = "",
+    @SerializedName("nqty") val quantity: Int = 0,
     @SerializedName("nqty_void") val qtyVoid: Int = 0,
     @SerializedName("nqty_refund") val qtyRefund: Int = 0,
-    @SerializedName("nprice") val price: String,
-    @SerializedName("nsubtotal") val subtotal: String,
+    @SerializedName("nprice") val price: String = "0",
+    @SerializedName("nsubtotal") val subtotal: String = "0",
     @SerializedName("cnote") val note: String? = null
 ) {
     val qtyAvailable: Int

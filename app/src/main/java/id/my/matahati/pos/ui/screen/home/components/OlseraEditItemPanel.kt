@@ -2,6 +2,7 @@ package id.my.matahati.pos.ui.screen.home.components
 
 import id.my.matahati.pos.ui.theme.AppPrimaryColor
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,12 +23,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.AltRoute
+import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.AlertDialog
@@ -36,6 +40,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,6 +58,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -83,6 +93,7 @@ fun OlseraEditItemPanel(
     var quantity by remember(cartItem) { mutableIntStateOf(cartItem.quantity) }
     var note by remember(cartItem) { mutableStateOf(cartItem.note) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showQtyKeypadDialog by remember { mutableStateOf(false) }
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Item Pesanan, 1 = Items Paket, 2 = Add-Ons
     var discountInput by remember { mutableStateOf("0") }
@@ -303,7 +314,7 @@ fun OlseraEditItemPanel(
                             )
                         }
 
-                        // Qty Number Column
+                        // Qty Number Column (Clickable to edit Qty directly)
                         Column(
                             horizontalAlignment = Alignment.Start,
                             modifier = Modifier.weight(0.8f)
@@ -314,12 +325,31 @@ fun OlseraEditItemPanel(
                                 color = OlseraTextMuted
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "$quantity",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OlseraTextLight
-                            )
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color.White.copy(alpha = 0.08f),
+                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
+                                modifier = Modifier.clickable { showQtyKeypadDialog = true }
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "$quantity",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = OlseraTextLight
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit Qty",
+                                        tint = OlseraTextMuted,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
                         }
 
                         // Stepper Controls [ - | + ]
@@ -637,6 +667,196 @@ fun OlseraEditItemPanel(
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White
                         )
+                    }
+                }
+            }
+        }
+
+        if (showQtyKeypadDialog) {
+            NumericQtyInputDialog(
+                initialQty = quantity,
+                productName = cartItem.product.name,
+                maxStock = if (cartItem.product.isTrackStock) cartItem.product.stock else null,
+                onDismiss = { showQtyKeypadDialog = false },
+                onConfirm = { newQty ->
+                    quantity = newQty
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun NumericQtyInputDialog(
+    initialQty: Int,
+    productName: String,
+    maxStock: Int? = null,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    var inputStr by remember { mutableStateOf(initialQty.toString()) }
+    var isInitialText by remember { mutableStateOf(true) }
+
+    val appendKey: (String) -> Unit = { key ->
+        if (key == "C") {
+            inputStr = ""
+            isInitialText = false
+        } else if (key == "BS") {
+            if (isInitialText) {
+                inputStr = ""
+                isInitialText = false
+            } else if (inputStr.isNotEmpty()) {
+                inputStr = inputStr.dropLast(1)
+            }
+        } else {
+            if (isInitialText) {
+                inputStr = key
+                isInitialText = false
+            } else {
+                inputStr = if (inputStr == "0") key else inputStr + key
+            }
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            modifier = Modifier
+                .width(360.dp)
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Ubah Kuantitas",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = productName,
+                    fontSize = 13.sp,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Input Field Display
+                OutlinedTextField(
+                    value = inputStr,
+                    onValueChange = { newValue ->
+                        if (newValue.all { it.isDigit() } && newValue.length <= 5) {
+                            inputStr = newValue
+                            isInitialText = false
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    textStyle = TextStyle(
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Center,
+                        color = AppPrimaryColor
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Keypad Buttons
+                val buttons = listOf(
+                    listOf("1", "2", "3"),
+                    listOf("4", "5", "6"),
+                    listOf("7", "8", "9"),
+                    listOf("C", "0", "BS")
+                )
+
+                buttons.forEach { row ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        row.forEach { btn ->
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = when (btn) {
+                                    "C" -> Color(0xFFFFEBEE)
+                                    "BS" -> Color(0xFFECEFF1)
+                                    else -> Color(0xFFF5F5F5)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .clickable { appendKey(btn) }
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    if (btn == "BS") {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.Backspace,
+                                            contentDescription = "Hapus",
+                                            tint = Color.DarkGray,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = btn,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (btn == "C") Color(0xFFD32F2F) else Color(0xFF212121)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Actions: BATAL & SIMPAN
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                    ) {
+                        Text("BATAL", fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            val parsed = inputStr.toIntOrNull() ?: 1
+                            val finalQty = parsed.coerceAtLeast(1)
+                            if (maxStock != null && maxStock > 0 && finalQty > maxStock) {
+                                onConfirm(maxStock)
+                            } else {
+                                onConfirm(finalQty)
+                            }
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AppPrimaryColor),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                    ) {
+                        Text("SIMPAN", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }

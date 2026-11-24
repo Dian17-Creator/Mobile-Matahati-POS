@@ -42,6 +42,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     var isShowPdfDialogEnabled by mutableStateOf(true)
         private set
 
+    var defaultTransactionCategory by mutableStateOf("ONLINE")
+        private set
+
     var cartMenuStates = mutableStateMapOf<CartMenuItem, Boolean>()
 
     init {
@@ -66,6 +69,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         isConfirmOrderEnabled = prefs.getBoolean("confirm_order_before_payment", true)
         isShowPrintPreviewEnabled = prefs.getBoolean("show_print_preview", true)
         isShowPdfDialogEnabled = prefs.getBoolean("show_pdf_dialog", true)
+        defaultTransactionCategory = prefs.getString("default_transaction_category", "ONLINE") ?: "ONLINE"
+    }
+
+    fun updateDefaultTransactionCategory(category: String) {
+        defaultTransactionCategory = category
+        prefs.edit().putString("default_transaction_category", category).apply()
     }
 
     fun updateConfirmOrderEnabled(enabled: Boolean) {

@@ -49,14 +49,11 @@ fun TransactionHistoryList(
 
     // Grouping by date (Safe for API 24)
     val grouped = transactions.groupBy {
-        try {
-            if (it.transactionDate.length >= 10) {
-                it.transactionDate.substring(0, 10)
-            } else {
-                it.transactionDate
-            }
-        } catch (_: Exception) {
-            "Unknown"
+        val dateStr = it.transactionDate
+        if (dateStr.length >= 10) {
+            dateStr.substring(0, 10)
+        } else {
+            if (dateStr.isBlank()) "Unknown" else dateStr
         }
     }
 
@@ -76,7 +73,7 @@ fun TransactionHistoryList(
             item {
                 TransactionDateHeader(formatDateHeader(date))
             }
-            items(items, key = { it.id }) { trx ->
+            items(items, key = { it.id.ifBlank { it.hashCode().toString() } }) { trx ->
                 val isSelected = (trx.id == selectedTransactionId)
                 TransactionItemCard(
                     transaction = trx,
@@ -116,8 +113,9 @@ fun TransactionItemCard(
     val isReversalChild = !transaction.nidParentTransaction.isNullOrBlank()
     val isSelfCancelled = statusUpper in listOf("CANCELLED", "CANCEL", "VOID", "VOIDED", "REFUND", "REFUNDED")
 
+    val transactionDateStr = transaction.transactionDate
     val timeStr = try {
-        val dateTime = transaction.transactionDate.replace("T", " ")
+        val dateTime = transactionDateStr.replace("T", " ")
         if (dateTime.contains(" ")) {
             dateTime.substringAfter(" ").substring(0, 5)
         } else {

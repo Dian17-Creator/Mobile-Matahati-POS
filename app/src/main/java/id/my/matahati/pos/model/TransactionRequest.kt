@@ -21,6 +21,8 @@ data class TransactionRequest(
     @SerializedName("ccancel_note") val cancelNote: String? = null,
     @SerializedName("cnote") val orderNote: String? = null,
     @SerializedName("cstatus") val status: String? = null,
+    @SerializedName("ctransaction_category") val transactionCategory: String = "OFFLINE",
+    @SerializedName("btax_exempt") val isTaxExempt: Boolean = false,
     @SerializedName("details") val details: List<TransactionDetailRequest>
 )
 

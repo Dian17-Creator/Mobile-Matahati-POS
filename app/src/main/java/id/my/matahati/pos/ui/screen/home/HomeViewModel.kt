@@ -137,6 +137,35 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    // Tax Settings & Transaction Category States
+    var offlineTaxSetting by mutableStateOf<id.my.matahati.pos.model.TaxSettingItem?>(null)
+    var onlineTaxSetting by mutableStateOf<id.my.matahati.pos.model.TaxSettingItem?>(null)
+    var isManualTaxExempt by mutableStateOf(false)
+    var activeTransactionCategory by mutableStateOf("ONLINE")
+
+    val activeTaxSetting: id.my.matahati.pos.model.TaxSettingItem?
+        get() = if (activeTransactionCategory.equals("ONLINE", ignoreCase = true)) onlineTaxSetting else offlineTaxSetting
+
+    fun loadTransactionCategoryFromPrefs(context: android.content.Context) {
+        val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+        activeTransactionCategory = prefs.getString("default_transaction_category", "ONLINE") ?: "ONLINE"
+    }
+
+    fun loadTaxSettings(outletId: Int?) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getTaxSettings(outletId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val data = response.body()?.data
+                    offlineTaxSetting = data?.offline
+                    onlineTaxSetting = data?.online
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Gagal memuat tax settings", e)
+            }
+        }
+    }
+
     fun fetchHeldOrders(nidOutlet: String?) {
         heldOrders.clear()
         viewModelScope.launch {
@@ -230,6 +259,9 @@ class HomeViewModel : ViewModel() {
         isPrinting = true
         printerError = null
 
+        val categoryStr = data.transaction?.transactionCategory ?: activeTransactionCategory
+        val taxSetting = if (categoryStr.equals("ONLINE", ignoreCase = true)) onlineTaxSetting else offlineTaxSetting
+
         viewModelScope.launch {
             val connectionManager = id.my.matahati.pos.data.printer.PrinterConnectionManager(context)
             val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
@@ -238,7 +270,8 @@ class HomeViewModel : ViewModel() {
                 cashierName = cashierName,
                 savedOutletName = savedOutletName,
                 isOrderTypeSelected = isOrderTypeSelectedByUser,
-                paymentMethods = paymentMethods
+                paymentMethods = paymentMethods,
+                taxSetting = taxSetting
             )
             
             val result = connectionManager.printData(receiptPrinter, receiptBytes)
@@ -272,6 +305,8 @@ class HomeViewModel : ViewModel() {
         isPrinting = true
         printerError = null
 
+        val taxSetting = if (activeTransactionCategory.equals("ONLINE", ignoreCase = true)) onlineTaxSetting else offlineTaxSetting
+
         viewModelScope.launch {
             val connectionManager = id.my.matahati.pos.data.printer.PrinterConnectionManager(context)
             val formatter = id.my.matahati.pos.data.printer.EscPosFormatter()
@@ -283,7 +318,8 @@ class HomeViewModel : ViewModel() {
                 tableName = tableName,
                 discountAmount = discountAmount,
                 taxAmount = taxAmount,
-                paxCount = paxCount
+                paxCount = paxCount,
+                taxSetting = taxSetting
             )
 
             val result = connectionManager.printData(receiptPrinter, checkBytes)
@@ -485,6 +521,7 @@ class HomeViewModel : ViewModel() {
             errorMessage = null
             try {
                 val outletIdInt = nidOutlet?.toIntOrNull()
+                loadTaxSettings(outletIdInt)
 
                 // Fetch Categories
                 val catResponse = RetrofitClient.apiService.getCategories(outletId = outletIdInt)
@@ -1327,6 +1364,7 @@ class HomeViewModel : ViewModel() {
         orderNote: String? = null,
         userName: String = "",
         outletName: String = "",
+        isTaxExempt: Boolean = false,
         onSuccess: (() -> Unit)? = null
     ) {
         executeTransaction(
@@ -1347,6 +1385,7 @@ class HomeViewModel : ViewModel() {
             orderNote = orderNote,
             userName = userName,
             outletName = outletName,
+            isTaxExempt = isTaxExempt,
             onSuccess = onSuccess
         )
     }
@@ -1358,7 +1397,8 @@ class HomeViewModel : ViewModel() {
         selectedCustomer: Customer?,
         cancelNote: String,
         nidOutlet: String?,
-        orderNote: String? = null
+        orderNote: String? = null,
+        isTaxExempt: Boolean = false
     ) {
         executeTransaction(
             context = context,
@@ -1372,7 +1412,8 @@ class HomeViewModel : ViewModel() {
             nidOutlet = nidOutlet,
             status = "CANCELLED",
             cancelNote = cancelNote,
-            orderNote = orderNote
+            orderNote = orderNote,
+            isTaxExempt = isTaxExempt
         )
     }
 
@@ -1387,6 +1428,7 @@ class HomeViewModel : ViewModel() {
         selectedPaymentDual: PaymentMethod? = null,
         dpAmount: Double? = null,
         orderNote: String? = null,
+        isTaxExempt: Boolean = false,
         onSuccess: () -> Unit = {}
     ) {
         executeTransaction(
@@ -1404,6 +1446,7 @@ class HomeViewModel : ViewModel() {
             status = "DRAFT",
             cancelNote = null,
             orderNote = orderNote,
+            isTaxExempt = isTaxExempt,
             onSuccess = onSuccess
         )
     }
@@ -1426,6 +1469,7 @@ class HomeViewModel : ViewModel() {
         orderNote: String? = null,
         userName: String = "",
         outletName: String = "",
+        isTaxExempt: Boolean = false,
         onSuccess: (() -> Unit)? = null
     ) {
         if (isSubmitting) return
@@ -1459,6 +1503,7 @@ class HomeViewModel : ViewModel() {
         val parsedOutlet = nidOutlet?.toIntOrNull() ?: 1
         isOrderTypeSelectedByUser = orderType.isNotBlank()
         val defaultOrderType = "ONLINE"
+        val currentCategory = activeTransactionCategory.ifBlank { "OFFLINE" }
 
         val request = TransactionRequest(
             nid = currentDraftId?.toIntOrNull(),
@@ -1479,6 +1524,8 @@ class HomeViewModel : ViewModel() {
             status = status,
             cancelNote = cancelNote,
             orderNote = orderNote?.ifBlank { null },
+            transactionCategory = currentCategory,
+            isTaxExempt = isTaxExempt,
             details = details
         )
 
@@ -1812,7 +1859,8 @@ class HomeViewModel : ViewModel() {
         endDate: String? = null,
         search: String? = null,
         nidOutlet: String? = null,
-        nidPayment: String? = null
+        nidPayment: String? = null,
+        category: String? = activeTransactionCategory
     ) {
         transactionHistory.clear()
         viewModelScope.launch {
@@ -1823,7 +1871,8 @@ class HomeViewModel : ViewModel() {
                     endDate = endDate,
                     search = search,
                     outletId = nidOutlet,
-                    paymentId = nidPayment
+                    paymentId = nidPayment,
+                    category = category ?: activeTransactionCategory
                 )
                 if (response.isSuccessful && response.body()?.success == true) {
                     val data = response.body()?.data ?: emptyList()

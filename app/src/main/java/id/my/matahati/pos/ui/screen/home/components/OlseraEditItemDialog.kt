@@ -1,7 +1,9 @@
 package id.my.matahati.pos.ui.screen.home.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -58,6 +61,7 @@ fun OlseraEditItemDialog(
     var quantity by remember { mutableIntStateOf(cartItem.quantity) }
     var note by remember { mutableStateOf(cartItem.note) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showQtyKeypadDialog by remember { mutableStateOf(false) }
 
     if (showDeleteConfirm) {
         AlertDialog(
@@ -157,12 +161,31 @@ fun OlseraEditItemDialog(
 
                     Spacer(modifier = Modifier.width(32.dp))
 
-                    Text(
-                        text = "$quantity",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.DarkGray
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFF5F5F5),
+                        border = BorderStroke(1.dp, Color.LightGray),
+                        modifier = Modifier.clickable { showQtyKeypadDialog = true }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "$quantity",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.DarkGray
+                            )
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit Qty",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.width(32.dp))
 
@@ -249,6 +272,18 @@ fun OlseraEditItemDialog(
                     }
                 }
             }
+        }
+
+        if (showQtyKeypadDialog) {
+            NumericQtyInputDialog(
+                initialQty = quantity,
+                productName = cartItem.product.name,
+                maxStock = if (cartItem.product.isTrackStock) cartItem.product.stock else null,
+                onDismiss = { showQtyKeypadDialog = false },
+                onConfirm = { newQty ->
+                    quantity = newQty
+                }
+            )
         }
     }
 }

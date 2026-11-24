@@ -32,6 +32,7 @@ fun CheckPrintPreviewDialog(
     taxAmount: Double = 0.0,
     paxCount: Int = 1,
     isPrinting: Boolean = false,
+    taxSetting: id.my.matahati.pos.model.TaxSettingItem? = null,
     onPrint: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -79,6 +80,16 @@ fun CheckPrintPreviewDialog(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
+                        if (!taxSetting?.receiptTitle.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = taxSetting!!.receiptTitle!!,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -276,13 +287,23 @@ fun CheckPrintPreviewDialog(
                             }
                         }
 
-                        if (taxAmount > 0) {
+                        val taxName = taxSetting?.taxName?.takeIf { it.isNotBlank() } ?: "Pajak"
+                        val taxPercent = taxSetting?.taxPercent ?: 0.0
+                        val isInclude = taxSetting?.isTaxIncluded == true
+
+                        if (taxAmount > 0 || isInclude) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
+                                val taxLabelText = when {
+                                    isInclude && taxPercent > 0 -> "$taxName ${taxPercent.toInt()}% (Include)"
+                                    isInclude -> "$taxName (Include)"
+                                    taxPercent > 0 -> "$taxName ${taxPercent.toInt()}%"
+                                    else -> taxName
+                                }
                                 Text(
-                                    text = "Tax",
+                                    text = taxLabelText,
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 12.sp
                                 )
@@ -319,6 +340,17 @@ fun CheckPrintPreviewDialog(
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp
                         )
+
+                        if (!taxSetting?.receiptNote.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = taxSetting!!.receiptNote!!,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
 

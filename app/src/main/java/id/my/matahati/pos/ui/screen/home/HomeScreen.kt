@@ -245,12 +245,18 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
+        viewModel.loadTransactionCategoryFromPrefs(context)
         viewModel.loadOrderTypes()
         viewModel.loadPrinterSettings(context)
     }
 
+    LaunchedEffect(currentScreen) {
+        viewModel.loadTransactionCategoryFromPrefs(context)
+    }
+
     LaunchedEffect(activeNidOutlet, userId, userName) {
         val outletId = activeNidOutlet?.toIntOrNull() ?: 1
+        viewModel.loadTransactionCategoryFromPrefs(context)
         viewModel.fetchData(activeNidOutlet)
         viewModel.loadServedByUsers(outletId, currentUserId = userId, currentUserName = userName)
         viewModel.fetchHeldOrders(activeNidOutlet)
@@ -274,7 +280,7 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType, activeNidOutlet) {
+    LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType, activeNidOutlet, viewModel.activeTransactionCategory) {
         if (currentScreen == "transaksi") {
             val selectedPaymentMethod = viewModel.paymentMethods.find { 
                 it.name.equals(selectedPaymentType, ignoreCase = true) 
@@ -290,7 +296,8 @@ fun HomeScreen(
                 endDate = selectedEndDate,
                 search = transaksiSearchQuery.ifBlank { null },
                 nidOutlet = activeNidOutlet,
-                nidPayment = paymentId
+                nidPayment = paymentId,
+                category = viewModel.activeTransactionCategory
             )
         }
     }
@@ -431,8 +438,22 @@ fun HomeScreen(
         }
     }
 
+    val taxCalculationResult by remember {
+        derivedStateOf {
+            id.my.matahati.pos.model.TaxCalculator.calculateTax(
+                transactionCategory = viewModel.activeTransactionCategory,
+                orderType = orderType,
+                subtotal = cartSubtotal,
+                discount = discountAmount,
+                offlineSetting = viewModel.offlineTaxSetting,
+                onlineSetting = viewModel.onlineTaxSetting,
+                isManualTaxExempt = viewModel.isManualTaxExempt
+            )
+        }
+    }
+
     val cartGrandTotal by remember {
-        derivedStateOf { (cartSubtotal - discountAmount).coerceAtLeast(0.0) }
+        derivedStateOf { taxCalculationResult.grandTotal }
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -536,6 +557,7 @@ fun HomeScreen(
                                 onRightTabSelected = { selectedRightTab = it },
                                 heldOrdersCount = viewModel.heldOrders.size,
                                 onHeldOrdersClick = { viewModel.showHeldOrdersDialog = true },
+                                transactionCategory = viewModel.activeTransactionCategory,
                                 onMenuClick = {
                                     coroutineScope.launch {
                                         if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -547,6 +569,7 @@ fun HomeScreen(
                         TransaksiHeaderBar(
                             currentDate = selectedDateRange,
                             onDateClick = { showDateFilterDialog = true },
+                            transactionCategory = viewModel.activeTransactionCategory,
                             onMenuClick = {
                                 coroutineScope.launch {
                                     if (drawerState.isClosed) drawerState.open() else drawerState.close()
@@ -843,12 +866,13 @@ fun HomeScreen(
                                                             orderType = orderType,
                                                             selectedCustomer = selectedCustomer,
                                                             discount = discountAmount,
-                                                            tax = 0.0,
+                                                            tax = taxCalculationResult.taxAmount,
                                                             nidOutlet = nidOutlet,
                                                             selectedPayment = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentId },
                                                             selectedPaymentDual = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentDualId },
                                                             dpAmount = viewModel.savedDraftDpAmount,
                                                             orderNote = orderNote,
+                                                            isTaxExempt = taxCalculationResult.isTaxExempt,
                                                             onSuccess = {
                                                                 cartItems.clear()
                                                                 orderType = ""
@@ -890,7 +914,7 @@ fun HomeScreen(
                                                                 customerName = selectedCustomer?.name,
                                                                 tableName = viewModel.selectedTable.ifBlank { null },
                                                                 discountAmount = discountAmount,
-                                                                taxAmount = 0.0,
+                                                                taxAmount = taxCalculationResult.taxAmount,
                                                                 paxCount = 1
                                                             )
                                                         }
@@ -911,6 +935,13 @@ fun HomeScreen(
                                                 orderNote = orderNote,
                                                 onOrderNoteClick = { showOrderNoteDialog = true },
                                                 discountAmount = discountAmount,
+                                                taxAmount = taxCalculationResult.taxAmount,
+                                                taxLabel = taxCalculationResult.taxName,
+                                                taxPercent = taxCalculationResult.taxPercent,
+                                                taxMode = taxCalculationResult.taxMode,
+                                                allowManualTaxExempt = viewModel.activeTransactionCategory.equals("OFFLINE", ignoreCase = true) && (viewModel.offlineTaxSetting?.allowManualTaxExempt == true),
+                                                isManualTaxExempt = viewModel.isManualTaxExempt,
+                                                onManualTaxExemptChange = { viewModel.isManualTaxExempt = it },
                                                 grandTotal = cartGrandTotal,
                                                 modifier = Modifier
                                                     .weight(0.40f)
@@ -1539,12 +1570,13 @@ fun HomeScreen(
                                                                 orderType = orderType,
                                                                 selectedCustomer = selectedCustomer,
                                                                 discount = discountAmount,
-                                                                tax = 0.0,
+                                                                tax = taxCalculationResult.taxAmount,
                                                                 nidOutlet = nidOutlet,
                                                                 selectedPayment = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentId },
                                                                 selectedPaymentDual = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentDualId },
                                                                 dpAmount = viewModel.savedDraftDpAmount,
                                                                 orderNote = orderNote,
+                                                                isTaxExempt = taxCalculationResult.isTaxExempt,
                                                                 onSuccess = {
                                                                     cartItems.clear()
                                                                     orderType = ""
@@ -1587,7 +1619,7 @@ fun HomeScreen(
                                                                     customerName = selectedCustomer?.name,
                                                                     tableName = viewModel.selectedTable.ifBlank { null },
                                                                     discountAmount = discountAmount,
-                                                                    taxAmount = 0.0,
+                                                                    taxAmount = taxCalculationResult.taxAmount,
                                                                     paxCount = 1
                                                                 )
                                                             }
@@ -1610,6 +1642,13 @@ fun HomeScreen(
                                                     orderNote = orderNote,
                                                     onOrderNoteClick = { showOrderNoteDialog = true },
                                                     discountAmount = discountAmount,
+                                                    taxAmount = taxCalculationResult.taxAmount,
+                                                    taxLabel = taxCalculationResult.taxName,
+                                                    taxPercent = taxCalculationResult.taxPercent,
+                                                    taxMode = taxCalculationResult.taxMode,
+                                                    allowManualTaxExempt = viewModel.activeTransactionCategory.equals("OFFLINE", ignoreCase = true) && (viewModel.offlineTaxSetting?.allowManualTaxExempt == true),
+                                                    isManualTaxExempt = viewModel.isManualTaxExempt,
+                                                    onManualTaxExemptChange = { viewModel.isManualTaxExempt = it },
                                                     grandTotal = cartGrandTotal,
                                                     modifier = Modifier.fillMaxSize()
                                                 )
@@ -1937,6 +1976,11 @@ fun HomeScreen(
     if (viewModel.showPaymentScreen) {
         PaymentScreen(
             grandTotal = cartGrandTotal,
+            taxAmount = taxCalculationResult.taxAmount,
+            taxLabel = taxCalculationResult.taxName,
+            allowManualTaxExempt = viewModel.activeTransactionCategory.equals("OFFLINE", ignoreCase = true) && (viewModel.offlineTaxSetting?.allowManualTaxExempt == true),
+            isManualTaxExempt = viewModel.isManualTaxExempt,
+            onManualTaxExemptChange = { viewModel.isManualTaxExempt = it },
             paymentMethods = viewModel.paymentMethods,
             isSubmitting = viewModel.isSubmitting,
             errorMessage = viewModel.transactionError,
@@ -1969,13 +2013,14 @@ fun HomeScreen(
                     selectedPaymentDual = payment2,
                     dpAmount = dpAmount,
                     discount = discountAmount,
-                    tax = 0.0,
+                    tax = taxCalculationResult.taxAmount,
                     paidAmount = paidAmount,
                     nidVoucher = selectedVoucher?.id?.toIntOrNull(),
                     nidOutlet = nidOutlet,
                     orderNote = orderNote,
                     userName = userName,
                     outletName = outletName ?: "",
+                    isTaxExempt = taxCalculationResult.isTaxExempt,
                     onSuccess = autoFinishCheckout
                 )
             }
@@ -1997,7 +2042,8 @@ fun HomeScreen(
                     selectedCustomer = selectedCustomer,
                     cancelNote = note,
                     nidOutlet = nidOutlet,
-                    orderNote = orderNote
+                    orderNote = orderNote,
+                    isTaxExempt = taxCalculationResult.isTaxExempt
                 )
             }
         )
@@ -2246,9 +2292,10 @@ fun HomeScreen(
             customerName = selectedCustomer?.name,
             tableName = viewModel.selectedTable.ifBlank { null },
             discountAmount = discountAmount,
-            taxAmount = 0.0,
+            taxAmount = taxCalculationResult.taxAmount,
             paxCount = 1,
             isPrinting = viewModel.isPrinting,
+            taxSetting = viewModel.activeTaxSetting,
             onPrint = {
                 viewModel.printCheckReceipt(
                     context = context,
@@ -2258,7 +2305,7 @@ fun HomeScreen(
                     customerName = selectedCustomer?.name,
                     tableName = viewModel.selectedTable.ifBlank { null },
                     discountAmount = discountAmount,
-                    taxAmount = 0.0,
+                    taxAmount = taxCalculationResult.taxAmount,
                     paxCount = 1
                 )
             },
@@ -2440,6 +2487,7 @@ fun HomeScreen(
                 isOrderTypeSelected = viewModel.isOrderTypeSelectedByUser,
                 isPrintPreviewEnabled = viewModel.isShowPrintPreviewEnabled(context),
                 isPdfDialogEnabled = viewModel.isShowPdfDialogEnabled(context),
+                taxSetting = viewModel.activeTaxSetting,
                 onPrint = {
                     if (viewModel.selectedPrinterAddress == null) {
                         viewModel.openPrinterSelection(printerManager)

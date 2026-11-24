@@ -50,8 +50,8 @@ fun TransactionDetailScreen(
         maximumFractionDigits = 0
     }
 
-    fun formatStringNum(str: String): String {
-        return formatter.format(str.toDoubleOrNull() ?: 0.0)
+    fun formatStringNum(str: String?): String {
+        return formatter.format(str?.toDoubleOrNull() ?: 0.0)
     }
 
     val statusUpper = transaction.status.uppercase()
@@ -60,7 +60,7 @@ fun TransactionDetailScreen(
     val cashierName = transaction.posUser?.user?.name ?: "Unknown"
     val hasPartialHistory = transaction.details?.any { it.qtyVoid > 0 || it.qtyRefund > 0 } == true
 
-    val displayGrandTotal = transaction.grandTotal.toDoubleOrNull() ?: 0.0
+    val displayGrandTotal = (transaction.grandTotal ?: "0").toDoubleOrNull() ?: 0.0
     val isDpPending = statusUpper == "PENDING" && transaction.remainingAmount > 0
 
     var showPartialActionWarningDialog by remember { mutableStateOf(false) }
@@ -416,24 +416,35 @@ fun TransactionDetailScreen(
                         verticalArrangement = Arrangement.Top
                     ) {
                         // Pajak row with background
-                        Surface(
-                            color = Color(0xFFF3F3F3),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                        val taxVal = (transaction.tax ?: "0").toDoubleOrNull() ?: 0.0
+                        val taxMode = transaction.taxMode
+                        val taxPercent = transaction.taxPercent ?: 0.0
+                        if (taxVal > 0 || taxMode == "INCLUDE") {
+                            Surface(
+                                color = Color(0xFFF3F3F3),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(text = "Pajak", fontSize = 12.sp, color = Color.Black)
-                                Text(
-                                    text = formatStringNum(transaction.tax),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val taxLabelText = when {
+                                        taxMode == "INCLUDE" && taxPercent > 0 -> "Pajak ${taxPercent.toInt()}% (Include)"
+                                        taxMode == "INCLUDE" -> "Pajak (Include)"
+                                        taxPercent > 0 -> "Pajak ${taxPercent.toInt()}%"
+                                        else -> "Pajak"
+                                    }
+                                    Text(text = taxLabelText, fontSize = 12.sp, color = Color.Black)
+                                    Text(
+                                        text = formatStringNum(transaction.tax),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black
+                                    )
+                                }
                             }
                         }
 

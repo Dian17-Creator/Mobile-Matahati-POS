@@ -53,6 +53,7 @@ fun OlseraHeaderBar(
     hasActivePesanan: Boolean = false,
     selectedRightTab: String = "Produk",
     onRightTabSelected: (String) -> Unit = {},
+    transactionCategory: String = "ONLINE",
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -197,6 +198,7 @@ fun TransaksiHeaderBar(
     onMenuClick: () -> Unit,
     currentDate: String = "",
     onDateClick: () -> Unit = {},
+    transactionCategory: String = "ONLINE",
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -215,17 +217,27 @@ fun TransaksiHeaderBar(
                 Icon(Icons.Default.Menu, "Menu", tint = Color.White)
             }
 
-            // Online Status
+            // Online / Offline Status Badge
+            val isOnline = transactionCategory.equals("ONLINE", ignoreCase = true)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
-                    .clickable { }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Icon(Icons.Default.Cloud, "Online", tint = Color.White, modifier = Modifier.size(18.dp))
+                Icon(
+                    imageVector = if (isOnline) Icons.Default.Cloud else Icons.Default.Storefront,
+                    contentDescription = if (isOnline) "Online" else "Offline",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Online", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = if (isOnline) "Online" else "Offline",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             Spacer(modifier = Modifier.weight(1f))
