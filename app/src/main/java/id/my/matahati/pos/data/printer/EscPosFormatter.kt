@@ -68,63 +68,55 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(INIT.toList())
         out.addAll(FONT_A.toList())
         out.addAll(ALIGN_CENTER.toList())
-        
-        // 2. Header Outlet (Bold & Double Size if <= 16 chars)
-        val outletName = (trx.outlet?.name ?: savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
-        out.addAll(BOLD_ON.toList())
-        if (outletName.length <= 16) {
-            out.addAll(SIZE_DOUBLE.toList())
-            out.addAll("$outletName\n".toByteArray().toList())
-            out.addAll(SIZE_NORMAL.toList())
-        } else {
-            out.addAll(SIZE_NORMAL.toList())
-            out.addAll("$outletName\n".toByteArray().toList())
-        }
-        out.addAll(BOLD_OFF.toList())
 
-        // Receipt Title from Tax Setting
-        if (!taxSetting?.receiptTitle.isNullOrBlank()) {
-            taxSetting!!.receiptTitle!!.lines().forEach { line ->
-                if (line.isNotBlank()) {
+        // 2. Receipt Title Header from Tax Setting (No Outlet Name Header)
+        val titleStr = taxSetting?.receiptTitle?.trim()
+        if (!titleStr.isNullOrBlank()) {
+            val titleLines = titleStr.lines()
+            titleLines.forEachIndexed { index, line ->
+                if (index == 0) {
+                    out.addAll(BOLD_ON.toList())
+                    out.addAll("$line\n".toByteArray().toList())
+                    out.addAll(BOLD_OFF.toList())
+                } else {
                     out.addAll("$line\n".toByteArray().toList())
                 }
             }
+            out.addAll("\n".toByteArray().toList())
         }
-        out.addAll("\n".toByteArray().toList())
 
-        // 3. Info Transaksi (Left Aligned)
+        // 3. Info Transaksi Atas (Left Aligned)
         out.addAll(ALIGN_LEFT.toList())
-        if (taxSetting?.hideOrderNo != true) {
-            out.addAll(formatLabelValue("No. Trx", trx.transactionNo).toList())
-        }
-        out.addAll(formatLabelValue("Waktu", formatDateTime(trx.transactionDate)).toList())
-        out.addAll(formatLabelValue("Kasir", finalCashierName).toList())
-        if (isOrderTypeSelected && !trx.orderType.isNullOrBlank()) {
-            out.addAll(formatLabelValue("Order", trx.orderType).toList())
-        }
+        out.addAll("${formatDateTime(trx.transactionDate)}\n".toByteArray().toList())
+        out.addAll(formatAlignedLabelValue("Kasir", finalCashierName, 12).toList())
         if (!trx.customerName.isNullOrBlank()) {
-            out.addAll(formatLabelValue("Customer", trx.customerName).toList())
+            out.addAll(formatAlignedLabelValue("Pelanggan", trx.customerName, 12).toList())
         }
-        if (!trx.tableName.isNullOrBlank()) {
-            out.addAll(formatLabelValue("Meja", trx.tableName).toList())
-        }
-        if (!trx.orderNote.isNullOrBlank()) {
-            out.addAll(formatLabelValue("Catatan", trx.orderNote).toList())
+        if (taxSetting?.hideOrderNo != true && trx.transactionNo.isNotBlank()) {
+            val formattedTrxNo = if (trx.transactionNo.startsWith("#")) trx.transactionNo else "#${trx.transactionNo}"
+            out.addAll("$formattedTrxNo\n".toByteArray().toList())
         }
 
-        // 4. Separator
+        // 4. Separator 1
         out.addAll(drawLine("-").toByteArray().toList())
 
-        // 5. Items
+        // 5. Antrian & Order Type (Center Aligned)
+        out.addAll(ALIGN_CENTER.toList())
+        val orderTypeDisplay = (trx.orderType ?: "DINE_IN").replace("_", "-").uppercase()
+        val queueStr = trx.queueNo?.takeIf { it.isNotBlank() }
+        val queueLine = if (!queueStr.isNullOrBlank()) "Antrian $queueStr ($orderTypeDisplay)" else "($orderTypeDisplay)"
+        out.addAll("$queueLine\n".toByteArray().toList())
+        out.addAll(ALIGN_LEFT.toList())
+
+        // 6. Items
         details.forEach { item ->
-            // Wrap product name if too long
             val wrappedName = wrapText(item.productName, cols)
             wrappedName.forEach { line ->
                 out.addAll("$line\n".toByteArray().toList())
             }
             
-            val qtyLine = "${item.quantity} x ${formatNum(item.price)}"
-            val subtotalLine = formatNum(item.subtotal)
+            val qtyLine = "    Rp. ${formatNum(item.price)}  x${item.quantity}"
+            val subtotalLine = "Rp. ${formatNum(item.subtotal)}"
             
             out.addAll(drawTwoColumns(qtyLine, subtotalLine).toByteArray().toList())
             
@@ -139,46 +131,58 @@ class EscPosFormatter(private val cols: Int = 32) {
             }
         }
 
-        // 6. Separator
+        // 7. Separator 2
         out.addAll(drawLine("-").toByteArray().toList())
 
-        // 7. Totals
-        out.addAll(drawTwoColumns("Subtotal", formatNum(trx.subtotal)).toByteArray().toList())
-        out.addAll(drawTwoColumns("Discount", formatNum(trx.discount)).toByteArray().toList())
+        // 8. Totals
+        out.addAll(drawTwoColumns("Subtotal", "Rp. ${formatNum(trx.subtotal)}").toByteArray().toList())
+        
+        val scPercent = taxSetting?.serviceChargePercent ?: 0.0
+        if (scPercent > 0) {
+            val scAmount = (trx.subtotal.toDoubleOrNull() ?: 0.0) * (scPercent / 100.0)
+            out.addAll(drawTwoColumns("Service charge $scPercent%", "Rp. ${formatNum(scAmount.toString())}").toByteArray().toList())
+        }
 
+        val discountVal = trx.discount.toDoubleOrNull() ?: 0.0
+        val voucherCode = trx.voucher?.ckode?.takeIf { it.isNotBlank() }
+        if (!voucherCode.isNullOrBlank()) {
+            val voucherLabel = "Voucher ($voucherCode)"
+            out.addAll(drawTwoColumns(voucherLabel, "-Rp. ${formatNum(trx.discount)}").toByteArray().toList())
+        } else if (discountVal > 0) {
+            out.addAll(drawTwoColumns("Diskon", "-Rp. ${formatNum(trx.discount)}").toByteArray().toList())
+        }
+
+        val categoryStr = trx.transactionCategory ?: taxSetting?.category ?: "OFFLINE"
+        val isOnlineCategory = categoryStr.equals("ONLINE", ignoreCase = true)
         val taxVal = trx.tax.toDoubleOrNull() ?: 0.0
         val taxMode = trx.taxMode ?: (if (taxSetting?.isTaxIncluded == true) "INCLUDE" else if (taxVal > 0) "EXCLUDE" else "NONE")
-        val taxName = taxSetting?.taxName?.takeIf { it.isNotBlank() } ?: "Pajak"
+        val taxName = taxSetting?.taxName?.takeIf { it.isNotBlank() } ?: "PPN"
         val taxPercent = trx.taxPercent ?: (taxSetting?.taxPercent ?: 0.0)
 
-        if (taxVal > 0 || taxMode == "INCLUDE") {
-            val taxLabelText = when {
-                taxMode == "INCLUDE" && taxPercent > 0 -> "$taxName ${taxPercent.toInt()}% (Include)"
-                taxMode == "INCLUDE" -> "$taxName (Include)"
-                taxPercent > 0 -> "$taxName ${taxPercent.toInt()}%"
-                else -> taxName
-            }
-            out.addAll(drawTwoColumns(taxLabelText, formatNum(trx.tax)).toByteArray().toList())
+        if (!isOnlineCategory && (taxVal > 0 || taxMode == "INCLUDE")) {
+            val taxLabelText = if (taxPercent > 0) "$taxName ${taxPercent.toInt()}%" else taxName
+            out.addAll(drawTwoColumns(taxLabelText, "Rp. ${formatNum(trx.tax)}").toByteArray().toList())
         }
         
+        // 9. Separator 3
         out.addAll(drawLine("-").toByteArray().toList())
         
-        // 8. GRAND TOTAL (Bold)
+        // 10. Total & Pembayaran
         out.addAll(BOLD_ON.toList())
-        out.addAll(drawTwoColumns("GRAND TOTAL", formatNum(trx.grandTotal)).toByteArray().toList())
+        out.addAll(drawTwoColumns("Total", "Rp. ${formatNum(trx.grandTotal)}").toByteArray().toList())
         out.addAll(BOLD_OFF.toList())
 
         val resolvedPayment1Name = trx.payment?.cname?.takeIf { it.isNotBlank() }
             ?: paymentMethods.find { it.id == trx.nidPayment }?.name
             ?: "CASH"
-        val payment1Name = resolvedPayment1Name.uppercase()
+        val rawP1 = resolvedPayment1Name.uppercase()
+        val payment1Name = if (rawP1.contains("CASH") || rawP1.contains("TUNAI")) "Tunai" else rawP1
 
         val resolvedPayment2Name = trx.paymentDual?.cname?.takeIf { it.isNotBlank() }
             ?: paymentMethods.find { it.id == trx.nidPaymentDual }?.name
         val payment2Name = resolvedPayment2Name?.uppercase()
 
         val isDualPayment = !payment2Name.isNullOrBlank()
-        val isDpReservation = (trx.status.uppercase() == "PENDING" && trx.remainingAmount > 0) || (trx.dpAmount > 0 && trx.remainingAmount > 0)
         val salesPayments = trx.salesPayments
 
         val totalPaid = trx.paidAmount.toDoubleOrNull() ?: 0.0
@@ -187,58 +191,44 @@ class EscPosFormatter(private val cols: Int = 32) {
         val changeToDisplay = if (changeCalculated > 0) changeCalculated else (trx.changeAmount.toDoubleOrNull() ?: 0.0)
 
         if (!salesPayments.isNullOrEmpty() && salesPayments.size > 1) {
-            out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
             salesPayments.forEachIndexed { index, sp ->
-                val pName = sp.paymentMethod?.cname?.uppercase() ?: "BAYAR ${index + 1}"
-                out.addAll(drawTwoColumns(pName, formatNum(sp.amount.toString())).toByteArray().toList())
+                val pName = sp.paymentMethod?.cname ?: "Bayar ${index + 1}"
+                out.addAll(drawTwoColumns(pName, "Rp. ${formatNum(sp.amount.toString())}").toByteArray().toList())
             }
-            if (trx.remainingAmount > 0) {
-                out.addAll(drawTwoColumns("Sisa Tagihan", formatNum(trx.remainingAmount.toString())).toByteArray().toList())
-            }
-            out.addAll(drawTwoColumns("Change", formatNum(changeToDisplay.toString())).toByteArray().toList())
+            out.addAll(drawTwoColumns("Kembalian", "Rp. ${formatNum(changeToDisplay.toString())}").toByteArray().toList())
         } else if (isDualPayment) {
             val dpVal = if (trx.dpAmount > 0) trx.dpAmount else totalPaid / 2
             val secondVal = maxOf(0.0, totalPaid - dpVal)
-
-            out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
-            out.addAll(drawTwoColumns(payment1Name, formatNum(dpVal.toString())).toByteArray().toList())
-            out.addAll(drawTwoColumns(payment2Name, formatNum(secondVal.toString())).toByteArray().toList())
-            out.addAll(drawTwoColumns("Change", formatNum(changeToDisplay.toString())).toByteArray().toList())
-        } else if (isDpReservation) {
-            val dpVal = if (trx.dpAmount > 0) trx.dpAmount else (trx.paidAmount.toDoubleOrNull() ?: 0.0)
-            out.addAll(drawTwoColumns("DP ($payment1Name)", formatNum(dpVal.toString())).toByteArray().toList())
-            out.addAll(drawTwoColumns("SISA TAGIHAN", formatNum(trx.remainingAmount.toString())).toByteArray().toList())
-            out.addAll(drawTwoColumns("Change", formatNum(changeToDisplay.toString())).toByteArray().toList())
+            out.addAll(drawTwoColumns(payment1Name, "Rp. ${formatNum(dpVal.toString())}").toByteArray().toList())
+            out.addAll(drawTwoColumns(payment2Name!!, "Rp. ${formatNum(secondVal.toString())}").toByteArray().toList())
+            out.addAll(drawTwoColumns("Kembalian", "Rp. ${formatNum(changeToDisplay.toString())}").toByteArray().toList())
         } else {
-            out.addAll(drawTwoColumns("Paid", formatNum(trx.paidAmount)).toByteArray().toList())
-            out.addAll(drawTwoColumns(payment1Name, "").toByteArray().toList())
-            out.addAll(drawTwoColumns("Change", formatNum(changeToDisplay.toString())).toByteArray().toList())
+            out.addAll(drawTwoColumns(payment1Name, "Rp. ${formatNum(trx.paidAmount)}").toByteArray().toList())
+            if (payment1Name.equals("Tunai", ignoreCase = true) || changeToDisplay > 0 || totalPaid > 0) {
+                out.addAll(drawTwoColumns("Kembalian", "Rp. ${formatNum(changeToDisplay.toString())}").toByteArray().toList())
+            }
         }
 
-        // 9. Status & Footer (Center)
         out.addAll("\n".toByteArray().toList())
-        out.addAll(ALIGN_CENTER.toList())
-        out.addAll(drawLine("=").toByteArray().toList())
-        out.addAll(BOLD_ON.toList())
-        val displayStatus = when {
-            isDpReservation -> "Status: DP / RESERVASI"
-            trx.status.uppercase() == "PAID" || trx.status.uppercase() == "SUCCESS" -> "Status: LUNAS"
-            else -> "Status: ${trx.status}"
-        }
-        out.addAll("$displayStatus\n".toByteArray().toList())
-        out.addAll(BOLD_OFF.toList())
-        out.addAll(drawLine("=").toByteArray().toList())
+        val itemCount = if (trx.itemCount > 0) trx.itemCount else details.sumOf { it.quantity }
+        out.addAll("Jumlah item : $itemCount\n".toByteArray().toList())
+        out.addAll("Dilayani oleh : $finalCashierName\n".toByteArray().toList())
         
-        out.addAll("\n".toByteArray().toList())
-        if (!taxSetting?.receiptNote.isNullOrBlank()) {
-            taxSetting?.receiptNote?.lines()?.forEach { line ->
-                if (line.isNotBlank()) {
-                    out.addAll("$line\n".toByteArray().toList())
-                }
+        // 11. Footer Note (Center Aligned)
+        val noteStr = taxSetting?.receiptNote?.trim()
+        if (!noteStr.isNullOrBlank()) {
+            out.addAll("\n".toByteArray().toList())
+            out.addAll(ALIGN_CENTER.toList())
+            noteStr.lines().forEach { line ->
+                out.addAll("$line\n".toByteArray().toList())
             }
             out.addAll("\n".toByteArray().toList())
         }
-        out.addAll("TERIMA KASIH\n".toByteArray().toList())
+        
+        // 12. Paper Feed
+        out.addAll("\n\n\n\n\n".toByteArray().toList())
+
+        return out.toByteArray()
         
         // 10. Paper Feed
         out.addAll("\n\n\n\n\n".toByteArray().toList())
@@ -499,17 +489,22 @@ class EscPosFormatter(private val cols: Int = 32) {
     }
 
     private fun formatLabelValue(label: String, value: String): ByteArray {
-        val labelPart = "$label: "
-        val availableForValue = cols - labelPart.length
-        
+        return formatAlignedLabelValue(label, value, 12)
+    }
+
+    private fun formatAlignedLabelValue(label: String, value: String, labelWidth: Int = 12): ByteArray {
+        val paddedLabel = label.padEnd(labelWidth) + ": "
+        val availableForValue = cols - paddedLabel.length
+        if (availableForValue <= 0) return "$label: $value\n".toByteArray()
+
         if (value.length <= availableForValue) {
-            return "$labelPart$value\n".toByteArray()
+            return "$paddedLabel$value\n".toByteArray()
         } else {
             val lines = wrapText(value, availableForValue)
             val result = StringBuilder()
-            result.append("$labelPart${lines[0]}\n")
+            result.append("$paddedLabel${lines[0]}\n")
             for (i in 1 until lines.size) {
-                result.append(" ".repeat(labelPart.length) + lines[i] + "\n")
+                result.append(" ".repeat(paddedLabel.length) + lines[i] + "\n")
             }
             return result.toString().toByteArray()
         }
