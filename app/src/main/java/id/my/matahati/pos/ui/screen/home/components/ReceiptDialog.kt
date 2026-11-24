@@ -35,6 +35,7 @@ fun ReceiptDialog(
     isOrderTypeSelected: Boolean = true,
     isPrintPreviewEnabled: Boolean = true,
     isPdfDialogEnabled: Boolean = true,
+    taxSetting: id.my.matahati.pos.model.TaxSettingItem? = null,
     onDismiss: () -> Unit
 ) {
     val trx = transactionData.transaction ?: return
@@ -110,6 +111,15 @@ fun ReceiptDialog(
                             fontFamily = FontFamily.Monospace,
                             textAlign = TextAlign.Center
                         )
+                        if (!taxSetting?.receiptTitle.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = taxSetting!!.receiptTitle!!,
+                                fontSize = 13.sp,
+                                fontFamily = FontFamily.Monospace,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Scrollable Content Area
@@ -121,7 +131,9 @@ fun ReceiptDialog(
                                     .verticalScroll(scrollState)
                             ) {
                                 Column(modifier = Modifier.fillMaxWidth()) {
-                                    TextRow("No. Trx", trx.transactionNo)
+                                    if (taxSetting?.hideOrderNo != true) {
+                                        TextRow("No. Trx", trx.transactionNo)
+                                    }
                                     TextRow("Waktu", formatDateTime(trx.transactionDate))
                                     TextRow("Kasir", finalCashierName)
                                     if (isOrderTypeSelected && !trx.orderType.isNullOrBlank()) {
@@ -178,7 +190,22 @@ fun ReceiptDialog(
                                 Column(modifier = Modifier.fillMaxWidth()) {
                                     RowAmount("Subtotal", formatStringNum(trx.subtotal))
                                     RowAmount("Discount", formatStringNum(trx.discount))
-                                    RowAmount("Tax", formatStringNum(trx.tax))
+
+                                    val taxVal = trx.tax.toDoubleOrNull() ?: 0.0
+                                    val taxMode = trx.taxMode ?: (if (taxSetting?.isTaxIncluded == true) "INCLUDE" else if (taxVal > 0) "EXCLUDE" else "NONE")
+                                    val taxName = taxSetting?.taxName?.takeIf { it.isNotBlank() } ?: "Pajak"
+                                    val taxPercent = trx.taxPercent ?: (taxSetting?.taxPercent ?: 0.0)
+
+                                    if (taxVal > 0 || taxMode == "INCLUDE") {
+                                        val taxLabelText = when {
+                                            taxMode == "INCLUDE" && taxPercent > 0 -> "$taxName ${taxPercent.toInt()}% (Include)"
+                                            taxMode == "INCLUDE" -> "$taxName (Include)"
+                                            taxPercent > 0 -> "$taxName ${taxPercent.toInt()}%"
+                                            else -> taxName
+                                        }
+                                        RowAmount(taxLabelText, formatStringNum(trx.tax))
+                                    }
+
                                     Spacer(modifier = Modifier.height(4.dp))
                                     HorizontalDivider(color = Color.Black, thickness = 1.dp)
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -232,6 +259,17 @@ fun ReceiptDialog(
                                     fontSize = 14.sp,
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
                                 )
+
+                                if (!taxSetting?.receiptNote.isNullOrBlank()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = taxSetting!!.receiptNote!!,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                                    )
+                                }
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
                         }

@@ -30,7 +30,8 @@ class EscPosFormatter(private val cols: Int = 32) {
         cashierName: String,
         savedOutletName: String? = null,
         isOrderTypeSelected: Boolean = true,
-        paymentMethods: List<id.my.matahati.pos.model.PaymentMethod> = emptyList()
+        paymentMethods: List<id.my.matahati.pos.model.PaymentMethod> = emptyList(),
+        taxSetting: id.my.matahati.pos.model.TaxSettingItem? = null
     ): ByteArray {
         val trx = data.transaction ?: return byteArrayOf()
         val details = data.details ?: emptyList()
@@ -80,11 +81,22 @@ class EscPosFormatter(private val cols: Int = 32) {
             out.addAll("$outletName\n".toByteArray().toList())
         }
         out.addAll(BOLD_OFF.toList())
+
+        // Receipt Title from Tax Setting
+        if (!taxSetting?.receiptTitle.isNullOrBlank()) {
+            taxSetting!!.receiptTitle!!.lines().forEach { line ->
+                if (line.isNotBlank()) {
+                    out.addAll("$line\n".toByteArray().toList())
+                }
+            }
+        }
         out.addAll("\n".toByteArray().toList())
 
         // 3. Info Transaksi (Left Aligned)
         out.addAll(ALIGN_LEFT.toList())
-        out.addAll(formatLabelValue("No. Trx", trx.transactionNo).toList())
+        if (taxSetting?.hideOrderNo != true) {
+            out.addAll(formatLabelValue("No. Trx", trx.transactionNo).toList())
+        }
         out.addAll(formatLabelValue("Waktu", formatDateTime(trx.transactionDate)).toList())
         out.addAll(formatLabelValue("Kasir", finalCashierName).toList())
         if (isOrderTypeSelected && !trx.orderType.isNullOrBlank()) {
@@ -133,7 +145,21 @@ class EscPosFormatter(private val cols: Int = 32) {
         // 7. Totals
         out.addAll(drawTwoColumns("Subtotal", formatNum(trx.subtotal)).toByteArray().toList())
         out.addAll(drawTwoColumns("Discount", formatNum(trx.discount)).toByteArray().toList())
-        out.addAll(drawTwoColumns("Tax", formatNum(trx.tax)).toByteArray().toList())
+
+        val taxVal = trx.tax.toDoubleOrNull() ?: 0.0
+        val taxMode = trx.taxMode ?: (if (taxSetting?.isTaxIncluded == true) "INCLUDE" else if (taxVal > 0) "EXCLUDE" else "NONE")
+        val taxName = taxSetting?.taxName?.takeIf { it.isNotBlank() } ?: "Pajak"
+        val taxPercent = trx.taxPercent ?: (taxSetting?.taxPercent ?: 0.0)
+
+        if (taxVal > 0 || taxMode == "INCLUDE") {
+            val taxLabelText = when {
+                taxMode == "INCLUDE" && taxPercent > 0 -> "$taxName ${taxPercent.toInt()}% (Include)"
+                taxMode == "INCLUDE" -> "$taxName (Include)"
+                taxPercent > 0 -> "$taxName ${taxPercent.toInt()}%"
+                else -> taxName
+            }
+            out.addAll(drawTwoColumns(taxLabelText, formatNum(trx.tax)).toByteArray().toList())
+        }
         
         out.addAll(drawLine("-").toByteArray().toList())
         
@@ -204,6 +230,14 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll(drawLine("=").toByteArray().toList())
         
         out.addAll("\n".toByteArray().toList())
+        if (!taxSetting?.receiptNote.isNullOrBlank()) {
+            taxSetting?.receiptNote?.lines()?.forEach { line ->
+                if (line.isNotBlank()) {
+                    out.addAll("$line\n".toByteArray().toList())
+                }
+            }
+            out.addAll("\n".toByteArray().toList())
+        }
         out.addAll("TERIMA KASIH\n".toByteArray().toList())
         
         // 10. Paper Feed
@@ -220,7 +254,8 @@ class EscPosFormatter(private val cols: Int = 32) {
         tableName: String? = null,
         discountAmount: Double = 0.0,
         taxAmount: Double = 0.0,
-        paxCount: Int = 1
+        paxCount: Int = 1,
+        taxSetting: id.my.matahati.pos.model.TaxSettingItem? = null
     ): ByteArray {
         val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).apply {
             maximumFractionDigits = 0
@@ -239,8 +274,17 @@ class EscPosFormatter(private val cols: Int = 32) {
 
         // 2. Title: BUKAN RESI PEMBAYARAN
         out.addAll(BOLD_ON.toList())
-        out.addAll("BUKAN RESI PEMBAYARAN\n\n".toByteArray().toList())
+        out.addAll("BUKAN RESI PEMBAYARAN\n".toByteArray().toList())
         out.addAll(BOLD_OFF.toList())
+
+        if (!taxSetting?.receiptTitle.isNullOrBlank()) {
+            taxSetting?.receiptTitle?.lines()?.forEach { line ->
+                if (line.isNotBlank()) {
+                    out.addAll("$line\n".toByteArray().toList())
+                }
+            }
+        }
+        out.addAll("\n".toByteArray().toList())
 
         // 3. Info Pemesanan
         out.addAll(ALIGN_LEFT.toList())
@@ -304,8 +348,19 @@ class EscPosFormatter(private val cols: Int = 32) {
         if (discountAmount > 0) {
             out.addAll(drawTwoColumns("Discount", "-${formatNum(discountAmount)}").toByteArray().toList())
         }
-        if (taxAmount > 0) {
-            out.addAll(drawTwoColumns("Tax", formatNum(taxAmount)).toByteArray().toList())
+
+        val taxName = taxSetting?.taxName?.takeIf { it.isNotBlank() } ?: "Pajak"
+        val taxPercent = taxSetting?.taxPercent ?: 0.0
+        val isInclude = taxSetting?.isTaxIncluded == true
+
+        if (taxAmount > 0 || isInclude) {
+            val taxLabelText = when {
+                isInclude && taxPercent > 0 -> "$taxName ${taxPercent.toInt()}% (Include)"
+                isInclude -> "$taxName (Include)"
+                taxPercent > 0 -> "$taxName ${taxPercent.toInt()}%"
+                else -> taxName
+            }
+            out.addAll(drawTwoColumns(taxLabelText, formatNum(taxAmount)).toByteArray().toList())
         }
 
         val grandTotal = (subtotal - discountAmount + taxAmount).coerceAtLeast(0.0)
@@ -316,6 +371,15 @@ class EscPosFormatter(private val cols: Int = 32) {
         out.addAll("\n".toByteArray().toList())
         val totalQty = cartItems.sumOf { it.quantity }
         out.addAll("Jumlah Item: $totalQty\n".toByteArray().toList())
+
+        if (!taxSetting?.receiptNote.isNullOrBlank()) {
+            out.addAll("\n".toByteArray().toList())
+            taxSetting?.receiptNote?.lines()?.forEach { line ->
+                if (line.isNotBlank()) {
+                    out.addAll("$line\n".toByteArray().toList())
+                }
+            }
+        }
 
         // 9. Paper Feed
         out.addAll("\n\n\n\n\n".toByteArray().toList())

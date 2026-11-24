@@ -103,6 +103,13 @@ fun OlseraCartPanel(
     orderNote: String = "",
     onOrderNoteClick: () -> Unit = {},
     discountAmount: Double = 0.0,
+    taxAmount: Double = 0.0,
+    taxLabel: String = "Pajak",
+    taxPercent: Double = 0.0,
+    taxMode: String = "NONE",
+    allowManualTaxExempt: Boolean = false,
+    isManualTaxExempt: Boolean = false,
+    onManualTaxExemptChange: (Boolean) -> Unit = {},
     grandTotal: Double = 0.0,
     isSubmitting: Boolean = false
 ) {
@@ -283,33 +290,66 @@ fun OlseraCartPanel(
                 }
 
                 if (cartItems.isNotEmpty()) {
-                    item {
-                        Surface(
-                            color = Color.White,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp
-                                    ),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                    if (allowManualTaxExempt) {
+                        item {
+                            Surface(
+                                color = Color.White,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = "Pajak",
-                                    fontSize = 12.sp,
-                                    color = Color.Black
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Bebas Pajak",
+                                        fontSize = 12.sp,
+                                        color = Color.Black
+                                    )
+                                    androidx.compose.material3.Switch(
+                                        checked = isManualTaxExempt,
+                                        onCheckedChange = onManualTaxExemptChange
+                                    )
+                                }
+                            }
+                        }
+                    }
 
-                                Text(
-                                    text = "0",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black
-                                )
+                    if (taxAmount > 0 || taxMode == "INCLUDE") {
+                        item {
+                            Surface(
+                                color = Color.White,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val displayTaxLabel = when {
+                                        taxMode == "INCLUDE" && taxPercent > 0 -> "$taxLabel ${taxPercent.toInt()}% (Include)"
+                                        taxMode == "INCLUDE" -> "$taxLabel (Include)"
+                                        taxPercent > 0 -> "$taxLabel ${taxPercent.toInt()}%"
+                                        else -> taxLabel
+                                    }
+
+                                    Text(
+                                        text = displayTaxLabel,
+                                        fontSize = 12.sp,
+                                        color = Color.Black
+                                    )
+
+                                    Text(
+                                        text = formatRawCurrency(taxAmount),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black
+                                    )
+                                }
                             }
                         }
                     }

@@ -401,6 +401,82 @@ fun SettingsScreen(
                                 )
                             )
                         }
+
+                        HorizontalDivider(color = Color(0xFFEEEEEE))
+
+                        // Setting 4: Skema Transaksi Default
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 16.dp)
+                            ) {
+                                Text(
+                                    text = "Skema Transaksi",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color(0xFF212121)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Pilih skema transaksi aktif (Offline menghitung pajak outlet, Online tanpa pajak)",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    lineHeight = 16.sp
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .width(160.dp)
+                                    .height(40.dp)
+                                    .background(Color(0xFFF0F0F0), RoundedCornerShape(20.dp))
+                                    .padding(3.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                val isOffline = viewModel.defaultTransactionCategory.uppercase() == "OFFLINE"
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .clip(RoundedCornerShape(17.dp))
+                                        .background(if (isOffline) SettingsBlue else Color.Transparent)
+                                        .clickable { viewModel.updateDefaultTransactionCategory("OFFLINE") },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Offline",
+                                        color = if (isOffline) Color.White else Color.DarkGray,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                }
+
+                                val isOnline = viewModel.defaultTransactionCategory.uppercase() == "ONLINE"
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .clip(RoundedCornerShape(17.dp))
+                                        .background(if (isOnline) SettingsBlue else Color.Transparent)
+                                        .clickable { viewModel.updateDefaultTransactionCategory("ONLINE") },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Online",
+                                        color = if (isOnline) Color.White else Color.DarkGray,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

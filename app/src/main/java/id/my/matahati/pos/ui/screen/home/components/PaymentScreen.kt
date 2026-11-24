@@ -29,6 +29,11 @@ import java.util.Locale
 @Composable
 fun PaymentScreen(
     grandTotal: Double,
+    taxAmount: Double = 0.0,
+    taxLabel: String = "Pajak",
+    allowManualTaxExempt: Boolean = false,
+    isManualTaxExempt: Boolean = false,
+    onManualTaxExemptChange: ((Boolean) -> Unit)? = null,
     paymentMethods: List<PaymentMethod>,
     isSubmitting: Boolean,
     errorMessage: String?,

@@ -74,6 +74,11 @@ interface ApiService {
         @Query("nid_outlet") outletId: Int? = null
     ): Response<id.my.matahati.pos.model.PosUserResponse>
 
+    @GET("api/pos/tax-settings")
+    suspend fun getTaxSettings(
+        @Query("nid_outlet") outletId: Int? = null
+    ): Response<id.my.matahati.pos.model.TaxSettingsResponse>
+
     @GET("api/pos/order-types")
     suspend fun getOrderTypes(): Response<OrderTypeResponse>
 
@@ -83,7 +88,8 @@ interface ApiService {
     @POST("api/pos/transactions/{id}/pay")
     suspend fun settlePayment(
         @Path("id") id: String,
-        @Body request: id.my.matahati.pos.model.SettlePaymentRequest
+        @Body request: id.my.matahati.pos.model.SettlePaymentRequest,
+        @Query("ctransaction_category") category: String? = null
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 
     @GET("api/pos/transactions")
@@ -92,11 +98,15 @@ interface ApiService {
         @Query("end_date") endDate: String? = null,
         @Query("search") search: String? = null,
         @Query("nid_outlet") outletId: String? = null,
-        @Query("nid_payment") paymentId: String? = null
+        @Query("nid_payment") paymentId: String? = null,
+        @Query("ctransaction_category") category: String? = null
     ): Response<id.my.matahati.pos.model.TransactionHistoryResponse>
 
     @DELETE("api/pos/transactions/{id}")
-    suspend fun deleteTransaction(@Path("id") id: String): Response<id.my.matahati.pos.model.TransactionResponse>
+    suspend fun deleteTransaction(
+        @Path("id") id: String,
+        @Query("ctransaction_category") category: String? = null
+    ): Response<id.my.matahati.pos.model.TransactionResponse>
 
     // Shift Endpoints
     @GET("api/shifts/current")
@@ -133,36 +143,42 @@ interface ApiService {
 
     @GET("api/pos/transactions/{id}")
     suspend fun getTransactionDetail(
-        @Path("id") id: String
+        @Path("id") id: String,
+        @Query("ctransaction_category") category: String? = null
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 
     @POST("api/pos/transactions/{id}/finish")
     suspend fun markTransactionFinished(
-        @Path("id") id: String
+        @Path("id") id: String,
+        @Query("ctransaction_category") category: String? = null
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 
     @POST("api/pos/transactions/{id}/void")
     suspend fun voidTransaction(
         @Path("id") id: String,
-        @Body request: id.my.matahati.pos.model.VoidTransactionRequest
+        @Body request: id.my.matahati.pos.model.VoidTransactionRequest,
+        @Query("ctransaction_category") category: String? = null
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 
     @POST("api/pos/transactions/{id}/refund")
     suspend fun refundTransaction(
         @Path("id") id: String,
-        @Body request: id.my.matahati.pos.model.RefundTransactionRequest
+        @Body request: id.my.matahati.pos.model.RefundTransactionRequest,
+        @Query("ctransaction_category") category: String? = null
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 
     @POST("api/pos/transactions/{id}/items/void")
     suspend fun voidItemTransaction(
         @Path("id") id: String,
-        @Body request: id.my.matahati.pos.model.ItemVoidRefundRequest
+        @Body request: id.my.matahati.pos.model.ItemVoidRefundRequest,
+        @Query("ctransaction_category") category: String? = null
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 
     @POST("api/pos/transactions/{id}/items/refund")
     suspend fun refundItemTransaction(
         @Path("id") id: String,
-        @Body request: id.my.matahati.pos.model.ItemVoidRefundRequest
+        @Body request: id.my.matahati.pos.model.ItemVoidRefundRequest,
+        @Query("ctransaction_category") category: String? = null
     ): Response<id.my.matahati.pos.model.TransactionResponse>
 
     @GET("api/pos/dashboard")
