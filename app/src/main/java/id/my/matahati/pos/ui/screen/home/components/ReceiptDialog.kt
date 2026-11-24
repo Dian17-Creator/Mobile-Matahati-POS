@@ -102,25 +102,18 @@ fun ReceiptDialog(
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Header (Fixed)
-                        val outletHeader = (trx.outlet?.name ?: savedOutletName ?: "IQOS MATAHATI TULUNGAGUNG").uppercase()
-                        Text(
-                            text = outletHeader,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            fontFamily = FontFamily.Monospace,
-                            textAlign = TextAlign.Center
-                        )
-                        if (!taxSetting?.receiptTitle.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                        // Header (Receipt Title only - No Outlet Name Header)
+                        val titleStr = taxSetting?.receiptTitle?.trim()
+                        if (!titleStr.isNullOrBlank()) {
                             Text(
-                                text = taxSetting!!.receiptTitle!!,
-                                fontSize = 13.sp,
+                                text = titleStr,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
                                 fontFamily = FontFamily.Monospace,
                                 textAlign = TextAlign.Center
                             )
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
 
                         // Scrollable Content Area
                         Box(modifier = Modifier.weight(1f, fill = false)) {
@@ -131,22 +124,24 @@ fun ReceiptDialog(
                                     .verticalScroll(scrollState)
                             ) {
                                 Column(modifier = Modifier.fillMaxWidth()) {
-                                    if (taxSetting?.hideOrderNo != true) {
-                                        TextRow("No. Trx", trx.transactionNo)
-                                    }
-                                    TextRow("Waktu", formatDateTime(trx.transactionDate))
-                                    TextRow("Kasir", finalCashierName)
-                                    if (isOrderTypeSelected && !trx.orderType.isNullOrBlank()) {
-                                        TextRow("Order", trx.orderType)
+                                    Text(
+                                        text = formatDateTime(trx.transactionDate),
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp
+                                    )
+                                    Row(modifier = Modifier.fillMaxWidth()) {
+                                        Text(text = "Kasir       : ", fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                                        Text(text = finalCashierName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
                                     }
                                     if (!trx.customerName.isNullOrBlank()) {
-                                        TextRow("Customer", trx.customerName)
+                                        Row(modifier = Modifier.fillMaxWidth()) {
+                                            Text(text = "Pelanggan   : ", fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                                            Text(text = trx.customerName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                                        }
                                     }
-                                    if (!trx.tableName.isNullOrBlank()) {
-                                        TextRow("Meja", trx.tableName)
-                                    }
-                                    if (!trx.orderNote.isNullOrBlank()) {
-                                        TextRow("Catatan", trx.orderNote)
+                                    if (taxSetting?.hideOrderNo != true && trx.transactionNo.isNotBlank()) {
+                                        val formattedTrxNo = if (trx.transactionNo.startsWith("#")) trx.transactionNo else "#${trx.transactionNo}"
+                                        Text(text = formattedTrxNo, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
                                     }
                                 }
 
@@ -154,17 +149,32 @@ fun ReceiptDialog(
                                 HorizontalDivider(color = Color.Black, thickness = 1.dp)
                                 Spacer(modifier = Modifier.height(8.dp))
 
+                                // Queue & Order Type Header
+                                val orderTypeDisplay = (trx.orderType ?: "DINE_IN").replace("_", "-").uppercase()
+                                val queueStr = trx.queueNo?.takeIf { it.isNotBlank() }
+                                val queueLine = if (!queueStr.isNullOrBlank()) "Antrian $queueStr ($orderTypeDisplay)" else "($orderTypeDisplay)"
+                                Text(
+                                    text = queueLine,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
                                 details.forEach { item ->
                                     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                                         Text(text = item.productName, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
                                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                             Text(
-                                                text = "${item.quantity} x ${formatStringNum(item.price)}",
+                                                text = "    Rp ${formatStringNum(item.price)} x${item.quantity}",
                                                 fontFamily = FontFamily.Monospace,
                                                 fontSize = 12.sp
                                             )
                                             Text(
-                                                text = formatStringNum(item.subtotal),
+                                                text = "Rp ${formatStringNum(item.subtotal)}",
                                                 fontFamily = FontFamily.Monospace,
                                                 fontSize = 12.sp
                                             )
@@ -188,86 +198,90 @@ fun ReceiptDialog(
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 Column(modifier = Modifier.fillMaxWidth()) {
-                                    RowAmount("Subtotal", formatStringNum(trx.subtotal))
-                                    RowAmount("Discount", formatStringNum(trx.discount))
+                                    RowAmount("Subtotal", "Rp ${formatStringNum(trx.subtotal)}")
 
+                                    val scPercent = taxSetting?.serviceChargePercent ?: 0.0
+                                    if (scPercent > 0) {
+                                        val scAmount = (trx.subtotal.toDoubleOrNull() ?: 0.0) * (scPercent / 100.0)
+                                        RowAmount("Service charge $scPercent%", "Rp ${formatStringNum(scAmount.toString())}")
+                                    }
+
+                                    val discountVal = trx.discount.toDoubleOrNull() ?: 0.0
+                                    val voucherCode = trx.voucher?.ckode?.takeIf { it.isNotBlank() }
+                                    if (!voucherCode.isNullOrBlank()) {
+                                        RowAmount("Voucher ($voucherCode)", "-Rp ${formatStringNum(trx.discount)}")
+                                    } else if (discountVal > 0) {
+                                        RowAmount("Diskon", "-Rp ${formatStringNum(trx.discount)}")
+                                    }
+
+                                    val categoryStr = trx.transactionCategory ?: taxSetting?.category ?: "OFFLINE"
+                                    val isOnlineCategory = categoryStr.equals("ONLINE", ignoreCase = true)
                                     val taxVal = trx.tax.toDoubleOrNull() ?: 0.0
                                     val taxMode = trx.taxMode ?: (if (taxSetting?.isTaxIncluded == true) "INCLUDE" else if (taxVal > 0) "EXCLUDE" else "NONE")
-                                    val taxName = taxSetting?.taxName?.takeIf { it.isNotBlank() } ?: "Pajak"
+                                    val taxName = taxSetting?.taxName?.takeIf { it.isNotBlank() } ?: "PPN"
                                     val taxPercent = trx.taxPercent ?: (taxSetting?.taxPercent ?: 0.0)
 
-                                    if (taxVal > 0 || taxMode == "INCLUDE") {
-                                        val taxLabelText = when {
-                                            taxMode == "INCLUDE" && taxPercent > 0 -> "$taxName ${taxPercent.toInt()}% (Include)"
-                                            taxMode == "INCLUDE" -> "$taxName (Include)"
-                                            taxPercent > 0 -> "$taxName ${taxPercent.toInt()}%"
-                                            else -> taxName
-                                        }
-                                        RowAmount(taxLabelText, formatStringNum(trx.tax))
+                                    if (!isOnlineCategory && (taxVal > 0 || taxMode == "INCLUDE")) {
+                                        val taxLabelText = if (taxPercent > 0) "$taxName ${taxPercent.toInt()}%" else taxName
+                                        RowAmount(taxLabelText, "Rp ${formatStringNum(trx.tax)}")
                                     }
 
                                     Spacer(modifier = Modifier.height(4.dp))
                                     HorizontalDivider(color = Color.Black, thickness = 1.dp)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    RowAmount("GRAND TOTAL", formatStringNum(trx.grandTotal), true)
-                                    RowAmount("Paid", formatStringNum(trx.paidAmount))
+                                    RowAmount("Total", "Rp ${formatStringNum(trx.grandTotal)}", true)
 
                                     val resolvedPayment1Name = trx.payment?.cname?.takeIf { it.isNotBlank() }
                                         ?: paymentMethods.find { it.id == trx.nidPayment }?.name
                                         ?: "CASH"
-                                    val payment1Name = resolvedPayment1Name.uppercase()
+                                    val rawP1 = resolvedPayment1Name.uppercase()
+                                    val payment1Name = if (rawP1.contains("CASH") || rawP1.contains("TUNAI")) "Tunai" else rawP1
 
                                     val resolvedPayment2Name = trx.paymentDual?.cname?.takeIf { it.isNotBlank() }
                                         ?: paymentMethods.find { it.id == trx.nidPaymentDual }?.name
                                     val payment2Name = resolvedPayment2Name?.uppercase()
 
                                     val isDual = !payment2Name.isNullOrBlank()
-                                    val isDpPending = (trx.status.uppercase() == "PENDING" && trx.remainingAmount > 0) || (trx.dpAmount > 0 && trx.remainingAmount > 0)
-
-                                    if (isDual) {
-                                        val totalPaid = trx.paidAmount.toDoubleOrNull() ?: 0.0
-                                        val dpVal = if (trx.dpAmount > 0) trx.dpAmount else totalPaid / 2
-                                        val secondVal = maxOf(0.0, totalPaid - dpVal)
-                                        RowAmount(payment1Name, formatStringNum(dpVal.toString()))
-                                        RowAmount(payment2Name, formatStringNum(secondVal.toString()))
-                                    } else if (isDpPending) {
-                                        val dpVal = if (trx.dpAmount > 0) trx.dpAmount else (trx.paidAmount.toDoubleOrNull() ?: 0.0)
-                                        RowAmount("DP ($payment1Name)", formatStringNum(dpVal.toString()))
-                                        RowAmount("SISA TAGIHAN", formatStringNum(trx.remainingAmount.toString()))
-                                    } else {
-                                        Text(
-                                            text = payment1Name,
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 12.sp,
-                                            modifier = Modifier.padding(vertical = 1.dp)
-                                        )
-                                    }
-
                                     val totalPaid = trx.paidAmount.toDoubleOrNull() ?: 0.0
                                     val grandTotal = trx.grandTotal.toDoubleOrNull() ?: 0.0
                                     val changeCalculated = maxOf(0.0, totalPaid - grandTotal)
                                     val changeToDisplay = if (changeCalculated > 0) changeCalculated else (trx.changeAmount.toDoubleOrNull() ?: 0.0)
 
-                                    RowAmount("Change", formatStringNum(changeToDisplay.toString()))
+                                    if (isDual) {
+                                        val dpVal = if (trx.dpAmount > 0) trx.dpAmount else totalPaid / 2
+                                        val secondVal = maxOf(0.0, totalPaid - dpVal)
+                                        RowAmount(payment1Name, "Rp ${formatStringNum(dpVal.toString())}")
+                                        RowAmount(payment2Name!!, "Rp ${formatStringNum(secondVal.toString())}")
+                                        RowAmount("Kembalian", "Rp ${formatStringNum(changeToDisplay.toString())}")
+                                    } else {
+                                        RowAmount(payment1Name, "Rp ${formatStringNum(trx.paidAmount)}")
+                                        if (payment1Name.equals("Tunai", ignoreCase = true) || changeToDisplay > 0 || totalPaid > 0) {
+                                            RowAmount("Kembalian", "Rp ${formatStringNum(changeToDisplay.toString())}")
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    val itemCount = if (trx.itemCount > 0) trx.itemCount else details.sumOf { it.quantity }
+                                    Text(
+                                        text = "Jumlah item : $itemCount",
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp
+                                    )
+                                    Text(
+                                        text = "Dilayani oleh : $finalCashierName",
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp
+                                    )
                                 }
 
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = "Status: ${trx.status}",
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                                )
-
                                 if (!taxSetting?.receiptNote.isNullOrBlank()) {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
                                     Text(
                                         text = taxSetting!!.receiptNote!!,
                                         fontFamily = FontFamily.Monospace,
                                         fontSize = 12.sp,
                                         textAlign = TextAlign.Center,
-                                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
