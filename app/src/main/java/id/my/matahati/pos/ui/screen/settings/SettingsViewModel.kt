@@ -33,13 +33,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     var isTestingConnection by mutableStateOf(false)
     var testResultMessage by mutableStateOf<String?>(null)
 
-    var isConfirmOrderEnabled by mutableStateOf(true)
+    var isConfirmOrderEnabled by mutableStateOf(false)
         private set
 
-    var isShowPrintPreviewEnabled by mutableStateOf(true)
+    var isShowPrintPreviewEnabled by mutableStateOf(false)
         private set
 
-    var isShowPdfDialogEnabled by mutableStateOf(true)
+    var isShowPdfDialogEnabled by mutableStateOf(false)
         private set
 
     var defaultTransactionCategory by mutableStateOf("ONLINE")
@@ -66,9 +66,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun loadPaymentSettings() {
-        isConfirmOrderEnabled = prefs.getBoolean("confirm_order_before_payment", true)
-        isShowPrintPreviewEnabled = prefs.getBoolean("show_print_preview", true)
-        isShowPdfDialogEnabled = prefs.getBoolean("show_pdf_dialog", true)
+        isConfirmOrderEnabled = prefs.getBoolean("confirm_order_before_payment", false)
+        isShowPrintPreviewEnabled = prefs.getBoolean("show_print_preview", false)
+        isShowPdfDialogEnabled = prefs.getBoolean("show_pdf_dialog", false)
         defaultTransactionCategory = prefs.getString("default_transaction_category", "ONLINE") ?: "ONLINE"
     }
 

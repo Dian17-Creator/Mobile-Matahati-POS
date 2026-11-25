@@ -184,7 +184,7 @@ class SalesClosureReportViewModel : ViewModel() {
 
     fun isShowPrintPreviewEnabled(context: Context): Boolean {
         val prefs = context.getSharedPreferences("pos_prefs", Context.MODE_PRIVATE)
-        return prefs.getBoolean("show_print_preview", true)
+        return prefs.getBoolean("show_print_preview", false)
     }
 
     fun toShiftResponse(data: DailySalesClosureData, userName: String? = null): ShiftResponse {

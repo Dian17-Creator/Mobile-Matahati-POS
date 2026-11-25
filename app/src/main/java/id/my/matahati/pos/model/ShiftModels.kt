@@ -62,6 +62,9 @@ data class ShiftResponse(
     @SerializedName("cash_refund") val cashRefund: Double? = null,
     @SerializedName("cash_cancellation") val cashCancellation: Double? = null,
     @SerializedName("total_cancellation") val totalCancellation: Double? = null,
+    @SerializedName("offline_sales_total") val offlineSalesTotal: Double? = null,
+    @SerializedName("offline_tax_total") val offlineTaxTotal: Double? = null,
+    @SerializedName("online_sales_total") val onlineSalesTotal: Double? = null,
     @SerializedName("payment_breakdown") val paymentBreakdown: List<PaymentBreakdownItem>? = null
 )
 
