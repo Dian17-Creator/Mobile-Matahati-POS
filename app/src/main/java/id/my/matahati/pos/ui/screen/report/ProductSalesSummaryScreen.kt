@@ -76,7 +76,7 @@ fun ProductSalesSummaryScreen(
             val firstItem = selectedDayItems.first()
             activeSelectedDayDisplay = firstItem.displayLabel
             activeSelectedDayApi = firstItem.apiDate
-            summaryViewModel.fetchSummary(apiDate = firstItem.apiDate, nidOutlet = nidOutlet)
+            summaryViewModel.fetchSummary(apiDate = firstItem.apiDate, nidOutlet = nidOutlet, context = context)
         }
     }
 
@@ -215,7 +215,8 @@ fun ProductSalesSummaryScreen(
                                             activeSelectedDayApi = dayItem.apiDate
                                             summaryViewModel.fetchSummary(
                                                 apiDate = dayItem.apiDate,
-                                                nidOutlet = nidOutlet
+                                                nidOutlet = nidOutlet,
+                                                context = context
                                             )
                                         }
                                 ) {

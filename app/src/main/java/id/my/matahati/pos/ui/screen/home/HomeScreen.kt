@@ -232,7 +232,7 @@ fun HomeScreen(
                 validationWarningMessage = "Kasir belum memulai shift. Silakan buka shift terlebih dahulu di menu Shift."
             } else {
                 val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
-                val isConfirmEnabled = prefs.getBoolean("confirm_order_before_payment", true)
+                val isConfirmEnabled = prefs.getBoolean("confirm_order_before_payment", false)
                 if (isConfirmEnabled) {
                     viewModel.showCashierConfirmDialog = true
                 } else {

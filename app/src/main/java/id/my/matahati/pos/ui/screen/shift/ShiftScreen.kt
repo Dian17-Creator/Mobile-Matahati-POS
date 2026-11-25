@@ -134,12 +134,12 @@ fun ShiftScreen(
     val selectedDetail = shiftViewModel.selectedShiftDetail
 
     LaunchedEffect(nidOutlet) {
-        shiftViewModel.checkCurrentShift(nidOutlet)
+        shiftViewModel.checkCurrentShift(nidOutlet, context = context)
     }
 
     LaunchedEffect(selectedTabIndex, activeSelectedDayApi, nidOutlet) {
         if (selectedTabIndex == 1) {
-            shiftViewModel.fetchShiftHistory(nidOutlet, date = activeSelectedDayApi)
+            shiftViewModel.fetchShiftHistory(nidOutlet, date = activeSelectedDayApi, context = context)
         }
     }
 

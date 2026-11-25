@@ -51,12 +51,14 @@ class ShiftViewModel : ViewModel() {
 
     var successMessage by mutableStateOf<String?>(null)
 
-    fun checkCurrentShift(outletId: String?, onResult: ((hasActiveShift: Boolean) -> Unit)? = null) {
+    fun checkCurrentShift(outletId: String?, context: android.content.Context? = null, onResult: ((hasActiveShift: Boolean) -> Unit)? = null) {
         val parsedOutlet = outletId?.toIntOrNull() ?: 1
+        val category = context?.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+            ?.getString("default_transaction_category", "ONLINE") ?: "ONLINE"
         isCurrentShiftLoading = true
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.apiService.getCurrentShift(parsedOutlet)
+                val response = RetrofitClient.apiService.getCurrentShift(parsedOutlet, category = category)
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.success == true && body.data != null && body.data.status.uppercase() == "OPEN") {
@@ -211,14 +213,16 @@ class ShiftViewModel : ViewModel() {
         }
     }
 
-    fun fetchShiftHistory(outletId: String?, date: String? = null) {
+    fun fetchShiftHistory(outletId: String?, date: String? = null, context: android.content.Context? = null) {
         val parsedOutlet = outletId?.toIntOrNull()
+        val category = context?.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+            ?.getString("default_transaction_category", "ONLINE") ?: "ONLINE"
         isHistoryLoading = true
         shiftHistory.clear()
 
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.apiService.getShiftHistory(parsedOutlet, date)
+                val response = RetrofitClient.apiService.getShiftHistory(parsedOutlet, date, category = category)
                 if (response.isSuccessful && response.body()?.success == true) {
                     val list = response.body()?.data
                     shiftHistory.clear()
@@ -238,7 +242,7 @@ class ShiftViewModel : ViewModel() {
 
     fun isShowPrintPreviewEnabled(context: Context): Boolean {
         val prefs = context.getSharedPreferences("pos_prefs", Context.MODE_PRIVATE)
-        return prefs.getBoolean("show_print_preview", true)
+        return prefs.getBoolean("show_print_preview", false)
     }
 
     var isPrinting by mutableStateOf(false)

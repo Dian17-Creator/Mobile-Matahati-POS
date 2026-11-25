@@ -59,15 +59,19 @@ class ProductSalesSummaryViewModel : ViewModel() {
         showReceiptPreview = false
     }
 
-    fun fetchSummary(apiDate: String, nidOutlet: String? = null) {
+    fun fetchSummary(apiDate: String, nidOutlet: String? = null, context: android.content.Context? = null) {
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
             try {
                 val outletIdInt = nidOutlet?.toIntOrNull()
+                val category = context?.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+                    ?.getString("default_transaction_category", "ONLINE") ?: "ONLINE"
+
                 val response = RetrofitClient.apiService.getProductSalesSummary(
                     dateFrom = apiDate,
-                    outletId = outletIdInt
+                    outletId = outletIdInt,
+                    category = category
                 )
 
                 if (response.isSuccessful && response.body() != null) {

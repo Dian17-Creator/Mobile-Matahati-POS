@@ -36,23 +36,27 @@ class ReportViewModel : ViewModel() {
     var selectedDateLabel by mutableStateOf(displaySdf.format(Date()))
         private set
 
-    fun updateDateRange(label: String, startDate: String, endDate: String, nidOutlet: String?) {
+    fun updateDateRange(label: String, startDate: String, endDate: String, nidOutlet: String?, context: android.content.Context? = null) {
         selectedDateLabel = label
         selectedStartDate = startDate
         selectedEndDate = endDate
-        fetchDashboard(nidOutlet = nidOutlet)
+        fetchDashboard(context = context, nidOutlet = nidOutlet)
     }
 
-    fun fetchDashboard(nidOutlet: String? = null) {
+    fun fetchDashboard(context: android.content.Context? = null, nidOutlet: String? = null) {
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
             try {
                 val outletIdInt = nidOutlet?.toIntOrNull()
+                val category = context?.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
+                    ?.getString("default_transaction_category", "ONLINE") ?: "ONLINE"
+
                 val response = RetrofitClient.apiService.getDashboard(
                     dateFrom = selectedStartDate,
                     dateTo = selectedEndDate,
-                    outletId = outletIdInt
+                    outletId = outletIdInt,
+                    category = category
                 )
 
                 if (response.isSuccessful && response.body() != null) {

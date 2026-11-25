@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,8 +55,10 @@ fun ReportScreen(
     var showReportTypeDialog by remember { mutableStateOf(false) }
     var selectedReportType by remember { mutableStateOf("Penutupan Penjualan") }
 
+    val context = LocalContext.current
+
     LaunchedEffect(nidOutlet) {
-        viewModel.fetchDashboard(nidOutlet = nidOutlet)
+        viewModel.fetchDashboard(context = context, nidOutlet = nidOutlet)
     }
 
     val dashboardData = viewModel.dashboardData
@@ -195,7 +198,7 @@ fun ReportScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
-                            onClick = { viewModel.fetchDashboard(nidOutlet = nidOutlet) },
+                            onClick = { viewModel.fetchDashboard(context = context, nidOutlet = nidOutlet) },
                             colors = ButtonDefaults.buttonColors(containerColor = OlseraBlueHeader)
                         ) {
                             Icon(

@@ -111,7 +111,8 @@ interface ApiService {
     // Shift Endpoints
     @GET("api/shifts/current")
     suspend fun getCurrentShift(
-        @Query("nid_outlet") outletId: Int
+        @Query("nid_outlet") outletId: Int,
+        @Query("ctransaction_category") category: String? = null
     ): Response<BaseResponse<ShiftResponse>>
 
     @POST("api/shifts/open")
@@ -138,7 +139,8 @@ interface ApiService {
     suspend fun getShiftHistory(
         @Query("nid_outlet") outletId: Int?,
         @Query("date") date: String? = null,
-        @Query("per_page") perPage: Int = 15
+        @Query("per_page") perPage: Int = 15,
+        @Query("ctransaction_category") category: String? = null
     ): Response<BaseResponse<List<ShiftResponse>>>
 
     @GET("api/pos/transactions/{id}")
@@ -185,13 +187,15 @@ interface ApiService {
     suspend fun getDashboard(
         @Query("date_from") dateFrom: String? = null,
         @Query("date_to") dateTo: String? = null,
-        @Query("nid_outlet") outletId: Int? = null
+        @Query("nid_outlet") outletId: Int? = null,
+        @Query("ctransaction_category") category: String? = null
     ): Response<DashboardResponse>
 
     @GET("api/pos/reports/product-summary")
     suspend fun getProductSalesSummary(
         @Query("date_from") dateFrom: String,
         @Query("date_to") dateTo: String? = null,
-        @Query("nid_outlet") outletId: Int? = null
+        @Query("nid_outlet") outletId: Int? = null,
+        @Query("ctransaction_category") category: String? = null
     ): Response<ProductSalesSummaryResponse>
 }

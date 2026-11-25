@@ -1631,14 +1631,14 @@ class HomeViewModel : ViewModel() {
 
     fun isShowPrintPreviewEnabled(context: android.content.Context): Boolean {
         val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
-        return prefs.getBoolean("show_print_preview", true)
+        return prefs.getBoolean("show_print_preview", false)
     }
 
     var showSuccessDialog by mutableStateOf(false)
 
     fun isShowPdfDialogEnabled(context: android.content.Context): Boolean {
         val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
-        return prefs.getBoolean("show_pdf_dialog", true)
+        return prefs.getBoolean("show_pdf_dialog", false)
     }
 
     fun handlePendingReceipt(
