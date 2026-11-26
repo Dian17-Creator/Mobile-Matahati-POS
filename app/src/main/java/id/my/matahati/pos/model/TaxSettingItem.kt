@@ -11,7 +11,8 @@ data class TaxSettingsResponse(
 
 data class TaxSettingsData(
     @SerializedName("offline") val offline: TaxSettingItem? = null,
-    @SerializedName("online") val online: TaxSettingItem? = null
+    @SerializedName("online") val online: TaxSettingItem? = null,
+    @SerializedName("outlet_transaction_type") val outletTransactionType: String? = null
 )
 
 data class TaxSettingItem(
@@ -52,7 +53,9 @@ object TaxCalculator {
         isManualTaxExempt: Boolean
     ): TaxCalculationResult {
         val categoryUpper = transactionCategory.uppercase()
-        val isOnline = categoryUpper == "ONLINE"
+        val orderTypeUpper = orderType.trim().uppercase()
+        val isFoodDelivery = orderTypeUpper == "GOFOOD" || orderTypeUpper == "GRABFOOD" || orderTypeUpper == "SHOPEEFOOD" || orderTypeUpper == "TRAVELOKAEATS"
+        val isOnline = categoryUpper == "ONLINE" || isFoodDelivery
         val setting = if (isOnline) onlineSetting else offlineSetting
         val defaultTaxName = setting?.taxName?.takeIf { it.isNotBlank() } ?: "Pajak"
 
@@ -70,7 +73,6 @@ object TaxCalculator {
             )
         }
 
-        val orderTypeUpper = orderType.uppercase()
         val isTakeaway = orderTypeUpper == "TAKE_AWAY" || orderTypeUpper == "TAKEAWAY" || orderTypeUpper == "BUNGKUS"
         val isTakeawayExempt = setting.takeawayTaxExempt && isTakeaway
         val isManualExempt = setting.allowManualTaxExempt && isManualTaxExempt

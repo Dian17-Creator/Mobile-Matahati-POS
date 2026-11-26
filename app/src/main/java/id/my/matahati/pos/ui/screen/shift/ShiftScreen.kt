@@ -209,7 +209,7 @@ fun ShiftScreen(
                         selected = selectedTabIndex == 1,
                         onClick = {
                             selectedTabIndex = 1
-                            shiftViewModel.fetchShiftHistory(nidOutlet, date = activeSelectedDayApi)
+                            shiftViewModel.fetchShiftHistory(nidOutlet, date = activeSelectedDayApi, context = context)
                         },
                         text = {
                             Text(
@@ -356,7 +356,8 @@ fun ShiftScreen(
                                                     activeSelectedDayApi = dayItem.apiDate
                                                     shiftViewModel.fetchShiftHistory(
                                                         outletId = nidOutlet,
-                                                        date = dayItem.apiDate
+                                                        date = dayItem.apiDate,
+                                                        context = context
                                                     )
                                                 }
                                         ) {

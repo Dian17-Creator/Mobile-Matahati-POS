@@ -317,6 +317,13 @@ class EscPosFormatter(private val cols: Int = 32) {
             val itemSubtotalStr = formatNum(item.totalPrice)
             out.addAll(drawTwoColumns(qtyLine, itemSubtotalStr).toByteArray().toList())
 
+            if (item.product.isCombo && item.product.comboItems.isNotEmpty()) {
+                item.product.comboItems.forEach { comboItem ->
+                    val totalChildQty = comboItem.qty * item.quantity
+                    out.addAll("  $totalChildQty x ${comboItem.name}\n".toByteArray().toList())
+                }
+            }
+
             // Note / Sub-items if any
             if (!item.note.isNullOrBlank()) {
                 val (cleanNote, _) = CartItem.parseNoteAndSentQty(item.note)
@@ -411,6 +418,13 @@ class EscPosFormatter(private val cols: Int = 32) {
                     out.addAll((" ".repeat(qtyPart.length) + nameLines[i] + "\n").toByteArray().toList())
                 }
                 out.addAll(BOLD_OFF.toList())
+
+                if (item.product.isCombo && item.product.comboItems.isNotEmpty()) {
+                    item.product.comboItems.forEach { comboItem ->
+                        val totalChildQty = comboItem.qty * item.quantity
+                        out.addAll("  $totalChildQty x ${comboItem.name}\n".toByteArray().toList())
+                    }
+                }
 
                 if (!item.note.isNullOrBlank()) {
                     val wrappedNote = wrapText("Note: ${item.note}", cols - 2)

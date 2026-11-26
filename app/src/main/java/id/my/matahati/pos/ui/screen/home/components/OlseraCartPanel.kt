@@ -290,70 +290,6 @@ fun OlseraCartPanel(
                 }
 
                 if (cartItems.isNotEmpty()) {
-                    if (allowManualTaxExempt) {
-                        item {
-                            Surface(
-                                color = Color.White,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Bebas Pajak",
-                                        fontSize = 12.sp,
-                                        color = Color.Black
-                                    )
-                                    androidx.compose.material3.Switch(
-                                        checked = isManualTaxExempt,
-                                        onCheckedChange = onManualTaxExemptChange
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    if (taxAmount > 0 || taxMode == "INCLUDE") {
-                        item {
-                            Surface(
-                                color = Color.White,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    val displayTaxLabel = when {
-                                        taxMode == "INCLUDE" && taxPercent > 0 -> "$taxLabel ${taxPercent.toInt()}% (Include)"
-                                        taxMode == "INCLUDE" -> "$taxLabel (Include)"
-                                        taxPercent > 0 -> "$taxLabel ${taxPercent.toInt()}%"
-                                        else -> taxLabel
-                                    }
-
-                                    Text(
-                                        text = displayTaxLabel,
-                                        fontSize = 12.sp,
-                                        color = Color.Black
-                                    )
-
-                                    Text(
-                                        text = formatRawCurrency(taxAmount),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.Black
-                                    )
-                                }
-                            }
-                        }
-                    }
-
                     if (discountAmount > 0) {
                         item {
                             Surface(
@@ -625,6 +561,18 @@ private fun OlseraCartItemRow(
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Start
             )
+
+            if (cartItem.product.isCombo && cartItem.product.comboItems.isNotEmpty()) {
+                cartItem.product.comboItems.forEach { comboItem ->
+                    val totalChildQty = comboItem.qty * cartItem.quantity
+                    Text(
+                        text = "$totalChildQty x ${comboItem.name}",
+                        fontSize = 11.sp,
+                        color = Color(0xFF475569),
+                        modifier = Modifier.padding(start = 8.dp, top = 1.dp)
+                    )
+                }
+            }
 
             if (cleanNote.isNotBlank()) {
                 Spacer(modifier = Modifier.height(2.dp))

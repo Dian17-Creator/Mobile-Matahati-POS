@@ -2,6 +2,8 @@ package id.my.matahati.pos.ui.screen.home.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -27,6 +29,7 @@ fun OlseraOrderTypeDialog(
         Surface(
             modifier = Modifier
                 .width(380.dp)
+                .heightIn(max = 480.dp)
                 .wrapContentHeight(),
             shape = RoundedCornerShape(16.dp),
             color = Color.White
@@ -80,41 +83,47 @@ fun OlseraOrderTypeDialog(
                         )
                     }
                 } else {
-                    orderTypes.forEach { item ->
-                        val displayLabel = if (
-                            item.value.uppercase() == "TAKE_AWAY" || 
-                            item.value.uppercase() == "TAKEAWAY" || 
-                            item.label.uppercase().contains("TAKE")
-                        ) {
-                            "TAKE-AWAY / OFFLINE"
-                        } else {
-                            item.label
-                        }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        orderTypes.forEach { item ->
+                            val displayLabel = if (
+                                item.value.uppercase() == "TAKE_AWAY" || 
+                                item.value.uppercase() == "TAKEAWAY" || 
+                                item.label.uppercase().contains("TAKE")
+                            ) {
+                                "TAKE-AWAY / OFFLINE"
+                            } else {
+                                item.label
+                            }
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onOrderTypeSelected(item)
-                                    onDismiss()
-                                }
-                                .padding(vertical = 18.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = displayLabel,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = OlseraBlueHeader,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                        if (item != orderTypes.last()) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = Color.LightGray.copy(alpha = 0.5f)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onOrderTypeSelected(item)
+                                        onDismiss()
+                                    }
+                                    .padding(vertical = 18.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = displayLabel,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OlseraBlueHeader,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            if (item != orderTypes.last()) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = Color.LightGray.copy(alpha = 0.5f)
+                                )
+                            }
                         }
                     }
                 }

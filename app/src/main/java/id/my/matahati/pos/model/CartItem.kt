@@ -8,10 +8,12 @@ data class CartItem(
     val quantity: Int,
     val note: String = "",
     val sentQuantity: Int = 0, // Track how many items already sent to kitchen/bar
-    val isOnlineOrder: Boolean = false
+    val isOnlineOrder: Boolean = false,
+    val customDeliveryPrice: Double? = null,
+    val orderType: String = ""
 ) {
     val unitPrice: Double
-        get() = product.getEffectivePrice(isOnlineOrder)
+        get() = customDeliveryPrice ?: if (orderType.isNotBlank()) product.getPriceForOrderType(orderType) else product.getEffectivePrice(isOnlineOrder)
 
     val totalPrice: Double
         get() = unitPrice * quantity

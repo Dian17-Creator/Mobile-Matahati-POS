@@ -12,6 +12,24 @@ data class ProductResponse(
     val data: List<ProductDto>
 )
 
+data class ComboItemDto(
+    @SerializedName("nid_product") val nidProduct: Int? = null,
+    @SerializedName("cname") val cname: String? = null,
+    @SerializedName("nqty") val nqty: Double? = null,
+    @SerializedName("product") val product: ComboChildProductDto? = null
+)
+
+data class ComboChildProductDto(
+    @SerializedName("nid") val nid: Int? = null,
+    @SerializedName("cname") val cname: String? = null
+)
+
+data class ComboItem(
+    val productId: String,
+    val name: String,
+    val qty: Int
+)
+
 data class ProductDto(
     @SerializedName("nid")
     val nid: Int,
@@ -30,7 +48,13 @@ data class ProductDto(
     @SerializedName("cstatus")
     val cstatus: String?,
     @SerializedName("ftrack_stock")
-    val ftrackStock: Boolean? = true
+    val ftrackStock: Boolean? = true,
+    @SerializedName("delivery_prices")
+    val deliveryPrices: Map<String, Double>? = null,
+    @SerializedName("fcombo")
+    val fcombo: Boolean? = false,
+    @SerializedName("combo_items")
+    val comboItems: List<ComboItemDto>? = null
 ) {
     fun toProduct(categories: List<Category> = emptyList()): Product {
         val matchedCategory = categories.find { it.id == nidCategory?.toString() }
@@ -68,6 +92,7 @@ data class ProductDto(
             name = cname,
             price = nprice,
             onlinePrice = npriceOnline ?: 0.0,
+            deliveryPrices = deliveryPrices ?: emptyMap(),
             categoryId = nidCategory?.toString() ?: "1",
             stock = nqty ?: 0,
             iconEmoji = "📦",
@@ -75,7 +100,21 @@ data class ProductDto(
             isAvailable = cstatus?.lowercase() != "inactive",
             ftrackStock = effectiveTrackStock,
             category = matchedCategory,
-            stationName = station
+            stationName = station,
+            isCombo = fcombo ?: false,
+            comboItems = comboItems?.mapNotNull { itemDto ->
+                val name = itemDto.cname ?: itemDto.product?.cname
+                val prodId = (itemDto.nidProduct ?: itemDto.product?.nid)?.toString()
+                if (!name.isNullOrBlank() && !prodId.isNullOrBlank()) {
+                    ComboItem(
+                        productId = prodId,
+                        name = name,
+                        qty = (itemDto.nqty ?: 1.0).toInt().coerceAtLeast(1)
+                    )
+                } else {
+                    null
+                }
+            } ?: emptyList()
         )
     }
 }
@@ -85,6 +124,7 @@ data class Product(
     val name: String,
     val price: Double,
     val onlinePrice: Double = 0.0,
+    val deliveryPrices: Map<String, Double> = emptyMap(),
     val categoryId: String,
     val stock: Int,
     val iconEmoji: String = "📦",
@@ -92,7 +132,9 @@ data class Product(
     val isAvailable: Boolean = true,
     val ftrackStock: Boolean = true,
     val category: Category? = null,
-    val stationName: String = "DAPUR" // Default station
+    val stationName: String = "DAPUR", // Default station
+    val isCombo: Boolean = false,
+    val comboItems: List<ComboItem> = emptyList()
 ) {
     val isTrackStock: Boolean
         get() = ftrackStock && (category?.ftrackStock ?: true)
@@ -112,6 +154,30 @@ data class Product(
             formatter.maximumFractionDigits = 0
             return formatter.format(onlinePrice)
         }
+
+    fun isFoodDeliveryOrderType(orderType: String): Boolean {
+        val typeUpper = orderType.trim().uppercase()
+        return typeUpper == "GOFOOD" || typeUpper == "GRABFOOD" || typeUpper == "SHOPEEFOOD" || typeUpper == "TRAVELOKAEATS"
+    }
+
+    fun isAvailableForOrderType(orderType: String): Boolean {
+        return if (isFoodDeliveryOrderType(orderType)) {
+            deliveryPrices.containsKey(orderType.trim().uppercase())
+        } else {
+            true
+        }
+    }
+
+    fun getPriceForOrderType(orderType: String): Double {
+        val typeUpper = orderType.trim().uppercase()
+        return if (isFoodDeliveryOrderType(typeUpper)) {
+            deliveryPrices[typeUpper] ?: if (onlinePrice > 0.0) onlinePrice else price
+        } else if (typeUpper == "ONLINE" && onlinePrice > 0.0) {
+            onlinePrice
+        } else {
+            price
+        }
+    }
 
     fun getEffectivePrice(isOnline: Boolean): Double {
         return if (isOnline && onlinePrice > 0.0) onlinePrice else price

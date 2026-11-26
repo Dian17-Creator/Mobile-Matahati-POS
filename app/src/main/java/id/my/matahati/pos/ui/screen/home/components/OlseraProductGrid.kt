@@ -118,7 +118,7 @@ fun OlseraProductCard(
     orderType: String = ""
 ) {
     val isOnline = orderType.equals("ONLINE", ignoreCase = true)
-    val displayPrice = product.getEffectivePrice(isOnline)
+    val displayPrice = product.getPriceForOrderType(orderType)
     val isTrackStock = product.isTrackStock
     val isOutOfStock = isTrackStock && product.stock <= 0
 
@@ -250,6 +250,7 @@ fun OlseraProductCard(
                 }
 
                 val secondaryText = when {
+                    product.isFoodDeliveryOrderType(orderType) -> "Toko: Rp ${formatRawCurrency(product.price)}"
                     isOnline -> "Toko: Rp ${formatRawCurrency(product.price)}"
                     product.onlinePrice > 0.0 -> "Online: Rp ${formatRawCurrency(product.onlinePrice)}"
                     else -> " "
