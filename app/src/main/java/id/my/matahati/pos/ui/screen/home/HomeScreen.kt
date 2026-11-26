@@ -245,18 +245,13 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.loadTransactionCategoryFromPrefs(context)
-        viewModel.loadOrderTypes()
+        viewModel.loadOrderTypes(activeNidOutlet?.toIntOrNull())
         viewModel.loadPrinterSettings(context)
-    }
-
-    LaunchedEffect(currentScreen) {
-        viewModel.loadTransactionCategoryFromPrefs(context)
     }
 
     LaunchedEffect(activeNidOutlet, userId, userName) {
         val outletId = activeNidOutlet?.toIntOrNull() ?: 1
-        viewModel.loadTransactionCategoryFromPrefs(context)
+        viewModel.loadOrderTypes(outletId)
         viewModel.fetchData(activeNidOutlet)
         viewModel.loadServedByUsers(outletId, currentUserId = userId, currentUserName = userName)
         viewModel.fetchHeldOrders(activeNidOutlet)
@@ -303,11 +298,16 @@ fun HomeScreen(
     }
 
     LaunchedEffect(orderType) {
-        val isOnline = orderType.equals("ONLINE", ignoreCase = true)
+        val isOnline = viewModel.isOnlineOrDeliveryOrderType(orderType)
         for (i in cartItems.indices) {
             val item = cartItems[i]
-            if (item.isOnlineOrder != isOnline) {
-                cartItems[i] = item.copy(isOnlineOrder = isOnline)
+            val deliveryPrice = if (item.product.isFoodDeliveryOrderType(orderType)) item.product.getPriceForOrderType(orderType) else null
+            if (item.isOnlineOrder != isOnline || item.orderType != orderType || item.customDeliveryPrice != deliveryPrice) {
+                cartItems[i] = item.copy(
+                    isOnlineOrder = isOnline,
+                    orderType = orderType,
+                    customDeliveryPrice = deliveryPrice
+                )
             }
         }
     }
@@ -318,7 +318,8 @@ fun HomeScreen(
         if (isTrackStock && product.stock <= 0) {
             android.widget.Toast.makeText(context, "Stok produk ini sedang kosong!", android.widget.Toast.LENGTH_SHORT).show()
         } else {
-            val isOnline = orderType.equals("ONLINE", ignoreCase = true)
+            val isOnline = viewModel.isOnlineOrDeliveryOrderType(orderType)
+            val deliveryPrice = if (product.isFoodDeliveryOrderType(orderType)) product.getPriceForOrderType(orderType) else null
             val existingIndex = cartItems.indexOfFirst { it.product.id == product.id }
             if (existingIndex >= 0) {
                 val item = cartItems[existingIndex]
@@ -327,11 +328,19 @@ fun HomeScreen(
                 } else {
                     cartItems[existingIndex] = item.copy(
                         quantity = item.quantity + 1,
-                        isOnlineOrder = isOnline
+                        isOnlineOrder = isOnline,
+                        customDeliveryPrice = deliveryPrice,
+                        orderType = orderType
                     )
                 }
             } else {
-                cartItems.add(CartItem(product = product, quantity = 1, isOnlineOrder = isOnline))
+                cartItems.add(CartItem(
+                    product = product,
+                    quantity = 1,
+                    isOnlineOrder = isOnline,
+                    customDeliveryPrice = deliveryPrice,
+                    orderType = orderType
+                ))
             }
         }
     }
@@ -395,7 +404,8 @@ fun HomeScreen(
             allProducts.filter { product ->
                 val matchesCategory = isProductMatchingCategory(product, selectedCategoryId, categories)
                 val matchesSearch = product.name.contains(searchQuery, ignoreCase = true)
-                matchesCategory && matchesSearch
+                val matchesOrderType = product.isAvailableForOrderType(orderType)
+                matchesCategory && matchesSearch && matchesOrderType
             }
         }
     }
@@ -441,7 +451,7 @@ fun HomeScreen(
     val taxCalculationResult by remember {
         derivedStateOf {
             id.my.matahati.pos.model.TaxCalculator.calculateTax(
-                transactionCategory = viewModel.activeTransactionCategory,
+                transactionCategory = if (viewModel.isOnlineOrDeliveryOrderType(orderType)) "ONLINE" else viewModel.activeTransactionCategory,
                 orderType = orderType,
                 subtotal = cartSubtotal,
                 discount = discountAmount,
@@ -867,7 +877,7 @@ fun HomeScreen(
                                                             selectedCustomer = selectedCustomer,
                                                             discount = discountAmount,
                                                             tax = taxCalculationResult.taxAmount,
-                                                            nidOutlet = nidOutlet,
+                                                            nidOutlet = activeNidOutlet,
                                                             selectedPayment = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentId },
                                                             selectedPaymentDual = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentDualId },
                                                             dpAmount = viewModel.savedDraftDpAmount,
@@ -1527,6 +1537,10 @@ fun HomeScreen(
                                                         val orderTypeTabLabel = when {
                                                             orderType.isBlank() -> "In/Aw"
                                                             orderType.uppercase() == "TAKE_AWAY" || orderType.uppercase() == "TAKEAWAY" || orderType.uppercase().contains("TAKE") -> "Take Away"
+                                                            orderType.uppercase() == "GOFOOD" -> "GoFood"
+                                                            orderType.uppercase() == "GRABFOOD" -> "GrabFood"
+                                                            orderType.uppercase() == "SHOPEEFOOD" -> "ShopeeFood"
+                                                            orderType.uppercase() == "TRAVELOKAEATS" -> "TravelokaEats"
                                                             else -> orderType
                                                         }
                                                         HeaderTabItem(
@@ -1571,7 +1585,7 @@ fun HomeScreen(
                                                                 selectedCustomer = selectedCustomer,
                                                                 discount = discountAmount,
                                                                 tax = taxCalculationResult.taxAmount,
-                                                                nidOutlet = nidOutlet,
+                                                                nidOutlet = activeNidOutlet,
                                                                 selectedPayment = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentId },
                                                                 selectedPaymentDual = viewModel.paymentMethods.find { it.id == viewModel.savedDraftPaymentDualId },
                                                                 dpAmount = viewModel.savedDraftDpAmount,
@@ -2016,7 +2030,7 @@ fun HomeScreen(
                     tax = taxCalculationResult.taxAmount,
                     paidAmount = paidAmount,
                     nidVoucher = selectedVoucher?.id?.toIntOrNull(),
-                    nidOutlet = nidOutlet,
+                    nidOutlet = activeNidOutlet,
                     orderNote = orderNote,
                     userName = userName,
                     outletName = outletName ?: "",
@@ -2041,7 +2055,7 @@ fun HomeScreen(
                     orderType = orderType,
                     selectedCustomer = selectedCustomer,
                     cancelNote = note,
-                    nidOutlet = nidOutlet,
+                    nidOutlet = activeNidOutlet,
                     orderNote = orderNote,
                     isTaxExempt = taxCalculationResult.isTaxExempt
                 )
@@ -2264,14 +2278,14 @@ fun HomeScreen(
 
     if (viewModel.showPesananDialog) {
         LaunchedEffect(Unit) {
-            viewModel.startRealtimePesananPolling(context, nidOutlet)
+            viewModel.startRealtimePesananPolling(context, activeNidOutlet)
         }
         PesananRealtimeDialog(
             activeOrders = viewModel.activeRealtimePesanan,
             completedOrders = viewModel.completedRealtimePesanan,
             isLoading = viewModel.isRealtimePesananLoading,
             onRefresh = {
-                viewModel.fetchRealtimePesananManual(context, nidOutlet)
+                viewModel.fetchRealtimePesananManual(context, activeNidOutlet)
             },
             onMarkDone = { orderId ->
                 viewModel.markPesananDone(orderId, context)
@@ -2329,7 +2343,7 @@ fun HomeScreen(
                     selectedHistoryTransaction = updatedTrx
 
                     // Refresh Shift Data secara realtime (Kas Pembatalan / Kas Pengembalian ter-update)
-                    shiftViewModel.checkCurrentShift(nidOutlet)
+                    shiftViewModel.checkCurrentShift(activeNidOutlet)
 
                     val actionLabel = if (actionType == VoidRefundActionType.VOID) "dibatalkan" else "di-refund"
                     android.widget.Toast.makeText(context, "Transaksi berhasil $actionLabel", android.widget.Toast.LENGTH_SHORT).show()
@@ -2339,14 +2353,14 @@ fun HomeScreen(
                     viewModel.voidTransaction(
                         transactionId = targetTrx.id,
                         note = reason,
-                        nidOutlet = nidOutlet,
+                        nidOutlet = activeNidOutlet,
                         onSuccess = onSuccessHandler
                     )
                 } else {
                     viewModel.refundTransaction(
                         transactionId = targetTrx.id,
                         note = reason,
-                        nidOutlet = nidOutlet,
+                        nidOutlet = activeNidOutlet,
                         onSuccess = onSuccessHandler
                     )
                 }
@@ -2377,7 +2391,7 @@ fun HomeScreen(
                     }
 
                     // Refresh Shift Data & History secara realtime
-                    shiftViewModel.checkCurrentShift(nidOutlet)
+                    shiftViewModel.checkCurrentShift(activeNidOutlet)
 
                     val actionLabel = if (actionType == id.my.matahati.pos.ui.screen.home.components.VoidRefundActionType.VOID) "dibatalkan" else "di-refund"
                     android.widget.Toast.makeText(context, "Item berhasil $actionLabel", android.widget.Toast.LENGTH_SHORT).show()
@@ -2388,7 +2402,7 @@ fun HomeScreen(
                         transactionId = targetTrx.id,
                         items = requestItems,
                         reason = reason,
-                        nidOutlet = nidOutlet,
+                        nidOutlet = activeNidOutlet,
                         onSuccess = onSuccessHandler
                     )
                 } else {
@@ -2396,7 +2410,7 @@ fun HomeScreen(
                         transactionId = targetTrx.id,
                         items = requestItems,
                         reason = reason,
-                        nidOutlet = nidOutlet,
+                        nidOutlet = activeNidOutlet,
                         onSuccess = onSuccessHandler
                     )
                 }
@@ -2426,13 +2440,13 @@ fun HomeScreen(
                 viewModel.settlePayment(
                     transactionId = selectedHistoryTransaction!!.id,
                     request = request,
-                    nidOutlet = nidOutlet,
+                    nidOutlet = activeNidOutlet,
                     onSuccess = { updatedData ->
                         showSettlePaymentDialog = false
                         if (updatedData?.transaction != null) {
                             selectedHistoryTransaction = updatedData.transaction
                         }
-                        shiftViewModel.checkCurrentShift(nidOutlet)
+                        shiftViewModel.checkCurrentShift(activeNidOutlet)
                         android.widget.Toast.makeText(context, "Pelunasan berhasil diproses", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 )
@@ -2748,7 +2762,7 @@ fun HomeScreen(
                         showAddCustomerPanel = false
                     },
                     onSubmit = { req ->
-                        viewModel.createNewCustomer(req, nidOutlet) { newCustomer ->
+                        viewModel.createNewCustomer(req, activeNidOutlet) { newCustomer ->
                             selectedCustomer = newCustomer
                             viewModel.resetRegions()
                             showAddCustomerPanel = false
@@ -2818,7 +2832,7 @@ fun HomeScreen(
                     },
                     onSubmit = { req ->
                         customerToEdit?.let { target ->
-                            viewModel.updateCustomer(target.id, req, nidOutlet) { updatedCustomer ->
+                            viewModel.updateCustomer(target.id, req, activeNidOutlet) { updatedCustomer ->
                                 if (selectedCustomer?.id == updatedCustomer.id) {
                                     selectedCustomer = updatedCustomer
                                 }

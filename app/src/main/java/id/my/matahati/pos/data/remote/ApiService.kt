@@ -80,7 +80,9 @@ interface ApiService {
     ): Response<id.my.matahati.pos.model.TaxSettingsResponse>
 
     @GET("api/pos/order-types")
-    suspend fun getOrderTypes(): Response<OrderTypeResponse>
+    suspend fun getOrderTypes(
+        @Query("nid_outlet") outletId: Int? = null
+    ): Response<OrderTypeResponse>
 
     @POST("api/pos/transactions")
     suspend fun submitTransaction(@Body request: id.my.matahati.pos.model.TransactionRequest): Response<id.my.matahati.pos.model.TransactionResponse>

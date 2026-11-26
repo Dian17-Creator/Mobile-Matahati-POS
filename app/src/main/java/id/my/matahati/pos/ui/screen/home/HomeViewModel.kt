@@ -147,8 +147,7 @@ class HomeViewModel : ViewModel() {
         get() = if (activeTransactionCategory.equals("ONLINE", ignoreCase = true)) onlineTaxSetting else offlineTaxSetting
 
     fun loadTransactionCategoryFromPrefs(context: android.content.Context) {
-        val prefs = context.getSharedPreferences("pos_prefs", android.content.Context.MODE_PRIVATE)
-        activeTransactionCategory = prefs.getString("default_transaction_category", "ONLINE") ?: "ONLINE"
+        // Skema transaksi sekarang dikendalikan otomatis oleh server (outletTransactionType)
     }
 
     fun loadTaxSettings(outletId: Int?) {
@@ -159,6 +158,9 @@ class HomeViewModel : ViewModel() {
                     val data = response.body()?.data
                     offlineTaxSetting = data?.offline
                     onlineTaxSetting = data?.online
+                    if (!data?.outletTransactionType.isNullOrBlank()) {
+                        activeTransactionCategory = data!!.outletTransactionType!!.uppercase()
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "Gagal memuat tax settings", e)
@@ -1306,10 +1308,19 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun loadOrderTypes() {
+    fun isOnlineOrDeliveryOrderType(orderType: String): Boolean {
+        val typeUpper = orderType.trim().uppercase()
+        return typeUpper == "ONLINE" || typeUpper == "GOFOOD" || typeUpper == "GRABFOOD" || typeUpper == "SHOPEEFOOD" || typeUpper == "TRAVELOKAEATS"
+    }
+
+    fun loadOrderTypes(outletId: Int? = activeOutletId) {
+        if (outletId != null) {
+            activeOutletId = outletId
+        }
+        val targetOutletId = outletId ?: activeOutletId
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.apiService.getOrderTypes()
+                val response = RetrofitClient.apiService.getOrderTypes(targetOutletId)
 
                 if (response.isSuccessful) {
                     val body = response.body()
@@ -1500,7 +1511,7 @@ class HomeViewModel : ViewModel() {
                 )
             }
 
-        val parsedOutlet = nidOutlet?.toIntOrNull() ?: 1
+        val parsedOutlet = nidOutlet?.toIntOrNull() ?: activeOutletId ?: 1
         isOrderTypeSelectedByUser = orderType.isNotBlank()
         val defaultOrderType = "ONLINE"
         val currentCategory = activeTransactionCategory.ifBlank { "OFFLINE" }
