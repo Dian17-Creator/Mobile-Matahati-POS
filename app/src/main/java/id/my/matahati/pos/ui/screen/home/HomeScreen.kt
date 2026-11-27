@@ -275,6 +275,15 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(viewModel.paymentMethods.toList(), activeNidOutlet) {
+        if (selectedPaymentType != "Semua Tipe Pembayaran" && !selectedPaymentType.equals("all", ignoreCase = true)) {
+            val exists = viewModel.paymentMethods.any { it.name.equals(selectedPaymentType, ignoreCase = true) }
+            if (!exists) {
+                selectedPaymentType = "Semua Tipe Pembayaran"
+            }
+        }
+    }
+
     LaunchedEffect(currentScreen, transaksiSearchQuery, selectedStartDate, selectedEndDate, selectedPaymentType, activeNidOutlet, viewModel.activeTransactionCategory) {
         if (currentScreen == "transaksi") {
             val selectedPaymentMethod = viewModel.paymentMethods.find { 

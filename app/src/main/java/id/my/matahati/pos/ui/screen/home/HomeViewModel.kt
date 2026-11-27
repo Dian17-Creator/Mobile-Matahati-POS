@@ -573,16 +573,7 @@ class HomeViewModel : ViewModel() {
                 fetchVouchers(outletIdInt)
 
                 // Fetch Payment Methods
-                val payResponse = RetrofitClient.apiService.getPaymentMethods()
-                if (payResponse.isSuccessful && payResponse.body()?.success == true) {
-                    val dtos = payResponse.body()?.data ?: emptyList()
-                    val fetchedPayments = mutableListOf<PaymentMethod>(
-                        PaymentMethod(id = "all", name = "Semua Tipe Pembayaran")
-                    )
-                    fetchedPayments.addAll(dtos.map { it.toPaymentMethod() })
-                    paymentMethods.clear()
-                    paymentMethods.addAll(fetchedPayments)
-                }
+                fetchPaymentMethods(outletIdInt)
             } catch (e: Exception) {
                 errorMessage = "Gagal memuat data dari server: ${e.localizedMessage}"
                 // Fallback to dummy data if network fails so POS is still usable
@@ -1355,6 +1346,29 @@ class HomeViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("Vouchers", "Gagal memuat voucher", e)
+            }
+        }
+    }
+
+    fun fetchPaymentMethods(outletId: Int? = activeOutletId) {
+        if (outletId != null) {
+            activeOutletId = outletId
+        }
+        val targetOutletId = outletId ?: activeOutletId
+        viewModelScope.launch {
+            try {
+                val payResponse = RetrofitClient.apiService.getPaymentMethods(targetOutletId)
+                if (payResponse.isSuccessful && payResponse.body()?.success == true) {
+                    val dtos = payResponse.body()?.data ?: emptyList()
+                    val fetchedPayments = mutableListOf<PaymentMethod>(
+                        PaymentMethod(id = "all", name = "Semua Tipe Pembayaran")
+                    )
+                    fetchedPayments.addAll(dtos.map { it.toPaymentMethod() })
+                    paymentMethods.clear()
+                    paymentMethods.addAll(fetchedPayments)
+                }
+            } catch (e: Exception) {
+                Log.e("PaymentMethods", "Gagal memuat metode pembayaran", e)
             }
         }
     }
