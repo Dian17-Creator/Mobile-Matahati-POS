@@ -67,7 +67,9 @@ interface ApiService {
     ): Response<VoucherResponse>
 
     @GET("api/payment-methods")
-    suspend fun getPaymentMethods(): Response<PaymentMethodResponse>
+    suspend fun getPaymentMethods(
+        @Query("nid_outlet") outletId: Int? = null
+    ): Response<PaymentMethodResponse>
 
     @GET("api/pos-users")
     suspend fun getPosUsers(

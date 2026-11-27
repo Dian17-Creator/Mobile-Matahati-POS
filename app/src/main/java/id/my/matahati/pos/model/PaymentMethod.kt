@@ -13,17 +13,21 @@ data class PaymentMethodDto(
     @SerializedName("nid")
     val nid: Int,
     @SerializedName("cname")
-    val cname: String
+    val cname: String,
+    @SerializedName("nid_outlet")
+    val nidOutlet: Int? = null
 ) {
     fun toPaymentMethod(): PaymentMethod {
         return PaymentMethod(
             id = nid.toString(),
-            name = cname
+            name = cname,
+            nidOutlet = nidOutlet
         )
     }
 }
 
 data class PaymentMethod(
     val id: String,
-    val name: String
+    val name: String,
+    val nidOutlet: Int? = null
 )
