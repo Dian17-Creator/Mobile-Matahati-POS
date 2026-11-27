@@ -406,7 +406,7 @@ class HomeViewModel : ViewModel() {
                     val targetPrinter = if (station.uppercase() == "BAR") barPrinter else kitchenPrinter
                     if (targetPrinter != null) {
                         if (!isFirstStation) {
-                            kotlinx.coroutines.delay(1000)
+                            kotlinx.coroutines.delay(2000) // Delay cetak antar printer
                         }
                         isFirstStation = false
 
