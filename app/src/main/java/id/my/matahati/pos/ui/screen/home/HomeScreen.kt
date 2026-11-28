@@ -263,13 +263,21 @@ fun HomeScreen(
         viewModel.fetchProducts(activeNidOutlet, selectedCustomer?.id)
     }
 
-    LaunchedEffect(allProducts) {
+    LaunchedEffect(allProducts.toList(), selectedCustomer?.id, orderType) {
         if (cartItems.isNotEmpty() && allProducts.isNotEmpty()) {
             for (i in cartItems.indices) {
                 val currentCartItem = cartItems[i]
                 val matchingProduct = allProducts.find { it.id == currentCartItem.product.id }
-                if (matchingProduct != null && matchingProduct.price != currentCartItem.product.price) {
-                    cartItems[i] = currentCartItem.copy(product = matchingProduct)
+                if (matchingProduct != null) {
+                    val deliveryPrice = if (matchingProduct.isFoodDeliveryOrderType(orderType)) {
+                        matchingProduct.getPriceForOrderType(orderType)
+                    } else null
+                    if (currentCartItem.product != matchingProduct || currentCartItem.customDeliveryPrice != deliveryPrice) {
+                        cartItems[i] = currentCartItem.copy(
+                            product = matchingProduct,
+                            customDeliveryPrice = deliveryPrice
+                        )
+                    }
                 }
             }
         }

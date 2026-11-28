@@ -141,7 +141,7 @@ class HomeViewModel : ViewModel() {
     var offlineTaxSetting by mutableStateOf<id.my.matahati.pos.model.TaxSettingItem?>(null)
     var onlineTaxSetting by mutableStateOf<id.my.matahati.pos.model.TaxSettingItem?>(null)
     var isManualTaxExempt by mutableStateOf(false)
-    var activeTransactionCategory by mutableStateOf("ONLINE")
+    var activeTransactionCategory by mutableStateOf("OFFLINE")
 
     val activeTaxSetting: id.my.matahati.pos.model.TaxSettingItem?
         get() = if (activeTransactionCategory.equals("ONLINE", ignoreCase = true)) onlineTaxSetting else offlineTaxSetting
@@ -1527,7 +1527,7 @@ class HomeViewModel : ViewModel() {
 
         val parsedOutlet = nidOutlet?.toIntOrNull() ?: activeOutletId ?: 1
         isOrderTypeSelectedByUser = orderType.isNotBlank()
-        val defaultOrderType = "ONLINE"
+        val defaultOrderType = "DINE_IN"
         val currentCategory = activeTransactionCategory.ifBlank { "OFFLINE" }
 
         val request = TransactionRequest(
